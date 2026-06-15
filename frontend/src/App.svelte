@@ -101,7 +101,7 @@
   <header>
     <p class="eyebrow">Prévisions · Canada</p>
     <nav class="villes" aria-label="Choix de la ville">
-      {#each villes as v}
+      {#each villes as v (v.id)}
         <button
           class:active={v.id === selection}
           onclick={() => choisirVille(v.id)}

@@ -20,7 +20,7 @@
 <section aria-label="Prévisions sur 7 jours">
   <h2>Cette semaine</h2>
   <ol>
-    {#each jours as j, i}
+    {#each jours as j, i (j.date)}
       <li>
         <span class="jour">{i === 0 ? 'Auj.' : jourCourt(j.date)}</span>
         <span

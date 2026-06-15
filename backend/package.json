@@ -5,10 +5,11 @@
   "type": "module",
   "main": "app.ts",
   "scripts": {
-    "dev":   "tsx --watch app.ts",
+    "dev": "tsx --watch app.ts",
     "start": "tsx app.ts",
     "build": "tsc",
-    "prod":  "node dist/app.js"
+    "prod": "node dist/app.js",
+    "lint": "eslint src/ app.ts"
   },
   "engines": {
     "node": ">=18"
@@ -18,10 +19,13 @@
     "express": "^5.2.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^22.0.0",
+    "eslint": "^10.5.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.61.0"
   }
 }

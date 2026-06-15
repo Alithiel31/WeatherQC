@@ -19,7 +19,7 @@
 <section aria-label="Prévisions horaires">
   <h2>Heure par heure — 48 h</h2>
   <ul>
-    {#each heures as h, i}
+    {#each heures as h, i (h.heure)}
       <li class:minuit={i > 0 && new Date(h.heure).getHours() === 0}>
         <span class="heure">{etiquette(h, i)}</span>
         <span class="icone" aria-hidden="true">{iconeMeteo(h.code)}</span>
