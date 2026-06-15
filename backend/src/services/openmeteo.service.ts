@@ -1,3 +1,4 @@
+import { config } from '../config.js';
 import { BadGatewayError } from '../lib/errors.js';
 
 export interface Previsions {
@@ -36,7 +37,7 @@ interface FetchForecastParams {
 export async function fetchForecast({
   latitude,
   longitude,
-  timezone = 'America/Toronto',
+  timezone = config.defaultTimezone,
 }: FetchForecastParams): Promise<Previsions> {
   const params = new URLSearchParams({
     latitude: String(latitude),

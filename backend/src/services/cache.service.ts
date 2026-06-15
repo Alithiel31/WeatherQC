@@ -1,3 +1,5 @@
+import { config } from '../config.js';
+
 interface CacheEntry<T> {
   data: T;
   expires: number;
@@ -17,6 +19,6 @@ export function setCached<T>(key: string, data: T, ttlMs: number): void {
 }
 
 export const TTL = {
-  PREVISIONS: 10 * 60 * 1000,       // 10 minutes
-  GEOCODE: 30 * 24 * 60 * 60 * 1000, // 30 jours
-} as const;
+  PREVISIONS: config.cache.ttlPrevisions,
+  GEOCODE:    config.cache.ttlGeocode,
+};

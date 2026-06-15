@@ -1,89 +1,145 @@
-# Météo Québec · Montréal
+# 🌤️ Météo Québec
 
-Application de prévisions météo : backend **Node.js / Express** + frontend **Svelte (PWA)**.
-Données fournies par [Open-Meteo](https://open-meteo.com) (gratuit, sans clé API).
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green?logo=node.js)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Svelte](https://img.shields.io/badge/Svelte-5-orange?logo=svelte)](https://svelte.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Enabled-blue?logo=docker)](https://www.docker.com/)
+[![Tailscale](https://img.shields.io/badge/Accès-Tailscale-black?logo=tailscale)](https://tailscale.com/)
+
+Application de prévisions météo pour le Québec : backend **Express / TypeScript** + frontend **Svelte 5 (PWA)**.
+Données fournies par [Open-Meteo](https://open-meteo.com) — gratuit, sans clé API.
+
+---
 
 ## Fonctionnalités
 
-- Conditions actuelles (température, ressenti, vent, humidité)
-- Prévisions **heure par heure sur 48 h** et quotidiennes (7 jours)
-- **Carte animée des nuages** (satellite infrarouge) et du **radar des précipitations** via RainViewer + Leaflet, avec lecture/pause et curseur temporel
-- **Recherche par code postal québécois** (G, H, J) : géocodage de la RTA (3 premiers caractères, précision quartier) via Zippopotam, puis prévisions localisées
-- Bascule Montréal ↔ Québec (choix mémorisé)
-- Ciel dynamique : le dégradé d'arrière-plan suit les conditions et le jour/nuit
-- PWA installable, fonctionne hors ligne (dernières prévisions en cache)
-- Cache serveur 10 min pour limiter les appels à Open-Meteo
-- Interface entièrement en français
+| Fonctionnalité | Détail |
+|---|---|
+| 🌡️ Conditions actuelles | Température, ressenti, vent, humidité |
+| 🕐 Prévisions horaires | Heure par heure sur 48 h |
+| 📅 Prévisions quotidiennes | 7 jours avec barres min–max et heures de lever/coucher |
+| 🛰️ Carte animée | Satellite nuages (infrarouge) + radar précipitations via RainViewer + Leaflet |
+| 📮 Recherche par code postal | Géocodage de la RTA québécoise (G, H, J) via Zippopotam |
+| 🏙️ Bascule Montréal ↔ Québec | Choix mémorisé entre les sessions |
+| 🌅 Ciel dynamique | Dégradé d'arrière-plan selon les conditions et le jour/nuit |
+| 📱 PWA installable | Fonctionne hors ligne — dernières prévisions en cache |
+| ⚡ Cache serveur | Configurable via `.env` pour limiter les appels à Open-Meteo |
 
-## Démarrage
+---
 
-### 1. Backend (port 3001)
+## Déploiement (Docker)
+
+C'est la méthode recommandée. Le `docker-compose.yml` lance le backend (port **3005**) et le frontend Nginx (port **80**).
+
+**1. Configurer l'environnement**
 
 ```bash
-cd backend
-npm install
-npm start        # ou: npm run dev (rechargement auto)
+cp backend/.env.example backend/.env
+# Éditer backend/.env avec ta propre IP Tailscale si nécessaire
 ```
 
-Routes :
-- `GET /api/villes` — liste des villes
-- `GET /api/previsions/montreal` ou `/api/previsions/quebec`
-- `GET /api/geocode/H2X` — géocode un code postal québécois (RTA)
-- `GET /api/previsions-coordonnees?lat=45.5&lon=-73.6&nom=Plateau` — prévisions pour un point
-- `GET /api/sante` — vérification
-
-### 2. Frontend (port 5173)
+**2. Lancer**
 
 ```bash
-cd frontend
-npm install
+docker compose up --build -d
+```
+
+L'application est accessible sur `http://localhost` ou, via **Tailscale**, depuis n'importe quel appareil du réseau sur l'IP Tailscale de la machine hôte.
+
+---
+
+## Variables d'environnement
+
+| Variable | Obligatoire | Défaut | Description |
+|---|---|---|---|
+| `PORT` | ❌ | `3005` | Port du backend |
+| `NODE_ENV` | ❌ | `development` | Environnement (`production` en prod) |
+| `TAILSCALE_IP` | ❌ | — | IP Tailscale pour l'accès réseau distant |
+| `CACHE_TTL_PREVISIONS` | ❌ | `600000` | Durée du cache météo en ms (défaut : 10 min) |
+| `CACHE_TTL_GEOCODE` | ❌ | `2592000000` | Durée du cache géocodage en ms (défaut : 30 jours) |
+| `DEFAULT_TIMEZONE` | ❌ | `America/Toronto` | Timezone pour les prévisions Open-Meteo |
+
+---
+
+## Développement local
+
+### Backend (port 3005)
+
+```bash
+cd backend && npm install
+npm run dev        # rechargement auto (tsx --watch)
+```
+
+Routes disponibles :
+
+| Route | Description |
+|---|---|
+| `GET /api/villes` | Liste des villes disponibles |
+| `GET /api/previsions/:ville` | Prévisions par ville (`montreal`, `quebec`) |
+| `GET /api/previsions-coordonnees?lat=&lon=&nom=` | Prévisions pour un point GPS |
+| `GET /api/geocode/:rta` | Géocode une RTA québécoise (ex. `H2X`) |
+| `GET /api/sante` | Vérification de l'état du service |
+
+### Frontend (port 5173)
+
+```bash
+cd frontend && npm install
 npm run dev
 ```
 
-Ouvrir http://localhost:5173 — le proxy Vite redirige `/api` vers le backend.
+Ouvrir `http://localhost:5173`. Le proxy Vite redirige `/api` vers le backend.
 
-### Production
-
-```bash
-cd frontend && npm run build   # génère dist/ avec le service worker
-```
-
-Servir `frontend/dist` derrière le même domaine que l'API (ou ajuster le proxy).
-Le service worker met l'application en cache et garde les prévisions
-disponibles hors ligne (stratégie *network-first*, 6 h max).
+---
 
 ## Structure
 
 ```
 meteo-qc/
+├── docker-compose.yml
 ├── backend/
-│   └── server.js          # Express + proxy Open-Meteo + cache mémoire
+│   ├── app.ts                      # Point d'entrée
+│   ├── .env.example                # Template des variables d'environnement
+│   └── src/
+│       ├── config.ts               # Port, timezone, cache, Tailscale
+│       ├── data/cities.ts          # Villes et coordonnées
+│       ├── routers/                # Définition des routes
+│       ├── controllers/            # Logique des requêtes
+│       ├── services/               # Open-Meteo, géocodage, cache
+│       └── middlewares/            # Gestion globale des erreurs
 └── frontend/
-    ├── vite.config.js     # Vite + vite-plugin-pwa (manifest, service worker)
     └── src/
-        ├── App.svelte     # Ville active, ciel dynamique, conditions actuelles
+        ├── App.svelte              # Ville active, ciel dynamique, conditions
         └── lib/
-            ├── Horaire.svelte    # Bandeau heure par heure (48 h)
-            ├── CarteNuages.svelte # Carte Leaflet animée (RainViewer)
-            ├── Quotidien.svelte  # Liste 7 jours avec barres min–max
-            └── meteo.js          # Codes WMO → libellés FR, icônes, dates
+            ├── Horaire.svelte      # Bandeau 48 h
+            ├── CarteNuages.svelte  # Carte Leaflet animée
+            ├── Quotidien.svelte    # Prévisions 7 jours
+            ├── api.ts              # Appels backend
+            ├── meteo.ts            # Codes WMO → labels FR, icônes
+            └── types.ts            # Interfaces TypeScript
 ```
+
+---
 
 ## Ajouter une ville
 
-Ajouter une entrée dans l'objet `CITIES` de `backend/server.js` et dans le
-tableau `villes` de `frontend/src/App.svelte`.
+Ajouter une entrée dans `backend/src/data/cities.ts`.
 
-## Notes sur la précision du code postal
+---
 
-Un code postal complet (6 caractères) n'est pas géocodable avec un service
-gratuit ; l'application utilise la **RTA** (les 3 premiers caractères,
-ex. `H2X`), ce qui localise au quartier près — largement suffisant pour la
-météo, dont la résolution des modèles est de quelques kilomètres.
+## Notes
 
-## Services externes utilisés (tous gratuits, sans clé)
+**Précision des codes postaux** — l'application utilise la RTA (3 premiers caractères, ex. `H2X`) plutôt que le code complet, ce qui localise au quartier près — suffisant pour la résolution des modèles météo (quelques kilomètres).
 
-- **Open-Meteo** — prévisions
-- **Zippopotam.us** — géocodage des RTA canadiennes
-- **RainViewer** — images satellites (nuages) et radar animés
-- **CARTO / OpenStreetMap** — fond de carte
+---
+
+## Stack
+
+| Couche | Technologie |
+|---|---|
+| Backend | Express 5 · Node.js 18+ · TypeScript 5.6 |
+| Frontend | Svelte 5 · TypeScript · Vite 8 |
+| PWA | vite-plugin-pwa · Service Worker (network-first) |
+| Carte | Leaflet · RainViewer |
+| Infra | Docker · Nginx |
+| Accès réseau | Tailscale |
+| APIs externes | Open-Meteo · Zippopotam.us · CARTO / OpenStreetMap |

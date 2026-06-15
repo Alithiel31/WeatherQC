@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 
+import { config } from './config.js';
 import { globalErrorHandler } from './middlewares/global-error-handler.js';
 import villesRouter from './routers/villes.router.js';
 import previsionsRouter from './routers/previsions.router.js';
@@ -8,9 +9,15 @@ import geocodeRouter from './routers/geocode.router.js';
 
 const app = express();
 
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://100.109.50.124:5173', 'http://100.109.50.124'],
-}));
+const allowedOrigins = [
+  'http://localhost:5173',
+  ...(config.tailscaleIp ? [
+    `http://${config.tailscaleIp}:5173`,
+    `http://${config.tailscaleIp}`,
+  ] : []),
+];
+
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
 app.use('/api', villesRouter);
