@@ -1,0 +1,27 @@
+{
+  "name": "meteo-qc-backend",
+  "version": "2.0.0",
+  "description": "API meteo pour le Canada (proxy Open-Meteo avec cache)",
+  "type": "module",
+  "main": "app.ts",
+  "scripts": {
+    "dev":   "tsx --watch app.ts",
+    "start": "tsx app.ts",
+    "build": "tsc",
+    "prod":  "node dist/app.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

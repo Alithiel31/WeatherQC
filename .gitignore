@@ -1,0 +1,24 @@
+# Dépendances
+node_modules/
+
+# Build frontend
+frontend/dist/
+frontend/.svelte-kit/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Variables d'environnement
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp

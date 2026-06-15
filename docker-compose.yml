@@ -1,0 +1,18 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      target: production
+    ports:
+      - "3005:3005"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      target: production
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
