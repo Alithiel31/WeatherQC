@@ -1,0 +1,20 @@
+name: Deploy to Raspberry Pi
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Raspberry Pi via Tailscale
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.RASPBERRY_TAILSCALE_IP }}  # ← IP Tailscale (ex: 100.xxx.xxx.xxx)
+          username: ${{ secrets.RASPBERRY_USER }}
+          key: ${{ secrets.RASPBERRY_SSH_KEY }}
+          script: |
+            cd ~/QcWeather
+            git pull origin main
+            docker compose up --build -d
