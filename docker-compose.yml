@@ -3,8 +3,6 @@ services:
     build:
       context: ./backend
       target: production
-    ports:
-      - "3005:3005"
     env_file:
       - ./backend/.env
     restart: unless-stopped

@@ -5,7 +5,6 @@
   import CarteNuages from './lib/CarteNuages.svelte';
   import { descriptionMeteo, iconeMeteo, familleMeteo, heureMinute } from './lib/meteo.ts';
   import type { ReponseMeteo, LieuCP } from './lib/types.ts';
-  import { API_URL } from './lib/api.ts';
 
   const villes = [
     { id: 'montreal', nom: 'Montréal' },
@@ -41,9 +40,9 @@
           lon: String(lieuCP.longitude),
           nom: lieuCP.nom,
         });
-        url = `${API_URL}/api/previsions-coordonnees?${q}`;
+        url = `$/api/previsions-coordonnees?${q}`;
       } else {
-        url = `${API_URL}/api/previsions/${selection}`;
+        url = `$/api/previsions/${selection}`;
       }
       const res = await fetch(url);
       if (!res.ok) throw new Error('Réponse invalide du serveur');
@@ -67,7 +66,7 @@
     const saisie = codePostal.trim();
     if (!saisie) return;
     try {
-      const res = await fetch(`${API_URL}/api/geocode/${encodeURIComponent(saisie)}`);
+      const res = await fetch(`$/api/geocode/${encodeURIComponent(saisie)}`);
       const data = (await res.json()) as LieuCP & { erreur?: string };
       if (!res.ok) {
         erreurCP = data.erreur ?? 'Code postal introuvable.';
