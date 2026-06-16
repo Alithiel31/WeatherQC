@@ -17,6 +17,11 @@
     "test:run": "vitest run",
     "test:ui": "vitest --ui"
   },
+  "lint-staged": {
+    "*.ts": ["prettier --write", "eslint --fix"],
+    "*.svelte": ["prettier --write", "eslint --fix"]
+  },
+
   "engines": {
     "node": ">=18"
   },
@@ -31,6 +36,8 @@
     "@types/node": "^22.0.0",
     "@types/supertest": "^2.0.12",
     "eslint": "^10.5.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
     "prettier": "^3.3.0",
     "supertest": "^6.3.0",
     "tsx": "^4.19.0",

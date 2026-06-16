@@ -146,3 +146,8 @@ Ajouter une entrée dans `backend/src/data/cities.ts`.
 | Infra | Docker · Nginx |
 | Accès réseau | Tailscale |
 | APIs externes | Open-Meteo · Zippopotam.us · CARTO / OpenStreetMap |
+
+
+## License
+
+MIT — voir [LICENSE](./LICENSE)
