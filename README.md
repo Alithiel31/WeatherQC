@@ -4,7 +4,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Svelte](https://img.shields.io/badge/Svelte-5-orange?logo=svelte)](https://svelte.dev/)
 [![Docker](https://img.shields.io/badge/Docker-Enabled-blue?logo=docker)](https://www.docker.com/)
-[![Tailscale](https://img.shields.io/badge/Accès-Tailscale-black?logo=tailscale)](https://tailscale.com/)
+[![Déployé](https://img.shields.io/badge/Déployé-qcweather.alithiel31.dev-blue)](https://qcweather.alithiel31.dev)
+[![Cloudflare](https://img.shields.io/badge/Tunnel-Cloudflare-orange?logo=cloudflare)](https://www.cloudflare.com/)
 
 Application de prévisions météo pour le Québec : backend **Express / TypeScript** + frontend **Svelte 5 (PWA)**.
 Données fournies par [Open-Meteo](https://open-meteo.com) — gratuit, sans clé API.
@@ -44,7 +45,9 @@ cp backend/.env.example backend/.env
 docker compose up --build -d
 ```
 
-L'application est accessible sur `http://localhost` ou, via **Tailscale**, depuis n'importe quel appareil du réseau sur l'IP Tailscale de la machine hôte.
+L'application tourne sur un **Raspberry Pi** et est exposée publiquement via un **tunnel Cloudflare** (aucun port à ouvrir sur le routeur).
+Nginx fait office de reverse proxy à l'intérieur du conteneur frontend : il sert les fichiers statiques et redirige les appels `/api/` vers le backend.
+Le tunnel Cloudflare gère le **HTTPS** et le nom de domaine `qcweather.alithiel31.dev` — aucun certificat à gérer manuellement.
 
 ---
 
