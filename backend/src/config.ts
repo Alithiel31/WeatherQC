@@ -5,6 +5,6 @@ export const config = {
   defaultTimezone: process.env.DEFAULT_TIMEZONE || 'America/Toronto',
   cache: {
     ttlPrevisions: parseInt(process.env.CACHE_TTL_PREVISIONS || '600000'),
-    ttlGeocode:    parseInt(process.env.CACHE_TTL_GEOCODE    || '2592000000'),
+    ttlGeocode: parseInt(process.env.CACHE_TTL_GEOCODE || '2592000000'),
   },
 };

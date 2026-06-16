@@ -20,5 +20,5 @@ export function setCached<T>(key: string, data: T, ttlMs: number): void {
 
 export const TTL = {
   PREVISIONS: config.cache.ttlPrevisions,
-  GEOCODE:    config.cache.ttlGeocode,
+  GEOCODE: config.cache.ttlGeocode,
 };

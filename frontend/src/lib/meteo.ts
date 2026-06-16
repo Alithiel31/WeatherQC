@@ -5,34 +5,34 @@ interface EntreeWMO {
 }
 
 const WMO: Record<number, EntreeWMO> = {
-  0:  { description: 'Ciel dégagé',             iconJour: '☀️',  iconNuit: '🌙'  },
-  1:  { description: 'Généralement dégagé',      iconJour: '🌤️', iconNuit: '🌙'  },
-  2:  { description: 'Partiellement nuageux',    iconJour: '⛅',  iconNuit: '☁️'  },
-  3:  { description: 'Couvert',                  iconJour: '☁️',  iconNuit: '☁️'  },
-  45: { description: 'Brouillard',               iconJour: '🌫️', iconNuit: '🌫️' },
-  48: { description: 'Brouillard givrant',       iconJour: '🌫️', iconNuit: '🌫️' },
-  51: { description: 'Bruine légère',            iconJour: '🌦️', iconNuit: '🌧️' },
-  53: { description: 'Bruine',                   iconJour: '🌦️', iconNuit: '🌧️' },
-  55: { description: 'Bruine forte',             iconJour: '🌧️', iconNuit: '🌧️' },
-  56: { description: 'Bruine verglaçante',       iconJour: '🌧️', iconNuit: '🌧️' },
+  0: { description: 'Ciel dégagé', iconJour: '☀️', iconNuit: '🌙' },
+  1: { description: 'Généralement dégagé', iconJour: '🌤️', iconNuit: '🌙' },
+  2: { description: 'Partiellement nuageux', iconJour: '⛅', iconNuit: '☁️' },
+  3: { description: 'Couvert', iconJour: '☁️', iconNuit: '☁️' },
+  45: { description: 'Brouillard', iconJour: '🌫️', iconNuit: '🌫️' },
+  48: { description: 'Brouillard givrant', iconJour: '🌫️', iconNuit: '🌫️' },
+  51: { description: 'Bruine légère', iconJour: '🌦️', iconNuit: '🌧️' },
+  53: { description: 'Bruine', iconJour: '🌦️', iconNuit: '🌧️' },
+  55: { description: 'Bruine forte', iconJour: '🌧️', iconNuit: '🌧️' },
+  56: { description: 'Bruine verglaçante', iconJour: '🌧️', iconNuit: '🌧️' },
   57: { description: 'Bruine verglaçante forte', iconJour: '🌧️', iconNuit: '🌧️' },
-  61: { description: 'Pluie légère',             iconJour: '🌦️', iconNuit: '🌧️' },
-  63: { description: 'Pluie',                    iconJour: '🌧️', iconNuit: '🌧️' },
-  65: { description: 'Pluie forte',              iconJour: '🌧️', iconNuit: '🌧️' },
-  66: { description: 'Pluie verglaçante',        iconJour: '🌧️', iconNuit: '🌧️' },
-  67: { description: 'Pluie verglaçante forte',  iconJour: '🌧️', iconNuit: '🌧️' },
-  71: { description: 'Neige légère',             iconJour: '🌨️', iconNuit: '🌨️' },
-  73: { description: 'Neige',                    iconJour: '❄️',  iconNuit: '❄️'  },
-  75: { description: 'Neige forte',              iconJour: '❄️',  iconNuit: '❄️'  },
-  77: { description: 'Grésil',                   iconJour: '🌨️', iconNuit: '🌨️' },
-  80: { description: 'Averses légères',          iconJour: '🌦️', iconNuit: '🌧️' },
-  81: { description: 'Averses',                  iconJour: '🌧️', iconNuit: '🌧️' },
-  82: { description: 'Averses violentes',        iconJour: '⛈️',  iconNuit: '⛈️'  },
-  85: { description: 'Averses de neige',         iconJour: '🌨️', iconNuit: '🌨️' },
-  86: { description: 'Fortes averses de neige',  iconJour: '❄️',  iconNuit: '❄️'  },
-  95: { description: 'Orage',                    iconJour: '⛈️',  iconNuit: '⛈️'  },
-  96: { description: 'Orage avec grêle',         iconJour: '⛈️',  iconNuit: '⛈️'  },
-  99: { description: 'Orage avec forte grêle',   iconJour: '⛈️',  iconNuit: '⛈️'  },
+  61: { description: 'Pluie légère', iconJour: '🌦️', iconNuit: '🌧️' },
+  63: { description: 'Pluie', iconJour: '🌧️', iconNuit: '🌧️' },
+  65: { description: 'Pluie forte', iconJour: '🌧️', iconNuit: '🌧️' },
+  66: { description: 'Pluie verglaçante', iconJour: '🌧️', iconNuit: '🌧️' },
+  67: { description: 'Pluie verglaçante forte', iconJour: '🌧️', iconNuit: '🌧️' },
+  71: { description: 'Neige légère', iconJour: '🌨️', iconNuit: '🌨️' },
+  73: { description: 'Neige', iconJour: '❄️', iconNuit: '❄️' },
+  75: { description: 'Neige forte', iconJour: '❄️', iconNuit: '❄️' },
+  77: { description: 'Grésil', iconJour: '🌨️', iconNuit: '🌨️' },
+  80: { description: 'Averses légères', iconJour: '🌦️', iconNuit: '🌧️' },
+  81: { description: 'Averses', iconJour: '🌧️', iconNuit: '🌧️' },
+  82: { description: 'Averses violentes', iconJour: '⛈️', iconNuit: '⛈️' },
+  85: { description: 'Averses de neige', iconJour: '🌨️', iconNuit: '🌨️' },
+  86: { description: 'Fortes averses de neige', iconJour: '❄️', iconNuit: '❄️' },
+  95: { description: 'Orage', iconJour: '⛈️', iconNuit: '⛈️' },
+  96: { description: 'Orage avec grêle', iconJour: '⛈️', iconNuit: '⛈️' },
+  99: { description: 'Orage avec forte grêle', iconJour: '⛈️', iconNuit: '⛈️' },
 };
 
 export function descriptionMeteo(code: number): string {
@@ -54,7 +54,7 @@ export function familleMeteo(code: number): string {
   return 'pluie';
 }
 
-const JOURS      = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+const JOURS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
 const JOURS_LONGS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 
 export function jourCourt(dateStr: string): string {

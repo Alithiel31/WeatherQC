@@ -11,10 +11,9 @@ const app = express();
 
 const allowedOrigins = [
   'http://localhost:5173',
-  ...(config.tailscaleIp ? [
-    `http://${config.tailscaleIp}:5173`,
-    `http://${config.tailscaleIp}`,
-  ] : []),
+  ...(config.tailscaleIp
+    ? [`http://${config.tailscaleIp}:5173`, `http://${config.tailscaleIp}`]
+    : []),
 ];
 
 app.use(cors({ origin: allowedOrigins }));
