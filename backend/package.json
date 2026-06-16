@@ -18,10 +18,15 @@
     "test:ui": "vitest --ui"
   },
   "lint-staged": {
-    "*.ts": ["prettier --write", "eslint --fix"],
-    "*.svelte": ["prettier --write", "eslint --fix"]
+    "*.ts": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.svelte": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   },
-
   "engines": {
     "node": ">=18"
   },
@@ -35,6 +40,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^22.0.0",
     "@types/supertest": "^2.0.12",
+    "@vitest/ui": "^4.1.9",
     "eslint": "^10.5.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.7",
