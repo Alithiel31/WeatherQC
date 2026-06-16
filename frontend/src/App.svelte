@@ -40,9 +40,9 @@
           lon: String(lieuCP.longitude),
           nom: lieuCP.nom,
         });
-        url = `$/api/previsions-coordonnees?${q}`;
+        url = `/api/previsions-coordonnees?${q}`;
       } else {
-        url = `$/api/previsions/${selection}`;
+        url = `/api/previsions/${selection}`;
       }
       const res = await fetch(url);
       if (!res.ok) throw new Error('Réponse invalide du serveur');
@@ -66,7 +66,7 @@
     const saisie = codePostal.trim();
     if (!saisie) return;
     try {
-      const res = await fetch(`$/api/geocode/${encodeURIComponent(saisie)}`);
+      const res = await fetch(`/api/geocode/${encodeURIComponent(saisie)}`);
       const data = (await res.json()) as LieuCP & { erreur?: string };
       if (!res.ok) {
         erreurCP = data.erreur ?? 'Code postal introuvable.';

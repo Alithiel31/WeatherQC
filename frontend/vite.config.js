@@ -48,9 +48,9 @@ export default defineConfig({
             },
           },
           {
-            // Matche http://<host>:3005/api/previsions/... (hostname dynamique)
+            // Matche /api/previsions/... via nginx (prod) ou Vite proxy (dev)
             urlPattern: ({ url }) =>
-              url.port === "3005" && url.pathname.startsWith("/api/previsions"),
+              url.pathname.startsWith("/api/previsions"),
             handler: "NetworkFirst",
             options: {
               cacheName: "api-previsions",
