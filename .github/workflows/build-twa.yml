@@ -30,8 +30,7 @@ jobs:
 
       - name: Decode Keystore
         run: |
-          echo "${{ secrets.KEYSTORE_PASSWORD }}" | base64 --decode > twa-qcweather/android.keystore
-
+                echo "${{ secrets.KEYSTORE_BASE64 }}" | tr -d ' \n\r' | base64 --decode > twa-qcweather/android.keystore
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
