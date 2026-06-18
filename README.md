@@ -6,6 +6,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Enabled-blue?logo=docker)](https://www.docker.com/)
 [![Déployé](https://img.shields.io/badge/Déployé-qcweather.alithiel31.dev-blue)](https://qcweather.alithiel31.dev)
 [![Cloudflare](https://img.shields.io/badge/Tunnel-Cloudflare-orange?logo=cloudflare)](https://www.cloudflare.com/)
+[![Android](https://img.shields.io/badge/Android-Play%20Store-green?logo=google-play)](https://play.google.com/store/apps/details?id=dev.alithiel31.qcweather)
 
 Application de prévisions météo pour le Québec : backend **Express / TypeScript** + frontend **Svelte 5 (PWA)**.
 Données fournies par [Open-Meteo](https://open-meteo.com) — gratuit, sans clé API.
@@ -48,6 +49,38 @@ docker compose up --build -d
 L'application tourne sur un **Raspberry Pi** et est exposée publiquement via un **tunnel Cloudflare** (aucun port à ouvrir sur le routeur).
 Nginx fait office de reverse proxy à l'intérieur du conteneur frontend : il sert les fichiers statiques et redirige les appels `/api/` vers le backend.
 Le tunnel Cloudflare gère le **HTTPS** et le nom de domaine `qcweather.alithiel31.dev` — aucun certificat à gérer manuellement.
+
+---
+
+## Android (TWA)
+
+L'application est publiée sur le **Google Play Store** sous forme de TWA (Trusted Web Activity) : une coquille Android légère qui charge directement le PWA depuis `https://qcweather.alithiel31.dev`.
+
+**Package ID :** `dev.alithiel31.qcweather` — Sources : `twa-qcweather/`
+
+### Workflows CI/CD
+
+| Workflow | Déclencheur | Rôle |
+|---|---|---|
+| `build-twa.yml` | Push sur `twa-qcweather/**` ou manuel | Build + signature du `.aab` |
+| `deploy-twa.yml` | Après `build-twa.yml` réussi ou manuel | Publication sur Play Store (Internal Testing) |
+
+> `deploy-twa.yml` nécessite une **première soumission manuelle** dans Play Console — Google exige qu'une version existe déjà sur la piste avant d'accepter les uploads via API.
+
+### Secrets GitHub requis
+
+| Secret | Description |
+|---|---|
+| `KEYSTORE_BASE64` | Keystore Android encodé en base64 |
+| `KEYSTORE_PASSWORD` | Mot de passe du keystore |
+| `KEY_PASSWORD` | Mot de passe de la clé de signature |
+| `PLAY_SERVICE_ACCOUNT_JSON` | Clé JSON du Service Account Google Play API |
+
+### Configurer le Service Account (une fois)
+
+1. [Google Cloud Console](https://console.cloud.google.com) → IAM & Admin → Service Accounts → Créer
+2. Télécharger la clé JSON → ajouter comme secret `PLAY_SERVICE_ACCOUNT_JSON`
+3. Play Console → Setup → API access → lier le service account → rôle **Release Manager**
 
 ---
 
@@ -146,7 +179,8 @@ Ajouter une entrée dans `backend/src/data/cities.ts`.
 | Infra | Docker · Nginx |
 | Accès réseau | Tailscale |
 | APIs externes | Open-Meteo · Zippopotam.us · CARTO / OpenStreetMap |
-
+| Android | TWA · Bubblewrap · Google Play Store |
+| CI/CD | GitHub Actions (`ci.yml` · `build-twa.yml` · `deploy-twa.yml`) |
 
 ## License
 

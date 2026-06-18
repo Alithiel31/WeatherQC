@@ -25,3 +25,8 @@ Thumbs.db
 
 # Android TWA
 twa-qcweather/android.keystore
+
+# Assets Play Store (images locales uniquement, non servis par l'app)
+play-store-assets/
+
+app-release-bundle.aab

@@ -1,0 +1,28 @@
+name: Deploy TWA to Play Store
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Build TWA Android App"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Download AAB artifact
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: build-twa.yml
+          name: qcweather-release
+
+      - name: Publish to Play Store (Internal Testing)
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: dev.alithiel31.qcweather
+          releaseFiles: app-release-bundle.aab
+          track: internal
