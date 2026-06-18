@@ -50,7 +50,7 @@ jobs:
             spawn bubblewrap build --skipPwaValidation
             expect "Would you like to apply" { send "n\r" }
             expect "Password for the Key Store" { send "$env(KSPASS)\r" }
-            expect -re {assword for key} { send "$env(KPASS)\r" }
+            expect -re {assword for the Key} { send "$env(KPASS)\r" }
             expect eof
           '
 
