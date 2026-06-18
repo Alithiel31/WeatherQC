@@ -46,6 +46,7 @@ jobs:
           KPASS: ${{ secrets.KEY_PASSWORD }}
         run: |
           sudo apt-get install -y expect > /dev/null
+          chmod +x gradlew
           expect -c '
             spawn bubblewrap build --skipPwaValidation
             expect "Would you like to apply" { send "n\r" }
