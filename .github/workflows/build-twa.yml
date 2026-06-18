@@ -1,0 +1,56 @@
+name: Build TWA Android App
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'twa-qcweather/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Bubblewrap
+        run: npm install -g @bubblewrap/cli
+
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > twa-qcweather/android.keystore
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Configure Bubblewrap
+        run: |
+          mkdir -p ~/.bubblewrap
+          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_SDK_ROOT\"}" > ~/.bubblewrap/config.json
+
+      - name: Build AAB
+        working-directory: twa-qcweather
+        run: |
+          printf '%s\n%s\n' \
+            "${{ secrets.KEYSTORE_PASSWORD }}" \
+            "${{ secrets.KEY_PASSWORD }}" \
+            | bubblewrap build --skipPwaValidation
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcweather-release
+          path: twa-qcweather/app-release-bundle.aab
+          retention-days: 30

@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "dev.alithiel31.qcweather",
+    "sha256_cert_fingerprints": [
+      "51:A9:51:45:7E:E7:A2:89:68:C7:A6:05:CA:04:3B:D4:93:7A:E2:AD:BA:42:88:A1:C8:8D:91:86:62:55:C2:C4"
+    ]
+  }
+}]
