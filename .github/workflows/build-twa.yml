@@ -30,7 +30,7 @@ jobs:
 
       - name: Decode Keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > twa-qcweather/android.keystore
+          echo "${{ secrets.KEYSTORE_PASSWORD }}" | base64 --decode > twa-qcweather/android.keystore
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -43,7 +43,8 @@ jobs:
       - name: Build AAB
         working-directory: twa-qcweather
         run: |
-          printf '%s\n%s\n' \
+          printf '%s\n%s\n%s\n' \
+            "n" \
             "${{ secrets.KEYSTORE_PASSWORD }}" \
             "${{ secrets.KEY_PASSWORD }}" \
             | bubblewrap build --skipPwaValidation
