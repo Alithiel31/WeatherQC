@@ -65,10 +65,9 @@ describe('zodErrorHandler', () => {
   });
 
   it('formate le chemin imbriqué avec des points', () => {
-    const zodError = getZodError(
-      z.object({ ville: z.object({ nom: z.string().min(1) }) }),
-      { ville: { nom: '' } }
-    );
+    const zodError = getZodError(z.object({ ville: z.object({ nom: z.string().min(1) }) }), {
+      ville: { nom: '' },
+    });
 
     const res = makeRes();
     const next = vi.fn() as NextFunction;

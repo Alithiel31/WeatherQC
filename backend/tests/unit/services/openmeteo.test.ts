@@ -120,10 +120,7 @@ describe('fetchForecast', () => {
 
   describe('Gestion des erreurs', () => {
     it('lève BadGatewayError si Open-Meteo répond non-200', async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: false, status: 503 })
-      );
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 503 }));
 
       await expect(fetchForecast({ latitude: 45.5, longitude: -73.6 })).rejects.toThrow(
         BadGatewayError
@@ -131,19 +128,13 @@ describe('fetchForecast', () => {
     });
 
     it("inclut le code HTTP dans le message d'erreur", async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: false, status: 429 })
-      );
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 429 }));
 
       await expect(fetchForecast({ latitude: 45.5, longitude: -73.6 })).rejects.toThrow('429');
     });
 
     it('lève une erreur si fetch échoue réseau', async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockRejectedValue(new Error('Network error'))
-      );
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
 
       await expect(fetchForecast({ latitude: 45.5, longitude: -73.6 })).rejects.toThrow(
         'Network error'

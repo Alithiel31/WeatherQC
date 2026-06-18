@@ -22,7 +22,9 @@ describe('geocodeRTA', () => {
     it('retourne un LieuGeocode correctement mappé', async () => {
       vi.stubGlobal(
         'fetch',
-        vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => mockZippopotamResponse })
+        vi
+          .fn()
+          .mockResolvedValue({ ok: true, status: 200, json: async () => mockZippopotamResponse })
       );
 
       const result = await geocodeRTA('H2X');
@@ -35,7 +37,9 @@ describe('geocodeRTA', () => {
     it('convertit latitude et longitude en nombre (parseFloat)', async () => {
       vi.stubGlobal(
         'fetch',
-        vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => mockZippopotamResponse })
+        vi
+          .fn()
+          .mockResolvedValue({ ok: true, status: 200, json: async () => mockZippopotamResponse })
       );
 
       const result = await geocodeRTA('H2X');
@@ -49,37 +53,25 @@ describe('geocodeRTA', () => {
 
   describe('Gestion des erreurs API', () => {
     it('lève NotFoundError si statut 404', async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: false, status: 404 })
-      );
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 }));
 
       await expect(geocodeRTA('ZZZ')).rejects.toThrow(NotFoundError);
     });
 
-    it("inclut le RTA dans le message NotFoundError", async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: false, status: 404 })
-      );
+    it('inclut le RTA dans le message NotFoundError', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 }));
 
       await expect(geocodeRTA('ZZZ')).rejects.toThrow('ZZZ');
     });
 
     it('lève BadGatewayError si statut non-ok (pas 404)', async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: false, status: 500 })
-      );
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
 
       await expect(geocodeRTA('H2X')).rejects.toThrow(BadGatewayError);
     });
 
-    it("inclut le code HTTP dans le message BadGatewayError", async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: false, status: 500 })
-      );
+    it('inclut le code HTTP dans le message BadGatewayError', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
 
       await expect(geocodeRTA('H2X')).rejects.toThrow('500');
     });
