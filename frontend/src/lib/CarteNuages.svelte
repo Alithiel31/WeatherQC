@@ -35,6 +35,7 @@
   let donneesFrames = $state<RainViewerData | null>(null);
   let erreurCarte   = $state(false);
   let minuterie: ReturnType<typeof setInterval> | null = null;
+  let minuterieRafraichissement: ReturnType<typeof setInterval> | null = null;
 
   const reduireMouvement =
     typeof matchMedia !== 'undefined' &&
@@ -86,6 +87,15 @@
     mode = nouveau;
     frames = mode === 'satellite' ? donneesFrames.satellite : donneesFrames.radar;
     construireCouches();
+  }
+
+  async function rafraichirFrames(): Promise<void> {
+    try {
+      await chargerFrames();
+      construireCouches();
+    } catch {
+      // silencieux — on garde les frames existantes
+    }
   }
 
   async function chargerFrames(): Promise<void> {
@@ -141,6 +151,7 @@
       await chargerFrames();
       construireCouches();
       if (!reduireMouvement) basculerLecture();
+      minuterieRafraichissement = setInterval(rafraichirFrames, 10 * 60 * 1000);
     } catch {
       erreurCarte = true;
     }
@@ -148,6 +159,7 @@
 
   onDestroy(() => {
     if (minuterie) clearInterval(minuterie);
+    if (minuterieRafraichissement) clearInterval(minuterieRafraichissement);
     carte?.remove();
   });
 </script>
