@@ -40,6 +40,39 @@ describe('globalErrorHandler', () => {
     });
   });
 
+  describe('Erreurs Express portant un statut', () => {
+    it('relaie le statut 4xx de body-parser (corps trop volumineux)', () => {
+      const res = makeRes();
+      const erreur = Object.assign(new Error('request entity too large'), { status: 413 });
+
+      globalErrorHandler(erreur, req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(413);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ status: 413 }));
+    });
+
+    it('accepte aussi la propriété statusCode', () => {
+      const res = makeRes();
+      const erreur = Object.assign(new Error('JSON malformé'), { statusCode: 400 });
+
+      globalErrorHandler(erreur, req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('ignore un statut 5xx et retombe sur la réponse générique', () => {
+      const res = makeRes();
+      const erreur = Object.assign(new Error('panne interne détaillée'), { status: 503 });
+
+      globalErrorHandler(erreur, req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Internal server error' })
+      );
+    });
+  });
+
   describe('Erreur générique', () => {
     it('retourne 500 pour une erreur inconnue', () => {
       const res = makeRes();
