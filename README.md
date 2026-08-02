@@ -62,8 +62,12 @@ L'application est publiée sur le **Google Play Store** sous forme de TWA (Trust
 
 | Workflow | Déclencheur | Rôle |
 |---|---|---|
-| `build-twa.yml` | Push sur `twa-qcweather/**` ou manuel | Build + signature du `.aab` |
-| `deploy-twa.yml` | Après `build-twa.yml` réussi ou manuel | Publication sur Play Store (Internal Testing) |
+| `build-twa.yml` | Push sur `twa-qcweather/**` **depuis `main`** ou manuel | Build + signature du `.aab` |
+| `deploy-twa.yml` | Après `build-twa.yml` réussi, ou manuel depuis `main` | Publication sur Play Store (Internal Testing) |
+
+> Le build n'est déclenché que depuis `main` : le keystore de production n'est jamais
+> déchiffré sur une branche de travail. Pour tester un changement TWA avant merge,
+> utiliser le déclenchement manuel (`workflow_dispatch`).
 
 > `deploy-twa.yml` nécessite une **première soumission manuelle** dans Play Console — Google exige qu'une version existe déjà sur la piste avant d'accepter les uploads via API.
 
@@ -115,6 +119,20 @@ Routes disponibles :
 | `GET /api/previsions-coordonnees?lat=&lon=&nom=` | Prévisions pour un point GPS |
 | `GET /api/geocode/:rta` | Géocode une RTA québécoise (ex. `H2X`) |
 | `GET /api/sante` | Vérification de l'état du service |
+
+### Tests (backend)
+
+| Commande | Portée | Réseau |
+|---|---|---|
+| `npm run test:run` | Unitaires + intégration — lancé par la CI et le hook `pre-push` | ❌ aucun appel réseau |
+| `npm run test:contract` | Vérifie le contrat réel d'Open-Meteo et de Zippopotam | ✅ appels réels |
+
+Les tests d'intégration s'appuient sur les fixtures de `backend/tests/fixtures/` : une panne
+d'API externe ne peut plus faire échouer une PR. `tests/setup.ts` fait échouer explicitement
+tout appel réseau non mocké.
+
+Les tests de contrat tournent séparément via le workflow `contract.yml` (nocturne + manuel) :
+c'est lui qui détecte une dérive de schéma chez les APIs externes.
 
 ### Frontend (port 5173)
 

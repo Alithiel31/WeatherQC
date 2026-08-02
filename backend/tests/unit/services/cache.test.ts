@@ -1,12 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { getCached, setCached, TTL } from '../../../src/services/cache.service.js';
 
+// Le cache est vidé avant chaque test par `tests/setup.ts`.
 describe('Cache Service', () => {
-  beforeEach(() => {
-    // Vider le cache avant chaque test
-    getCached('__reset__');
-  });
-
   it('doit stocker et récupérer une valeur', () => {
     const key = 'test-key';
     const value = { data: 'test' };

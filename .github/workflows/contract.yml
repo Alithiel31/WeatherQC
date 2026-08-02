@@ -1,0 +1,39 @@
+name: Contrat APIs externes
+
+# Les tests d'intégration tournent sur fixtures : rien ne détecterait un
+# changement de contrat chez Open-Meteo ou Zippopotam. Ce workflow interroge
+# les vraies APIs une fois par nuit, hors du chemin critique des PR.
+#
+# Note : GitHub n'exécute les workflows `schedule` que depuis la branche par
+# défaut — ce job ne se déclenchera qu'une fois la branche mergée sur main.
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contract
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    name: Backend — tests de contrat (réseau réel)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - run: npm ci
+      - run: npm run test:contract

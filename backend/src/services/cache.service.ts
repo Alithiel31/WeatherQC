@@ -18,6 +18,11 @@ export function setCached<T>(key: string, data: T, ttlMs: number): void {
   store.set(key, { data, expires: Date.now() + ttlMs });
 }
 
+/** Vide entièrement le cache — utilisé pour isoler les tests entre eux. */
+export function clearCache(): void {
+  store.clear();
+}
+
 export const TTL = {
   PREVISIONS: config.cache.ttlPrevisions,
   GEOCODE: config.cache.ttlGeocode,

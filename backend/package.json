@@ -17,7 +17,8 @@
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
     "test:unit": "vitest run tests/unit",
-    "test:integration": "vitest run tests/integration"
+    "test:integration": "vitest run tests/integration",
+    "test:contract": "vitest run --config vitest.contract.config.ts"
   },
   "lint-staged": {
     "*.ts": [
