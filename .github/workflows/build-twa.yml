@@ -3,8 +3,18 @@ name: Build TWA Android App
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'twa-qcweather/**'
+
+# Le keystore de production ne doit être déchiffré que par ce workflow.
+permissions:
+  contents: read
+
+# Deux builds simultanés se disputeraient le même artefact `qcweather-release`.
+concurrency:
+  group: twa-build
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -32,7 +42,7 @@ jobs:
         run: |
                 echo "${{ secrets.KEYSTORE_BASE64 }}" | tr -d ' \n\r' | base64 --decode > twa-qcweather/android.keystore
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
 
       - name: Configure Bubblewrap
         run: |
@@ -62,3 +72,7 @@ jobs:
           name: qcweather-release
           path: twa-qcweather/app-release-bundle.aab
           retention-days: 30
+
+      - name: Supprimer le keystore du workspace
+        if: always()
+        run: rm -f twa-qcweather/android.keystore
