@@ -1,6 +1,14 @@
 # CHANGELOG
 
 ## [Non publié]
+### Added
+- Durcissement de l'API publique : en-têtes `helmet`, corps JSON plafonné à 10 ko,
+  limitation de débit par IP (100 req/min sur `/api`, 20 sur `/api/geocode`)
+- `TRUST_PROXY_HOPS` — retrouve l'IP réelle derrière cloudflared + nginx, sans quoi tous
+  les clients partageraient le même compteur de quota
+- Arrêt gracieux sur SIGTERM/SIGINT : les requêtes en vol ne sont plus coupées net
+- `healthcheck` du backend dans `docker-compose.yml`, le frontend attend `service_healthy`
+
 ### Fixed
 - Les appels à Open-Meteo et Zippopotam sont bornés par `FETCH_TIMEOUT_MS` (5 s par défaut) :
   une API amont lente ne laisse plus la requête Express pendue indéfiniment — dépassement
@@ -10,6 +18,10 @@
 - Le cache est plafonné à `CACHE_MAX_ENTRIES` (500 par défaut) avec éviction LRU : la clé des
   prévisions par coordonnées étant pilotée depuis Internet, il pouvait croître jusqu'à l'OOM
 - Balayage périodique des entrées expirées — une clé jamais relue n'était purgée par rien
+- Le gestionnaire d'erreurs relaie les statuts 4xx d'Express : un corps trop volumineux
+  donne un **413** et un JSON malformé un **400**, au lieu d'un 500 trompeur
+- `frontend/.prettierignore` — `npm run format:check` échouait sur `dist/` dès qu'un build
+  local avait été fait (la CI ne le voyait pas, elle vérifie le format avant de builder)
 
 ### Security
 - CI/CD Android : `build-twa.yml` n'est plus déclenché que depuis `main` — le keystore

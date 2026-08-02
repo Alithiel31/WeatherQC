@@ -96,6 +96,10 @@ L'application est publiée sur le **Google Play Store** sous forme de TWA (Trust
 | `NODE_ENV` | ❌ | `development` | Environnement (`production` en prod) |
 | `TAILSCALE_IP` | ❌ | — | IP Tailscale pour l'accès réseau distant |
 | `FETCH_TIMEOUT_MS` | ❌ | `5000` | Délai maximal d'un appel à Open-Meteo / Zippopotam |
+| `TRUST_PROXY_HOPS` | ❌ | `2` | Nombre de proxies devant l'API (cloudflared + nginx) |
+| `RATE_LIMIT_WINDOW_MS` | ❌ | `60000` | Fenêtre de la limitation de débit |
+| `RATE_LIMIT_MAX` | ❌ | `100` | Requêtes/fenêtre/IP sur `/api` |
+| `RATE_LIMIT_GEOCODE_MAX` | ❌ | `20` | Requêtes/fenêtre/IP sur `/api/geocode` |
 | `CACHE_TTL_PREVISIONS` | ❌ | `600000` | Durée du cache météo en ms (défaut : 10 min) |
 | `CACHE_TTL_GEOCODE` | ❌ | `2592000000` | Durée du cache géocodage en ms (défaut : 30 jours) |
 | `CACHE_MAX_ENTRIES` | ❌ | `500` | Plafond du nombre d'entrées en cache (éviction LRU) |
@@ -125,6 +129,16 @@ Routes disponibles :
 Les appels aux APIs externes sont bornés par `FETCH_TIMEOUT_MS` et rejoués une fois en cas
 d'erreur réseau ou 5xx. Un amont qui ne répond pas à temps donne un **504**, un amont en
 erreur un **502** — jamais une requête suspendue.
+
+L'API est exposée publiquement : en-têtes de durcissement (`helmet`), corps JSON plafonné à
+10 ko et limitation de débit par IP cliente (**429** au-delà du quota). `/api/sante` n'est
+jamais limité — le healthcheck Docker l'interroge toutes les 30 s.
+
+> **Calibrage de `TRUST_PROXY_HOPS`** — la limitation de débit s'applique par IP cliente.
+> Derrière cloudflared puis nginx, il faut remonter 2 sauts pour retrouver le vrai client ;
+> mal réglé, tous les visiteurs partagent le même compteur. Après un changement d'infra,
+> vérifier avec `curl -s https://qcweather.alithiel31.dev/api/villes -D - | grep -i ratelimit`
+> depuis deux réseaux différents : les compteurs doivent être indépendants.
 
 ### Tests (backend)
 
