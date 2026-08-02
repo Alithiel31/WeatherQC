@@ -1,9 +1,10 @@
 # Dépendances
 node_modules/
 
-# Build frontend
+# Build
 frontend/dist/
 frontend/.svelte-kit/
+backend/dist/
 
 # Logs
 *.log

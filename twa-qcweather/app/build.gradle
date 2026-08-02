@@ -50,15 +50,23 @@ def twaManifest = [
     orientation: 'default',
 ]
 
+// Le Play Store refuse tout upload dont le versionCode n'est pas strictement
+// supérieur au précédent. En CI, le numéro de run GitHub Actions s'ajoute à la
+// base pour garantir un code croissant sans intervention manuelle ; en local,
+// on retombe sur la base.
+def versionCodeBase = 3
+def ciRunNumber = System.getenv('GITHUB_RUN_NUMBER')
+def appVersionCode = ciRunNumber ? versionCodeBase + ciRunNumber.toInteger() : versionCodeBase
+
 android {
     compileSdkVersion 36
     namespace "dev.alithiel31.qcweather"
     defaultConfig {
         applicationId "dev.alithiel31.qcweather"
         minSdkVersion 21
-        targetSdkVersion 35
-        versionCode 2
-        versionName "2"
+        targetSdkVersion 36
+        versionCode appVersionCode
+        versionName "3"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name
