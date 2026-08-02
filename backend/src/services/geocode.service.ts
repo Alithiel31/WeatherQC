@@ -1,4 +1,5 @@
 import { BadGatewayError, NotFoundError } from '../lib/errors.js';
+import { fetchAvecTimeout } from '../lib/http.js';
 
 export interface LieuGeocode {
   rta: string;
@@ -9,7 +10,9 @@ export interface LieuGeocode {
 }
 
 export async function geocodeRTA(rta: string): Promise<LieuGeocode> {
-  const res = await fetch(`https://api.zippopotam.us/ca/${rta}`);
+  const res = await fetchAvecTimeout(`https://api.zippopotam.us/ca/${rta}`, {
+    service: 'Zippopotam',
+  });
 
   if (res.status === 404) {
     throw new NotFoundError(`Code postal introuvable : ${rta}.`);

@@ -1,6 +1,16 @@
 # CHANGELOG
 
 ## [Non publié]
+### Fixed
+- Les appels à Open-Meteo et Zippopotam sont bornés par `FETCH_TIMEOUT_MS` (5 s par défaut) :
+  une API amont lente ne laisse plus la requête Express pendue indéfiniment — dépassement
+  du délai = **504**
+- Une nouvelle tentative est jouée sur erreur réseau ou 5xx (GET idempotents) ; un 4xx,
+  réponse légitime de l'amont, n'est jamais rejoué
+- Le cache est plafonné à `CACHE_MAX_ENTRIES` (500 par défaut) avec éviction LRU : la clé des
+  prévisions par coordonnées étant pilotée depuis Internet, il pouvait croître jusqu'à l'OOM
+- Balayage périodique des entrées expirées — une clé jamais relue n'était purgée par rien
+
 ### Security
 - CI/CD Android : `build-twa.yml` n'est plus déclenché que depuis `main` — le keystore
   de production n'est plus déchiffré sur une branche de travail quelconque

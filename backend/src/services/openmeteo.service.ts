@@ -1,5 +1,6 @@
 import { config } from '../config.js';
 import { BadGatewayError } from '../lib/errors.js';
+import { fetchAvecTimeout } from '../lib/http.js';
 
 export interface Previsions {
   misAJour: string;
@@ -63,7 +64,9 @@ export async function fetchForecast({
     forecast_days: '7',
   });
 
-  const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+  const res = await fetchAvecTimeout(`https://api.open-meteo.com/v1/forecast?${params}`, {
+    service: 'Open-Meteo',
+  });
   if (!res.ok) throw new BadGatewayError(`Open-Meteo a répondu ${res.status}`);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

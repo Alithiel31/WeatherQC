@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import app from '../../../src/index.js';
 import { reponseOpenMeteo } from '../../fixtures/openmeteo.js';
-import { stubFetchJson } from '../../helpers/fetch.js';
+import { stubFetchJson, stubFetchTimeout } from '../../helpers/fetch.js';
 
 describe('Routes Prévisions', () => {
   describe('GET /api/previsions/:ville', () => {
@@ -52,6 +52,14 @@ describe('Routes Prévisions', () => {
       const response = await request(app).get('/api/previsions/montreal').expect(502);
 
       expect(response.body.error).toContain('503');
+    });
+
+    it('doit retourner erreur 504 si Open-Meteo ne répond pas à temps', async () => {
+      stubFetchTimeout();
+
+      const response = await request(app).get('/api/previsions/montreal').expect(504);
+
+      expect(response.body.error).toContain('Open-Meteo');
     });
   });
 
