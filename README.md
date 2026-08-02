@@ -95,8 +95,10 @@ L'application est publiée sur le **Google Play Store** sous forme de TWA (Trust
 | `PORT` | ❌ | `3005` | Port du backend |
 | `NODE_ENV` | ❌ | `development` | Environnement (`production` en prod) |
 | `TAILSCALE_IP` | ❌ | — | IP Tailscale pour l'accès réseau distant |
+| `FETCH_TIMEOUT_MS` | ❌ | `5000` | Délai maximal d'un appel à Open-Meteo / Zippopotam |
 | `CACHE_TTL_PREVISIONS` | ❌ | `600000` | Durée du cache météo en ms (défaut : 10 min) |
 | `CACHE_TTL_GEOCODE` | ❌ | `2592000000` | Durée du cache géocodage en ms (défaut : 30 jours) |
+| `CACHE_MAX_ENTRIES` | ❌ | `500` | Plafond du nombre d'entrées en cache (éviction LRU) |
 | `DEFAULT_TIMEZONE` | ❌ | `America/Toronto` | Timezone pour les prévisions Open-Meteo |
 
 ---
@@ -119,6 +121,10 @@ Routes disponibles :
 | `GET /api/previsions-coordonnees?lat=&lon=&nom=` | Prévisions pour un point GPS |
 | `GET /api/geocode/:rta` | Géocode une RTA québécoise (ex. `H2X`) |
 | `GET /api/sante` | Vérification de l'état du service |
+
+Les appels aux APIs externes sont bornés par `FETCH_TIMEOUT_MS` et rejoués une fois en cas
+d'erreur réseau ou 5xx. Un amont qui ne répond pas à temps donne un **504**, un amont en
+erreur un **502** — jamais une requête suspendue.
 
 ### Tests (backend)
 

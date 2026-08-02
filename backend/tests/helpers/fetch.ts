@@ -15,3 +15,13 @@ export function stubFetchJson(payload: unknown, status = 200) {
   vi.stubGlobal('fetch', mock);
   return mock;
 }
+
+/** Simule un dépassement du délai maximal, tel que le produit `AbortSignal.timeout()`. */
+export function stubFetchTimeout() {
+  const erreur = new Error('The operation was aborted due to timeout');
+  erreur.name = 'TimeoutError';
+
+  const mock = vi.fn().mockRejectedValue(erreur);
+  vi.stubGlobal('fetch', mock);
+  return mock;
+}

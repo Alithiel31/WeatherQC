@@ -25,3 +25,9 @@ export class BadGatewayError extends HttpClientError {
     super(message, 502);
   }
 }
+
+export class GatewayTimeoutError extends HttpClientError {
+  constructor(message: string) {
+    super(message, 504);
+  }
+}
