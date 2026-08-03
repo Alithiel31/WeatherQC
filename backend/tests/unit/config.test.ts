@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { chargerConfig } from '../../src/config.js';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { chargerConfig, environnementSchema } from '../../src/config.js';
 
 describe('chargerConfig', () => {
   it('applique les valeurs par défaut sur un environnement vide', () => {
@@ -57,5 +59,33 @@ describe('chargerConfig', () => {
     expect(() => chargerConfig({ PORT: 'abc', CACHE_TTL_GEOCODE: 'jamais' })).toThrow(
       /PORT[\s\S]*CACHE_TTL_GEOCODE/
     );
+  });
+});
+
+/**
+ * `.env.example` est la seule documentation qu'un exploitant lit avant de
+ * déployer. Une variable ajoutée au schéma mais oubliée là ne se voit nulle
+ * part — c'est exactement ce qui est arrivé à `CACHE_TTL_RAINVIEWER`.
+ */
+describe('.env.example couvre le schéma', () => {
+  const exemple = readFileSync(resolve(import.meta.dirname, '../../.env.example'), 'utf8');
+
+  const clesDocumentees = new Set(
+    exemple
+      .split('\n')
+      .map((ligne) => ligne.trim())
+      .filter((ligne) => ligne && !ligne.startsWith('#'))
+      .map((ligne) => ligne.split('=')[0].trim())
+  );
+
+  it.each(Object.keys(environnementSchema.shape))('documente %s', (cle) => {
+    expect(clesDocumentees.has(cle), `${cle} manque dans backend/.env.example`).toBe(true);
+  });
+
+  it('ne documente rien qui n’existe plus dans le schéma', () => {
+    const clesSchema = new Set(Object.keys(environnementSchema.shape));
+    const orphelines = [...clesDocumentees].filter((cle) => !clesSchema.has(cle));
+
+    expect(orphelines).toEqual([]);
   });
 });

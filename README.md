@@ -178,7 +178,7 @@ nommant, au lieu de laisser tourner le serveur avec un `NaN`.
 |---|---|---|
 | `npm run test:run` | Unitaires + intégration — lancé par le hook `pre-push` | ❌ aucun appel réseau |
 | `npm run test:coverage` | Idem + rapport de couverture — **c'est ce que lance la CI** | ❌ aucun appel réseau |
-| `npm run test:contract` | Vérifie le contrat réel d'Open-Meteo et de Zippopotam | ✅ appels réels |
+| `npm run test:contract` | Vérifie le contrat réel d'Open-Meteo, de Zippopotam et de RainViewer | ✅ appels réels |
 
 Les tests d'intégration s'appuient sur les fixtures de `backend/tests/fixtures/` : une panne
 d'API externe ne peut plus faire échouer une PR. `tests/setup.ts` fait échouer explicitement
