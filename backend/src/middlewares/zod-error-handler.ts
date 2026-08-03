@@ -11,7 +11,7 @@ export const zodErrorHandler = (err: unknown, _req: Request, res: Response, next
     return res.status(400).json({
       status: 400,
       error: 'Paramètres invalides',
-      details: err.errors.map((e) => ({
+      details: err.issues.map((e) => ({
         chemin: e.path.join('.'),
         message: e.message,
       })),

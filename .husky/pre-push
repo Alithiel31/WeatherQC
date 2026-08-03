@@ -8,6 +8,11 @@ npm run test:unit || exit 1
 echo "▶ Frontend : format + lint..."
 cd ../frontend && npm run format:check && npm run lint || exit 1
 
+# La CI lance svelte-check : sans lui ici, une erreur de types ne se découvre
+# qu'après le push. `build` reste hors du hook — trop lent.
+echo "▶ Frontend : types (svelte-check)..."
+npm run check || exit 1
+
 echo "▶ Frontend : tests..."
 npm run test:run || exit 1
 

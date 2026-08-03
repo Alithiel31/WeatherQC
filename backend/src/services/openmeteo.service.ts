@@ -76,7 +76,7 @@ export async function fetchForecast({
   if (!analyse.success) {
     // Une dérive de contrat est une panne amont, pas un bug interne : 502, pas 500.
     throw new BadGatewayError(
-      `Réponse Open-Meteo inexploitable : ${analyse.error.errors
+      `Réponse Open-Meteo inexploitable : ${analyse.error.issues
         .map((e) => e.path.join('.'))
         .join(', ')}`
     );

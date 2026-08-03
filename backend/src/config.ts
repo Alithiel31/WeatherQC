@@ -48,7 +48,7 @@ export function chargerConfig(env: NodeJS.ProcessEnv = process.env) {
   const analyse = environnementSchema.safeParse(env);
 
   if (!analyse.success) {
-    const details = analyse.error.errors
+    const details = analyse.error.issues
       .map((e) => `  ${e.path.join('.')} : ${e.message}`)
       .join('\n');
     throw new Error(`Configuration d'environnement invalide :\n${details}`);

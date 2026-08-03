@@ -26,7 +26,7 @@ export async function geocodeRTA(rta: string): Promise<LieuGeocode> {
   if (!analyse.success) {
     // Contrat rompu chez Zippopotam : panne amont (502), pas erreur interne (500).
     throw new BadGatewayError(
-      `Réponse Zippopotam inexploitable : ${analyse.error.errors
+      `Réponse Zippopotam inexploitable : ${analyse.error.issues
         .map((e) => e.path.join('.'))
         .join(', ')}`
     );
