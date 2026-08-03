@@ -4,6 +4,7 @@ import {
   previsionsCoordonnees,
   geocoder,
   framesRainViewer,
+  villesDisponibles,
   ErreurApi,
   HOTE_TUILES_DEFAUT,
 } from '../../src/lib/api.ts';
@@ -26,6 +27,22 @@ const previsions = {
   quotidien: [],
   depuisCache: false,
 };
+
+describe('villesDisponibles', () => {
+  it('retourne la liste servie par le backend', async () => {
+    const liste = [{ id: 'montreal', nom: 'Montréal' }];
+    const mock = stubFetchJson(liste);
+
+    await expect(villesDisponibles()).resolves.toEqual(liste);
+    expect(mock).toHaveBeenCalledWith('/api/villes', { signal: expect.any(AbortSignal) });
+  });
+
+  it('lève une ErreurApi quand le backend refuse', async () => {
+    stubFetchJson({ status: 503, error: 'Service indisponible' }, 503);
+
+    await expect(villesDisponibles()).rejects.toThrow('Service indisponible');
+  });
+});
 
 describe('previsionsVille', () => {
   it('appelle la route de la ville et retourne la charge utile', async () => {

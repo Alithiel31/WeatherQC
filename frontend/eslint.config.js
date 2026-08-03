@@ -15,7 +15,9 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.svelte'],
+    // `*.svelte.ts` : modules porteurs de runes hors composant. Le parser Svelte
+    // les prend en charge, mais leur contenu est du TypeScript pur.
+    files: ['**/*.svelte', '**/*.svelte.ts'],
     languageOptions: {
       parserOptions: {
         parser: tseslint.parser,

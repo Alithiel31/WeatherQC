@@ -3,6 +3,7 @@
   import L from 'leaflet';
   import 'leaflet/dist/leaflet.css';
   import { framesRainViewer, HOTE_TUILES_DEFAUT } from './api.ts';
+  import { heureMinute } from './meteo.ts';
   import type { ImageRainViewer, FramesRainViewer } from './types.ts';
 
   interface Props {
@@ -37,11 +38,6 @@
     return mode === 'satellite'
       ? `${hote}${frame.path}/256/{z}/{x}/{y}/0/0_0.png`
       : `${hote}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
-  }
-
-  function heureFrame(frame: ImageRainViewer): string {
-    const d = new Date(frame.time * 1000);
-    return `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
   }
 
   function viderCouches(): void {
@@ -185,7 +181,7 @@
         }}
         aria-label="Position dans l'animation"
       />
-      <span class="heure">{frames[index] ? heureFrame(frames[index]) : ''}</span>
+      <span class="heure">{frames[index] ? heureMinute(frames[index].time * 1000) : ''}</span>
     </div>
   {/if}
 </section>

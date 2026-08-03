@@ -10,17 +10,26 @@ vi.mock('../../src/lib/CarteNuages.svelte', async () => {
   return { default: Vide };
 });
 
-const { previsionsVille, previsionsCoordonnees, geocoder, ErreurApi } = vi.hoisted(() => ({
-  previsionsVille: vi.fn(),
-  previsionsCoordonnees: vi.fn(),
-  geocoder: vi.fn(),
-  ErreurApi: class ErreurApi extends Error {},
-}));
+const { previsionsVille, previsionsCoordonnees, geocoder, villesDisponibles, ErreurApi } =
+  vi.hoisted(() => ({
+    previsionsVille: vi.fn(),
+    previsionsCoordonnees: vi.fn(),
+    geocoder: vi.fn(),
+    villesDisponibles: vi.fn(),
+    ErreurApi: class ErreurApi extends Error {},
+  }));
+
+const VILLES_REPLI = [
+  { id: 'montreal', nom: 'Montréal' },
+  { id: 'quebec', nom: 'Québec' },
+];
 
 vi.mock('../../src/lib/api.ts', () => ({
   previsionsVille,
   previsionsCoordonnees,
   geocoder,
+  villesDisponibles,
+  VILLES_REPLI,
   ErreurApi,
 }));
 
@@ -57,6 +66,7 @@ beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
   previsionsVille.mockResolvedValue(montreal);
+  villesDisponibles.mockResolvedValue(VILLES_REPLI);
 });
 
 describe('App — chargement initial', () => {
@@ -127,6 +137,39 @@ describe('App — chargement initial', () => {
     expect(previsionsVille).toHaveBeenCalledWith('montreal', expect.any(AbortSignal));
 
     vi.restoreAllMocks();
+  });
+});
+
+describe('App — liste des villes', () => {
+  it('remplit le sélecteur depuis /api/villes', async () => {
+    villesDisponibles.mockResolvedValue([
+      { id: 'montreal', nom: 'Montréal' },
+      { id: 'quebec', nom: 'Québec' },
+      { id: 'sherbrooke', nom: 'Sherbrooke' },
+    ]);
+
+    render(App);
+
+    expect(await screen.findByRole('button', { name: 'Sherbrooke' })).toBeTruthy();
+  });
+
+  // La PWA doit rester utilisable hors ligne : le sélecteur ne peut pas dépendre
+  // d'une requête réussie.
+  it('garde la liste de repli quand le backend ne répond pas', async () => {
+    villesDisponibles.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    render(App);
+
+    expect(await screen.findByRole('button', { name: 'Montréal' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Québec' })).toBeTruthy();
+  });
+
+  it('ignore une liste vide plutôt que de vider le sélecteur', async () => {
+    villesDisponibles.mockResolvedValue([]);
+
+    render(App);
+
+    expect(await screen.findByRole('button', { name: 'Montréal' })).toBeTruthy();
   });
 });
 

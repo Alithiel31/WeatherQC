@@ -5,6 +5,12 @@ export interface Ville {
   longitude: number;
 }
 
+/** Entrée du sélecteur — sous-ensemble de ce que renvoie `GET /api/villes`. */
+export interface VilleDisponible {
+  id: string;
+  nom: string;
+}
+
 export interface ConditionsActuelles {
   temperature: number;
   ressenti: number;

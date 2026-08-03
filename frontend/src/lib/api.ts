@@ -1,4 +1,4 @@
-import type { ReponseMeteo, LieuCP, FramesRainViewer } from './types.ts';
+import type { ReponseMeteo, LieuCP, FramesRainViewer, VilleDisponible } from './types.ts';
 
 export const HOTE_TUILES_DEFAUT = 'https://tilecache.rainviewer.com';
 
@@ -21,6 +21,24 @@ const DELAI_MAX_MS = 10_000;
 function signalRequete(signal?: AbortSignal): AbortSignal {
   const delai = AbortSignal.timeout(DELAI_MAX_MS);
   return signal ? AbortSignal.any([signal, delai]) : delai;
+}
+
+/**
+ * Villes servies par le backend, en dernier recours quand il est injoignable.
+ *
+ * Le sélecteur doit s'afficher au premier rendu même hors ligne — c'est une PWA.
+ * La source de vérité reste `backend/src/data/cities.ts` : cette liste n'est là
+ * que pour le temps qu'il faut à `/api/villes` de répondre.
+ */
+export const VILLES_REPLI: VilleDisponible[] = [
+  { id: 'montreal', nom: 'Montréal' },
+  { id: 'quebec', nom: 'Québec' },
+];
+
+export async function villesDisponibles(signal?: AbortSignal): Promise<VilleDisponible[]> {
+  const res = await fetch('/api/villes', { signal: signalRequete(signal) });
+  if (!res.ok) throw new ErreurApi(await messageErreur(res, 'Liste des villes indisponible'));
+  return (await res.json()) as VilleDisponible[];
 }
 
 export async function previsionsVille(ville: string, signal?: AbortSignal): Promise<ReponseMeteo> {
