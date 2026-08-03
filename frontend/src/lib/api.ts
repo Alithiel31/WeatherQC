@@ -82,9 +82,9 @@ async function recupererPrevisions(url: string, signal?: AbortSignal): Promise<R
   return (await res.json()) as ReponseMeteo;
 }
 
-export async function geocoder(codePostal: string): Promise<LieuCP> {
+export async function geocoder(codePostal: string, signal?: AbortSignal): Promise<LieuCP> {
   const res = await fetch(`/api/geocode/${encodeURIComponent(codePostal)}`, {
-    signal: signalRequete(),
+    signal: signalRequete(signal),
   });
   // Sans le message du backend, une panne amont (502) ou un quota dépassé (429)
   // s'affichait « Code postal introuvable » — un diagnostic faux.

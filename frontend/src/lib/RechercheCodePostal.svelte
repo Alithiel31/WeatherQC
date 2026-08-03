@@ -2,31 +2,40 @@
   interface Props {
     valeur: string;
     erreur: string | null;
+    /** Vrai tant qu'un géocodage est en vol : sans quoi rien ne bouge à l'écran. */
+    enCours?: boolean;
     onrechercher: (saisie: string) => void;
   }
 
-  let { valeur = $bindable(), erreur, onrechercher }: Props = $props();
+  let { valeur = $bindable(), erreur, enCours = false, onrechercher }: Props = $props();
 
   function rechercher(): void {
     const saisie = valeur.trim();
-    if (!saisie) return;
+    if (!saisie || enCours) return;
     onrechercher(saisie);
   }
 </script>
 
-<div class="recherche-cp">
+<!--
+  Un vrai `form` plutôt qu'un `onkeydown` maison : la soumission implicite au
+  clavier vient gratuitement, et `enterkeyhint` donne une touche « rechercher »
+  sur les claviers mobiles.
+-->
+<form class="recherche-cp" onsubmit={(e) => (e.preventDefault(), rechercher())}>
   <label class="visually-hidden" for="cp">Code postal canadien</label>
   <input
     id="cp"
     type="text"
     placeholder="Code postal (ex. K1A 0B1)"
     bind:value={valeur}
-    onkeydown={(e) => e.key === 'Enter' && rechercher()}
     autocomplete="postal-code"
+    enterkeyhint="search"
     maxlength="7"
   />
-  <button onclick={rechercher}>Rechercher</button>
-</div>
+  <button type="submit" disabled={enCours}>
+    {enCours ? 'Recherche…' : 'Rechercher'}
+  </button>
+</form>
 {#if erreur}
   <p class="erreur-cp" role="alert">{erreur}</p>
 {/if}
@@ -45,6 +54,7 @@
     font: inherit; font-weight: 600; background: rgba(255,255,255,0.9); color: #16314d; cursor: pointer;
   }
   .recherche-cp button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .recherche-cp button:disabled { opacity: 0.6; cursor: progress; }
   .erreur-cp {
     margin: 0; font-size: 0.85rem;
     background: rgba(0,0,0,0.3); padding: 0.45rem 0.8rem; border-radius: 0.6rem;
