@@ -2,21 +2,13 @@
   import { onMount, onDestroy } from 'svelte';
   import L from 'leaflet';
   import 'leaflet/dist/leaflet.css';
+  import { framesRainViewer, HOTE_TUILES_DEFAUT } from './api.ts';
+  import type { ImageRainViewer, FramesRainViewer } from './types.ts';
 
   interface Props {
     latitude: number;
     longitude: number;
     nom?: string;
-  }
-
-  interface RainFrame {
-    path: string;
-    time: number;
-  }
-
-  interface RainViewerData {
-    satellite: RainFrame[];
-    radar: RainFrame[];
   }
 
   const { latitude, longitude, nom = '' }: Props = $props();
@@ -27,12 +19,12 @@
   let marqueur  = $state.raw<L.CircleMarker | undefined>(undefined);
   let couches   = $state.raw<L.TileLayer[]>([]);
 
-  let frames        = $state<RainFrame[]>([]);
+  let frames        = $state<ImageRainViewer[]>([]);
   let index         = $state(0);
   let lecture       = $state(false);
   let mode          = $state<'satellite' | 'radar'>('satellite');
-  let hote          = $state('https://tilecache.rainviewer.com');
-  let donneesFrames = $state<RainViewerData | null>(null);
+  let hote          = $state(HOTE_TUILES_DEFAUT);
+  let donneesFrames = $state<FramesRainViewer | null>(null);
   let erreurCarte   = $state(false);
   let minuterie: ReturnType<typeof setInterval> | null = null;
   let minuterieRafraichissement: ReturnType<typeof setInterval> | null = null;
@@ -41,13 +33,13 @@
     typeof matchMedia !== 'undefined' &&
     matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function urlTuile(frame: RainFrame): string {
+  function urlTuile(frame: ImageRainViewer): string {
     return mode === 'satellite'
       ? `${hote}${frame.path}/256/{z}/{x}/{y}/0/0_0.png`
       : `${hote}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
   }
 
-  function heureFrame(frame: RainFrame): string {
+  function heureFrame(frame: ImageRainViewer): string {
     const d = new Date(frame.time * 1000);
     return `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
   }
@@ -99,17 +91,8 @@
   }
 
   async function chargerFrames(): Promise<void> {
-    const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
-    if (!res.ok) throw new Error('RainViewer indisponible');
-    const data = await res.json();
-    hote = data.host || hote;
-    donneesFrames = {
-      satellite: ((data.satellite?.infrared ?? []) as RainFrame[]).slice(-10),
-      radar: ([
-        ...(data.radar?.past ?? []),
-        ...(data.radar?.nowcast ?? []),
-      ] as RainFrame[]).slice(-12),
-    };
+    donneesFrames = await framesRainViewer(hote);
+    hote = donneesFrames.hote;
     const satelliteVide = donneesFrames.satellite.length === 0;
     mode = satelliteVide ? 'radar' : 'satellite';
     frames = satelliteVide ? donneesFrames.radar : donneesFrames.satellite;
