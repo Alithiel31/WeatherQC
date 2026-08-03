@@ -163,6 +163,21 @@ npm run dev
 
 Ouvrir `http://localhost:5173`. Le proxy Vite redirige `/api` vers le backend.
 
+Tous les appels réseau passent par `src/lib/api.ts` — c'est le seul endroit où `fetch`
+est appelé côté frontend, ce qui permet de le stubber d'un bloc dans les tests.
+
+### Tests (frontend)
+
+```bash
+cd frontend
+npm run test:run   # une passe (CI)
+npm run test       # mode watch
+```
+
+Environnement `jsdom` + Testing Library. Comme côté backend, `tests/setup.ts` fait échouer
+explicitement tout appel réseau non mocké : un test ne peut pas dépendre de la disponibilité
+du backend ou de RainViewer.
+
 ---
 
 ## Structure
@@ -181,15 +196,20 @@ meteo-qc/
 │       ├── services/               # Open-Meteo, géocodage, cache
 │       └── middlewares/            # Gestion globale des erreurs
 └── frontend/
-    └── src/
-        ├── App.svelte              # Ville active, ciel dynamique, conditions
-        └── lib/
-            ├── Horaire.svelte      # Bandeau 48 h
-            ├── CarteNuages.svelte  # Carte Leaflet animée
-            ├── Quotidien.svelte    # Prévisions 7 jours
-            ├── api.ts              # Appels backend
-            ├── meteo.ts            # Codes WMO → labels FR, icônes
-            └── types.ts            # Interfaces TypeScript
+    ├── src/
+    │   ├── main.ts                 # Montage de l'app + service worker
+    │   ├── App.svelte              # Ville active, ciel dynamique, conditions
+    │   └── lib/
+    │       ├── Horaire.svelte      # Bandeau 48 h
+    │       ├── CarteNuages.svelte  # Carte Leaflet animée
+    │       ├── Quotidien.svelte    # Prévisions 7 jours
+    │       ├── api.ts              # Appels backend et RainViewer
+    │       ├── meteo.ts            # Codes WMO → labels FR, icônes
+    │       └── types.ts            # Interfaces TypeScript
+    └── tests/
+        ├── unit/                   # meteo.ts, api.ts
+        ├── composants/             # Rendu Svelte (Testing Library)
+        └── helpers/                # Stubs de fetch
 ```
 
 ---
