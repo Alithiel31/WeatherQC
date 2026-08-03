@@ -53,10 +53,18 @@ export default defineConfig({
 
   // `preview` sert `dist/`, donc le bundle réellement déployé — pas le serveur
   // de développement.
+  //
+  // Le build est fait par `pretest:e2e`, en dehors d'ici : enchaîné dans cette
+  // commande, il consommait le délai d'attente du serveur, et un runner un peu
+  // lent faisait échouer la suite sur un « Timed out waiting for webServer »
+  // qui ne disait rien du vrai problème.
+  //
+  // `--host 127.0.0.1` fixe la famille d'adresses : sans lui, `preview` peut
+  // n'écouter que sur `::1` pendant que Playwright interroge `127.0.0.1`.
   webServer: {
-    command: 'npm run build && npm run preview -- --port 4173 --strictPort',
+    command: 'npm run preview -- --port 4173 --strictPort --host 127.0.0.1',
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 60_000,
   },
 });
