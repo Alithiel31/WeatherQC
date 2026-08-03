@@ -8,4 +8,7 @@ npm run test:unit || exit 1
 echo "▶ Frontend : format + lint..."
 cd ../frontend && npm run format:check && npm run lint || exit 1
 
+echo "▶ Frontend : tests..."
+npm run test:run || exit 1
+
 echo "✓ Tout est au vert, push autorisé."

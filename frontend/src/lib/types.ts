@@ -47,3 +47,14 @@ export interface LieuCP {
   latitude: number;
   longitude: number;
 }
+
+export interface ImageRainViewer {
+  path: string;
+  time: number;
+}
+
+export interface FramesRainViewer {
+  hote: string;
+  satellite: ImageRainViewer[];
+  radar: ImageRainViewer[];
+}

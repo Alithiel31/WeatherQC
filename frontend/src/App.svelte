@@ -4,6 +4,7 @@
   import Quotidien from './lib/Quotidien.svelte';
   import CarteNuages from './lib/CarteNuages.svelte';
   import { descriptionMeteo, iconeMeteo, familleMeteo, heureMinute } from './lib/meteo.ts';
+  import { previsionsVille, previsionsCoordonnees, geocoder, ErreurApi } from './lib/api.ts';
   import type { ReponseMeteo, LieuCP } from './lib/types.ts';
 
   const villes = [
@@ -33,20 +34,10 @@
     chargement = true;
     erreur = null;
     try {
-      let url: string;
-      if (selection === 'cp' && lieuCP) {
-        const q = new URLSearchParams({
-          lat: String(lieuCP.latitude),
-          lon: String(lieuCP.longitude),
-          nom: lieuCP.nom,
-        });
-        url = `/api/previsions-coordonnees?${q}`;
-      } else {
-        url = `/api/previsions/${selection}`;
-      }
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('Réponse invalide du serveur');
-      donnees = (await res.json()) as ReponseMeteo;
+      donnees =
+        selection === 'cp' && lieuCP
+          ? await previsionsCoordonnees(lieuCP)
+          : await previsionsVille(selection);
     } catch {
       erreur = 'Les prévisions ne sont pas disponibles pour le moment. Vérifiez la connexion, puis réessayez.';
     } finally {
@@ -66,20 +57,16 @@
     const saisie = codePostal.trim();
     if (!saisie) return;
     try {
-      const res = await fetch(`/api/geocode/${encodeURIComponent(saisie)}`);
-      const data = (await res.json()) as LieuCP & { erreur?: string };
-      if (!res.ok) {
-        erreurCP = data.erreur ?? 'Code postal introuvable.';
-        return;
-      }
+      const data = await geocoder(saisie);
       lieuCP = data;
       selection = 'cp';
       localStorage.setItem('selection', 'cp');
       localStorage.setItem('codePostal', saisie);
       localStorage.setItem('lieuCP', JSON.stringify(data));
       charger();
-    } catch {
-      erreurCP = 'Recherche impossible. Vérifiez la connexion.';
+    } catch (e) {
+      erreurCP =
+        e instanceof ErreurApi ? e.message : 'Recherche impossible. Vérifiez la connexion.';
     }
   }
 

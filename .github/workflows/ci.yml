@@ -34,7 +34,8 @@ jobs:
       - run: npm ci
       - run: npm run format:check
       - run: npm run lint
-      - run: npm run test:run
+      # Échoue si la couverture passe sous les seuils de vitest.config.ts.
+      - run: npm run test:coverage
       - run: npm run build
 
   frontend:
@@ -57,6 +58,22 @@ jobs:
       - run: npm run format:check
       - run: npm run lint
       - run: npm run check
+      # Inclut les tests PWA (manifeste installable + service worker) et échoue
+      # si la couverture passe sous les seuils de vitest.config.ts.
+      - run: npm run test:ci
+
+      # `always()` : le rapport est surtout utile quand la CI vient d'échouer.
+      - name: Publier les rapports de tests et de couverture
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-rapports
+          path: |
+            frontend/rapport-tests.json
+            frontend/coverage/
+          retention-days: 14
+          if-no-files-found: error
+
       - run: npm run build
 
   docker:

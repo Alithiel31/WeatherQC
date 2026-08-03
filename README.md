@@ -144,7 +144,8 @@ jamais limité — le healthcheck Docker l'interroge toutes les 30 s.
 
 | Commande | Portée | Réseau |
 |---|---|---|
-| `npm run test:run` | Unitaires + intégration — lancé par la CI et le hook `pre-push` | ❌ aucun appel réseau |
+| `npm run test:run` | Unitaires + intégration — lancé par le hook `pre-push` | ❌ aucun appel réseau |
+| `npm run test:coverage` | Idem + rapport de couverture — **c'est ce que lance la CI** | ❌ aucun appel réseau |
 | `npm run test:contract` | Vérifie le contrat réel d'Open-Meteo et de Zippopotam | ✅ appels réels |
 
 Les tests d'intégration s'appuient sur les fixtures de `backend/tests/fixtures/` : une panne
@@ -154,6 +155,12 @@ tout appel réseau non mocké.
 Les tests de contrat tournent séparément via le workflow `contract.yml` (nocturne + manuel) :
 c'est lui qui détecte une dérive de schéma chez les APIs externes.
 
+`test:coverage` échoue sous les seuils déclarés dans `backend/vitest.config.ts`. Ils sont
+calés **sous la mesure réelle**, pas sur un chiffre rond : ils bloquent une régression
+franche sans casser la CI dès qu'un refactor ajoute une garde difficile à atteindre.
+`app.ts` est exclu de la mesure — il ne contient que `listen()` et les gestionnaires de
+signaux, dont la vérification réelle est le healthcheck Docker.
+
 ### Frontend (port 5173)
 
 ```bash
@@ -162,6 +169,53 @@ npm run dev
 ```
 
 Ouvrir `http://localhost:5173`. Le proxy Vite redirige `/api` vers le backend.
+
+Tous les appels réseau passent par `src/lib/api.ts` — c'est le seul endroit où `fetch`
+est appelé côté frontend, ce qui permet de le stubber d'un bloc dans les tests.
+
+### Tests (frontend)
+
+| Commande | Portée |
+|---|---|
+| `npm run test` | Mode watch pendant le développement |
+| `npm run test:run` | Une passe complète |
+| `npm run test:coverage` | Idem + rapport de couverture |
+| `npm run test:ci` | Idem + `rapport-tests.json` — **c'est ce que lance la CI** |
+| `npm run test:pwa` | Uniquement les vérifications PWA (manifeste + service worker) |
+
+La CI publie `frontend/coverage/` et `frontend/rapport-tests.json` en artefact
+(`frontend-rapports`, conservé 14 jours), y compris quand le job échoue — c'est là que le
+rapport est le plus utile.
+
+Environnement `jsdom` + Testing Library. Comme côté backend, `tests/setup.ts` fait échouer
+explicitement tout appel réseau non mocké : un test ne peut pas dépendre de la disponibilité
+du backend ou de RainViewer.
+
+Les seuils de couverture vivent dans `frontend/vitest.config.ts`, calés sous la mesure
+réelle. `src/main.ts` en est exclu : il ne fait que monter l'app et enregistrer le service
+worker.
+
+### Vérifications PWA
+
+`tests/pwa/build.test.ts` reconstruit l'app et lit la sortie de `dist/` pour vérifier les
+deux promesses affichées plus haut — installabilité et fonctionnement hors ligne :
+
+- le manifeste déclare `display: standalone`, un `start_url`, les icônes 192/512 et une
+  icône `maskable`, et n'y référence que des fichiers réellement présents ;
+- le service worker est généré, enregistré par le bundle, et précache la coquille ;
+- les stratégies de cache attendues sont bien câblées (`NetworkFirst` sur
+  `/api/previsions`, `CacheFirst` sur les tuiles de fond).
+
+```bash
+cd frontend && npm run test:pwa
+```
+
+> **Pourquoi pas Lighthouse** — depuis Lighthouse 12, la catégorie PWA et ses audits
+> (`installable-manifest`, `service-worker`) ont été **supprimés** ; Lighthouse 13 ne
+> connaît plus que `performance`, `accessibility`, `best-practices` et `seo`. Auditer
+> l'installabilité imposerait d'épingler une version abandonnée, plus un Chrome headless
+> et un serveur statique en CI. Les mêmes garanties se lisent dans la sortie de build,
+> en quelques secondes et sans navigateur.
 
 ---
 
@@ -181,15 +235,21 @@ meteo-qc/
 │       ├── services/               # Open-Meteo, géocodage, cache
 │       └── middlewares/            # Gestion globale des erreurs
 └── frontend/
-    └── src/
-        ├── App.svelte              # Ville active, ciel dynamique, conditions
-        └── lib/
-            ├── Horaire.svelte      # Bandeau 48 h
-            ├── CarteNuages.svelte  # Carte Leaflet animée
-            ├── Quotidien.svelte    # Prévisions 7 jours
-            ├── api.ts              # Appels backend
-            ├── meteo.ts            # Codes WMO → labels FR, icônes
-            └── types.ts            # Interfaces TypeScript
+    ├── src/
+    │   ├── main.ts                 # Montage de l'app + service worker
+    │   ├── App.svelte              # Ville active, ciel dynamique, conditions
+    │   └── lib/
+    │       ├── Horaire.svelte      # Bandeau 48 h
+    │       ├── CarteNuages.svelte  # Carte Leaflet animée
+    │       ├── Quotidien.svelte    # Prévisions 7 jours
+    │       ├── api.ts              # Appels backend et RainViewer
+    │       ├── meteo.ts            # Codes WMO → labels FR, icônes
+    │       └── types.ts            # Interfaces TypeScript
+    └── tests/
+        ├── unit/                   # meteo.ts, api.ts
+        ├── composants/             # Rendu Svelte (Testing Library)
+        ├── pwa/                    # Manifeste installable + service worker
+        └── helpers/                # Stubs de fetch
 ```
 
 ---

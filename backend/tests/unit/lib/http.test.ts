@@ -94,6 +94,17 @@ describe('fetchAvecTimeout', () => {
       expect(mock).toHaveBeenCalledTimes(2);
     });
 
+    it('décrit lisiblement un rejet qui n’est pas une Error', async () => {
+      // `fetch` peut rejeter une valeur brute : sans la conversion explicite,
+      // le message d'erreur ressortirait en « [object Object] ».
+      const mock = vi.fn().mockRejectedValue('connexion coupée');
+      vi.stubGlobal('fetch', mock);
+
+      await expect(
+        fetchAvecTimeout('https://exemple.test', { service: 'Exemple' })
+      ).rejects.toThrow('connexion coupée');
+    });
+
     it('respecte un nombre de tentatives explicite', async () => {
       const mock = vi.fn().mockRejectedValue(new Error('ECONNREFUSED'));
       vi.stubGlobal('fetch', mock);

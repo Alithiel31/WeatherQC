@@ -6,6 +6,10 @@ frontend/dist/
 frontend/.svelte-kit/
 backend/dist/
 
+# Rapports de couverture et de tests
+coverage/
+rapport-tests.json
+
 # Logs
 *.log
 npm-debug.log*
