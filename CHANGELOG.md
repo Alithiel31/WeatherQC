@@ -1,6 +1,42 @@
 # CHANGELOG
 
 ## [Non publié]
+### Fixed
+- Toutes les erreurs de l'API partagent l'enveloppe `{ status, error }` : le géocodage
+  affichait « Code postal introuvable » sur une panne de Zippopotam (502) ou un quota
+  dépassé (429), envoyant l'utilisateur corriger un code postal valide
+- Une ville ne peut plus être résolue via la chaîne de prototype : `/api/previsions/constructor`
+  passait la garde « ville inconnue » et partait chez Open-Meteo avec des coordonnées
+  `undefined` — **502** au lieu de **404**, et un appel sortant offert à qui le demandait
+- Un `lieuCP` corrompu dans `localStorage` ne blanchit plus la page : la lecture jetait
+  pendant l'initialisation du composant, donc avant le premier rendu. L'application démarre
+  aussi quand le navigateur refuse le stockage (Safari privé, cookies bloqués)
+- Deux clics rapides entre villes ne peuvent plus afficher une ville pendant que le bouton
+  actif en désigne une autre : la requête supplantée est annulée
+- Les réponses d'Open-Meteo et de Zippopotam sont validées avant usage : une dérive de schéma
+  donne un **502** nommant le champ fautif, au lieu d'un 500 laissant croire à un bug interne
+- Une variable d'environnement invalide (`PORT=abc`, quota vide) fait échouer le démarrage en
+  la nommant, au lieu de laisser tourner le serveur avec un `NaN`
+
+### Added
+- Délai maximal de 10 s sur les appels du frontend : rien ne bornait le trajet
+  navigateur → nginx → backend, et une requête pendue faisait tourner le spinner sans fin
+- Journalisation structurée (horodatage, niveau, contexte ; JSON en production) et en-tête
+  `X-Request-Id` sur chaque réponse, repris de l'amont s'il est fourni
+- `dependabot.yml` (trois manifestes npm + actions GitHub) et `npm audit` en CI sur les
+  dépendances de production
+- Limites mémoire et rotation des logs sur les deux conteneurs — la cible est un Raspberry Pi
+
+### Changed
+- Le sélecteur de villes est alimenté par `GET /api/villes`, jusque-là inutilisée : la liste
+  était recopiée dans `App.svelte`, et ajouter une ville demandait deux éditions. La liste en
+  dur subsiste comme repli hors ligne
+- `App.svelte` découpé (préférences, recherche par code postal, conditions actuelles) et
+  machine d'animation extraite de `CarteNuages.svelte`
+- `err.issues` et `{ message }` à la place de `err.errors` et `invalid_type_error` :
+  APIs supprimées en Zod 4, la montée de version n'est plus bloquée
+- Le hook `pre-push` lance `svelte-check`, comme la CI
+
 ### Added
 - Durcissement de l'API publique : en-têtes `helmet`, corps JSON plafonné à 10 ko,
   limitation de débit par IP (100 req/min sur `/api`, 20 sur `/api/geocode`)
