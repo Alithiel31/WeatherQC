@@ -11,6 +11,9 @@
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:ci": "vitest run --coverage --reporter=default --reporter=json --outputFile.json=./rapport-tests.json",
+    "test:pwa": "vitest run tests/pwa",
     "lint": "eslint src/ tests/",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -31,6 +34,8 @@
     "@testing-library/svelte": "^5.4.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/leaflet": "^1.9.14",
+    "@types/node": "^22.20.1",
+    "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^10.5.0",
     "eslint-plugin-svelte": "^3.19.0",
     "globals": "^17.6.0",
