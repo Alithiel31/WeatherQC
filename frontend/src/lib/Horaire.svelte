@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { iconeMeteo, heureCourte, jourCourt } from './meteo.ts';
+  import { iconeMeteo, degres, heureCourte, jourCourt } from './meteo.ts';
   import type { PrevisionsHoraires } from './types.ts';
 
   interface Props {
@@ -23,8 +23,8 @@
       <li class:minuit={i > 0 && new Date(h.heure).getHours() === 0}>
         <span class="heure">{etiquette(h, i)}</span>
         <span class="icone" aria-hidden="true">{iconeMeteo(h.code)}</span>
-        <span class="temp">{Math.round(h.temperature)}°</span>
-        {#if h.precipitation >= 20}
+        <span class="temp">{degres(h.temperature)}</span>
+        {#if h.precipitation !== null && h.precipitation >= 20}
           <span class="pluie">{h.precipitation} %</span>
         {/if}
       </li>

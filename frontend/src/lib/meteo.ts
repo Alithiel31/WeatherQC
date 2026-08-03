@@ -35,14 +35,32 @@ const WMO: Record<number, EntreeWMO> = {
   99: { description: 'Orage avec forte grêle', iconJour: '⛈️', iconNuit: '⛈️' },
 };
 
-export function descriptionMeteo(code: number): string {
+/** Marque d'une donnée absente. Un seul endroit décide de sa représentation. */
+export const VALEUR_ABSENTE = '—';
+
+/**
+ * `code` est nullable : Open-Meteo laisse des trous en fin de série. Les corps
+ * ci-dessous le toléraient déjà — seules les signatures affirmaient le contraire.
+ */
+export function descriptionMeteo(code: number | null): string {
+  if (code === null) return 'Conditions inconnues';
   return WMO[code]?.description ?? 'Conditions inconnues';
 }
 
-export function iconeMeteo(code: number, jour = true): string {
-  const entry = WMO[code];
+export function iconeMeteo(code: number | null, jour = true): string {
+  const entry = code === null ? undefined : WMO[code];
   if (!entry) return '❔';
   return jour ? entry.iconJour : entry.iconNuit;
+}
+
+/**
+ * Température arrondie, ou `—` quand Open-Meteo n'a rien à cette échéance.
+ *
+ * Sans ce garde-fou, `Math.round(null)` vaut `0` : une valeur absente s'affichait
+ * « 0° », indiscernable d'un vrai zéro — le pire résultat possible ici.
+ */
+export function degres(valeur: number | null): string {
+  return valeur === null ? VALEUR_ABSENTE : `${Math.round(valeur)}°`;
 }
 
 export function familleMeteo(code: number): string {

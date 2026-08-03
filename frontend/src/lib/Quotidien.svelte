@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { iconeMeteo, descriptionMeteo, jourCourt, jourLong } from './meteo.ts';
+  import { iconeMeteo, descriptionMeteo, degres, jourCourt, jourLong } from './meteo.ts';
   import type { PrevisionsQuotidiennes } from './types.ts';
 
   interface Props {
@@ -8,8 +8,16 @@
 
   const { jours = [] }: Props = $props();
 
-  let minSemaine = $derived(Math.min(...jours.map((j) => j.min)));
-  let maxSemaine = $derived(Math.max(...jours.map((j) => j.max)));
+  // Les nulls sont écartés avant le calcul : `Math.min` les convertit en `0`, et
+  // une seule journée sans donnée en queue de série écrasait l'échelle des barres
+  // de toute la semaine, pas seulement la sienne.
+  let temperatures = $derived(
+    jours.flatMap((j) => [j.min, j.max]).filter((t): t is number => t !== null)
+  );
+  // Semaine entièrement vide : aucune barre ne sera rendue, les bornes n'ont
+  // qu'à rester finies — `Math.min()` sans argument donne `Infinity`.
+  let minSemaine = $derived(temperatures.length ? Math.min(...temperatures) : 0);
+  let maxSemaine = $derived(temperatures.length ? Math.max(...temperatures) : 0);
   let plage      = $derived(Math.max(maxSemaine - minSemaine, 1));
 
   function pct(v: number): number {
@@ -29,15 +37,21 @@
           aria-label="{jourLong(j.date)} : {descriptionMeteo(j.code)}"
           title={descriptionMeteo(j.code)}
         >{iconeMeteo(j.code)}</span>
-        <span class="pluie">{j.precipitation >= 20 ? j.precipitation + ' %' : ''}</span>
-        <span class="min">{Math.round(j.min)}°</span>
+        <span class="pluie"
+          >{j.precipitation !== null && j.precipitation >= 20 ? `${j.precipitation} %` : ''}</span
+        >
+        <span class="min">{degres(j.min)}</span>
         <span class="barre" aria-hidden="true">
-          <span
-            class="plage"
-            style="left:{pct(j.min)}%; width:{pct(j.max) - pct(j.min)}%"
-          ></span>
+          <!-- Pas de barre sans les deux bornes : `pct(null)` en dessinerait une
+               partant du minimum de la semaine, un mensonge graphique. -->
+          {#if j.min !== null && j.max !== null}
+            <span
+              class="plage"
+              style="left:{pct(j.min)}%; width:{pct(j.max) - pct(j.min)}%"
+            ></span>
+          {/if}
         </span>
-        <span class="max">{Math.round(j.max)}°</span>
+        <span class="max">{degres(j.max)}</span>
       </li>
     {/each}
   </ol>

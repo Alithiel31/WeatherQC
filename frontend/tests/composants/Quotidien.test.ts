@@ -72,3 +72,60 @@ describe('Quotidien', () => {
     expect(screen.queryAllByRole('listitem')).toHaveLength(0);
   });
 });
+
+/**
+ * Open-Meteo laisse des `null` en fin de série, au-delà de la portée du modèle.
+ * Le frontend les déclarait non-nullables : `Math.round(null)` valant `0`, une
+ * échéance sans donnée s'affichait « 0° » — indiscernable d'un vrai zéro.
+ */
+describe('Quotidien — journées sans donnée', () => {
+  const vide = { min: null, max: null, code: null, precipitation: null };
+
+  it('n’affiche jamais « 0° » à la place d’une température absente', () => {
+    render(Quotidien, { jours: [jour('2026-08-03', vide)] });
+
+    expect(screen.queryByText('0°')).toBeNull();
+    expect(screen.getAllByText('—')).toHaveLength(2);
+  });
+
+  it('ne dessine aucune barre sans les deux bornes', () => {
+    render(Quotidien, {
+      jours: [jour('2026-08-03', vide), jour('2026-08-04', { min: 12, max: null })],
+    });
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect(document.querySelectorAll('.plage')).toHaveLength(0);
+  });
+
+  it('garde l’échelle de la semaine quand une journée sans donnée la termine', () => {
+    // Le vrai coût du bug : `Math.min` comptait ce `null` pour `0` et faussait
+    // les barres de *toutes* les journées, pas seulement celle sans donnée.
+    const { container: sans } = render(Quotidien, { jours: semaine });
+    const { container: avec } = render(Quotidien, {
+      jours: [...semaine, jour('2026-08-06', vide)],
+    });
+
+    const barres = (c: HTMLElement) =>
+      [...c.querySelectorAll('.plage')].map((b) => (b as HTMLElement).style.cssText);
+
+    // Sans quoi l'égalité serait celle de deux listes vides.
+    expect(barres(sans)).toHaveLength(semaine.length);
+    expect(barres(avec)).toEqual(barres(sans));
+  });
+
+  it('n’affiche pas de probabilité de précipitation absente', () => {
+    render(Quotidien, { jours: [jour('2026-08-03', vide)] });
+
+    expect(screen.queryByText(/%/)).toBeNull();
+  });
+
+  it('se rend quand la semaine entière est sans donnée', () => {
+    // Cas limite du repli : filtrer tous les nulls laisse une série vide, et
+    // `Math.min()` sans argument rend `Infinity` — les bornes doivent rester finies.
+    render(Quotidien, { jours: [jour('2026-08-03', vide), jour('2026-08-04', vide)] });
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect(screen.getAllByText('—')).toHaveLength(4);
+    expect(document.querySelectorAll('.plage')).toHaveLength(0);
+  });
+});

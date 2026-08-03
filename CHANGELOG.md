@@ -2,6 +2,12 @@
 
 ## [Non publié]
 ### Fixed
+- Une échéance sans donnée ne s'affiche plus « 0° » : le frontend déclarait non-nullables des
+  champs qu'Open-Meteo laisse à `null` au-delà de la portée du modèle, et `Math.round(null)`
+  vaut `0` — une température plausible en hiver, indiscernable d'une vraie mesure. Pire, ce
+  `null` comptait pour `0` dans `Math.min`, faussant l'échelle des barres min–max de **toute**
+  la semaine. Les séries horaire et quotidienne portent désormais le même contrat que le
+  backend, et une valeur absente se lit « — »
 - Toutes les erreurs de l'API partagent l'enveloppe `{ status, error }` : le géocodage
   affichait « Code postal introuvable » sur une panne de Zippopotam (502) ou un quota
   dépassé (429), envoyant l'utilisateur corriger un code postal valide
