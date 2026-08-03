@@ -8,7 +8,11 @@ import { previsionsParVilleSchema, previsionsCoordonneesSchema } from '../schema
 export default {
   getByVille: async (req: Request, res: Response) => {
     const { ville } = previsionsParVilleSchema.parse({ ville: req.params.ville });
-    const city = CITIES[ville];
+    // `ville` vient d'Internet : sans `hasOwn`, les clés héritées d'Object
+    // (`constructor`, `toString`, `valueOf`…) renvoient une valeur truthy qui
+    // passe la garde ci-dessous, et l'appel amont part avec des coordonnées
+    // `undefined` — 502 au lieu de 404, et un appel sortant offert à qui le demande.
+    const city = Object.hasOwn(CITIES, ville) ? CITIES[ville] : undefined;
 
     if (!city) {
       throw new NotFoundError(

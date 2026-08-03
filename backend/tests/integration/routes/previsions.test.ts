@@ -39,6 +39,22 @@ describe('Routes Prévisions', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
+    // Régression : ces clés sont héritées d'Object.prototype et renvoyaient une
+    // valeur truthy, si bien que la garde « ville inconnue » les laissait passer
+    // et qu'un appel partait chez Open-Meteo avec des coordonnées `undefined`.
+    // `toString` et `valueOf` ne sont pas listées : le `.toLowerCase()` du schéma
+    // les transforme en clés qui n'existent sur aucun prototype.
+    it.each(['constructor', '__proto__'])(
+      'doit retourner 404 sans appeler l’amont pour la clé héritée %s',
+      async (cle) => {
+        // Aucun stub : le filet de `tests/setup.ts` fait échouer tout appel réseau,
+        // donc un 404 ici prouve qu'aucun appel amont n'a été tenté.
+        const response = await request(app).get(`/api/previsions/${cle}`).expect(404);
+
+        expect(response.body.error).toContain('Ville inconnue');
+      }
+    );
+
     it('doit retourner erreur 404 pour une ville inconnue', async () => {
       const response = await request(app).get('/api/previsions/xyzabc').expect(404);
 
