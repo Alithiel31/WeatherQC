@@ -70,7 +70,8 @@ export function heureCourte(isoStr: string): string {
   return `${new Date(isoStr).getHours()} h`;
 }
 
-export function heureMinute(isoStr: string): string {
-  const d = new Date(isoStr);
+/** Accepte une chaîne ISO ou un instant en millisecondes (frames RainViewer). */
+export function heureMinute(instant: string | number): string {
+  const d = new Date(instant);
   return `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
 }

@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { HttpClientError } from '../lib/errors.js';
 import { config } from '../config.js';
+import { log } from '../lib/log.js';
 
 /** Erreurs d'Express et de body-parser : corps trop volumineux, JSON malformé… */
 interface ErreurAvecStatut extends Error {
@@ -13,6 +14,15 @@ export function globalErrorHandler(error: Error, req: Request, res: Response, ne
   const stack = config.isProd ? {} : { stack: error.stack };
 
   if (error instanceof HttpClientError) {
+    // 4xx et 5xx amont : tracés en `warn`, la cause est connue et le client la
+    // reçoit. Seule une 500 inattendue mérite `error` et une pile complète.
+    log.warn(error.message, {
+      requestId: req.id,
+      statut: error.status,
+      methode: req.method,
+      chemin: req.originalUrl,
+    });
+
     return res.status(error.status).json({
       status: error.status,
       error: error.message,
@@ -31,11 +41,19 @@ export function globalErrorHandler(error: Error, req: Request, res: Response, ne
     });
   }
 
-  console.error('Internal server error', error);
+  log.error('Internal server error', {
+    requestId: req.id,
+    methode: req.method,
+    chemin: req.originalUrl,
+    message: error.message,
+    stack: error.stack,
+  });
 
   res.status(500).json({
     status: 500,
     error: 'Internal server error',
+    // Renvoyé au client pour qu'il puisse citer l'identifiant en signalant la panne.
+    requestId: req.id,
     ...stack,
   });
 }

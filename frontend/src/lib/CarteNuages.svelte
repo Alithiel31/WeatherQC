@@ -3,6 +3,8 @@
   import L from 'leaflet';
   import 'leaflet/dist/leaflet.css';
   import { framesRainViewer, HOTE_TUILES_DEFAUT } from './api.ts';
+  import { heureMinute } from './meteo.ts';
+  import { creerAnimation } from './animationFrames.svelte.ts';
   import type { ImageRainViewer, FramesRainViewer } from './types.ts';
 
   interface Props {
@@ -19,15 +21,17 @@
   let marqueur  = $state.raw<L.CircleMarker | undefined>(undefined);
   let couches   = $state.raw<L.TileLayer[]>([]);
 
-  let frames        = $state<ImageRainViewer[]>([]);
-  let index         = $state(0);
-  let lecture       = $state(false);
   let mode          = $state<'satellite' | 'radar'>('satellite');
   let hote          = $state(HOTE_TUILES_DEFAUT);
   let donneesFrames = $state<FramesRainViewer | null>(null);
   let erreurCarte   = $state(false);
-  let minuterie: ReturnType<typeof setInterval> | null = null;
   let minuterieRafraichissement: ReturnType<typeof setInterval> | null = null;
+
+  // Le défilement vit dans son propre module ; ici on ne garde que ce qui touche
+  // à Leaflet — rendre visible la couche correspondant à l'image demandée.
+  const animation = creerAnimation((i) =>
+    couches.forEach((c, j) => c.setOpacity(j === i ? 0.75 : 0))
+  );
 
   const reduireMouvement =
     typeof matchMedia !== 'undefined' &&
@@ -39,11 +43,6 @@
       : `${hote}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
   }
 
-  function heureFrame(frame: ImageRainViewer): string {
-    const d = new Date(frame.time * 1000);
-    return `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
-  }
-
   function viderCouches(): void {
     couches.forEach((c) => carte?.removeLayer(c));
     couches = [];
@@ -52,32 +51,18 @@
   function construireCouches(): void {
     if (!carte) return;
     viderCouches();
-    couches = frames.map((f) =>
+    couches = animation.frames.map((f) =>
       L.tileLayer(urlTuile(f), { opacity: 0, tileSize: 256, zIndex: 400 }).addTo(carte!)
     );
-    index = frames.length - 1;
-    afficherFrame(index);
-  }
-
-  function afficherFrame(i: number): void {
-    couches.forEach((c, j) => c.setOpacity(j === i ? 0.75 : 0));
-    index = i;
-  }
-
-  function suivant(): void {
-    afficherFrame((index + 1) % frames.length);
-  }
-
-  function basculerLecture(): void {
-    lecture = !lecture;
-    if (minuterie) clearInterval(minuterie);
-    if (lecture) minuterie = setInterval(suivant, 600);
+    animation.allerA(animation.frames.length - 1);
   }
 
   function changerMode(nouveau: 'satellite' | 'radar'): void {
     if (mode === nouveau || !donneesFrames) return;
     mode = nouveau;
-    frames = mode === 'satellite' ? donneesFrames.satellite : donneesFrames.radar;
+    animation.remplacer(
+      mode === 'satellite' ? donneesFrames.satellite : donneesFrames.radar
+    );
     construireCouches();
   }
 
@@ -95,7 +80,7 @@
     hote = donneesFrames.hote;
     const satelliteVide = donneesFrames.satellite.length === 0;
     mode = satelliteVide ? 'radar' : 'satellite';
-    frames = satelliteVide ? donneesFrames.radar : donneesFrames.satellite;
+    animation.remplacer(satelliteVide ? donneesFrames.radar : donneesFrames.satellite);
   }
 
   // Recentrer la carte quand le lieu change
@@ -133,7 +118,7 @@
     try {
       await chargerFrames();
       construireCouches();
-      if (!reduireMouvement) basculerLecture();
+      if (!reduireMouvement) animation.basculerLecture();
       minuterieRafraichissement = setInterval(rafraichirFrames, 10 * 60 * 1000);
     } catch {
       erreurCarte = true;
@@ -141,7 +126,7 @@
   });
 
   onDestroy(() => {
-    if (minuterie) clearInterval(minuterie);
+    animation.detruire();
     if (minuterieRafraichissement) clearInterval(minuterieRafraichissement);
     carte?.remove();
   });
@@ -166,26 +151,26 @@
 
   {#if erreurCarte}
     <p class="erreur">Les images satellites ne sont pas disponibles pour le moment.</p>
-  {:else if frames.length}
+  {:else if animation.frames.length}
     <div class="controles">
       <button
         class="lecture"
-        onclick={basculerLecture}
-        aria-label={lecture ? 'Mettre en pause' : "Lancer l'animation"}
-      >{lecture ? '⏸' : '▶'}</button>
+        onclick={() => animation.basculerLecture()}
+        aria-label={animation.lecture ? 'Mettre en pause' : "Lancer l'animation"}
+      >{animation.lecture ? '⏸' : '▶'}</button>
       <input
         type="range"
         min="0"
-        max={frames.length - 1}
-        bind:value={index}
-        oninput={() => {
-          lecture = false;
-          if (minuterie) clearInterval(minuterie);
-          afficherFrame(index);
-        }}
+        max={animation.frames.length - 1}
+        value={animation.index}
+        oninput={(e) => animation.deplacerVers(Number(e.currentTarget.value))}
         aria-label="Position dans l'animation"
       />
-      <span class="heure">{frames[index] ? heureFrame(frames[index]) : ''}</span>
+      <span class="heure">
+        {animation.frames[animation.index]
+          ? heureMinute(animation.frames[animation.index].time * 1000)
+          : ''}
+      </span>
     </div>
   {/if}
 </section>

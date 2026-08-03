@@ -20,7 +20,7 @@ export default defineConfig({
       // et le timer de grâce — le test affirmerait ses propres doublures plutôt
       // que l'arrêt propre. Ce chemin est vérifié par le healthcheck Docker.
       include: ['src/**/*.ts'],
-      // Seuils calés sous la mesure réelle (99 / 98 / 100 / 100), pas sur un
+      // Seuils calés sous la mesure réelle (99,5 / 99 / 100 / 100), pas sur un
       // chiffre rond : ils doivent bloquer une régression franche — un service
       // ou un middleware qui perd ses tests — sans casser la CI dès qu'un
       // refactor ajoute une garde défensive difficile à atteindre.

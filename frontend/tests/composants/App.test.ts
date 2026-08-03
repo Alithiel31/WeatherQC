@@ -10,17 +10,26 @@ vi.mock('../../src/lib/CarteNuages.svelte', async () => {
   return { default: Vide };
 });
 
-const { previsionsVille, previsionsCoordonnees, geocoder, ErreurApi } = vi.hoisted(() => ({
-  previsionsVille: vi.fn(),
-  previsionsCoordonnees: vi.fn(),
-  geocoder: vi.fn(),
-  ErreurApi: class ErreurApi extends Error {},
-}));
+const { previsionsVille, previsionsCoordonnees, geocoder, villesDisponibles, ErreurApi } =
+  vi.hoisted(() => ({
+    previsionsVille: vi.fn(),
+    previsionsCoordonnees: vi.fn(),
+    geocoder: vi.fn(),
+    villesDisponibles: vi.fn(),
+    ErreurApi: class ErreurApi extends Error {},
+  }));
+
+const VILLES_REPLI = [
+  { id: 'montreal', nom: 'Montréal' },
+  { id: 'quebec', nom: 'Québec' },
+];
 
 vi.mock('../../src/lib/api.ts', () => ({
   previsionsVille,
   previsionsCoordonnees,
   geocoder,
+  villesDisponibles,
+  VILLES_REPLI,
   ErreurApi,
 }));
 
@@ -57,6 +66,7 @@ beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
   previsionsVille.mockResolvedValue(montreal);
+  villesDisponibles.mockResolvedValue(VILLES_REPLI);
 });
 
 describe('App — chargement initial', () => {
@@ -65,7 +75,9 @@ describe('App — chargement initial', () => {
 
     render(App);
 
-    await waitFor(() => expect(previsionsVille).toHaveBeenCalledWith('quebec'));
+    await waitFor(() =>
+      expect(previsionsVille).toHaveBeenCalledWith('quebec', expect.any(AbortSignal))
+    );
   });
 
   it('affiche les conditions actuelles arrondies', async () => {
@@ -88,6 +100,77 @@ describe('App — chargement initial', () => {
       expect.stringContaining('ne sont pas disponibles')
     );
   });
+
+  it('préfère le message du backend au message de repli', async () => {
+    previsionsVille.mockRejectedValue(new ErreurApi('Open-Meteo injoignable : timeout'));
+
+    render(App);
+
+    expect(await screen.findByRole('alert')).toHaveProperty(
+      'textContent',
+      expect.stringContaining('Open-Meteo injoignable')
+    );
+  });
+
+  // Régression : `JSON.parse(localStorage.getItem('lieuCP'))` s'exécutait pendant
+  // l'initialisation du composant, donc avant le premier rendu — une valeur
+  // corrompue laissait une page blanche jusqu'à un vidage manuel du stockage.
+  it('démarre malgré un lieu mémorisé corrompu', async () => {
+    localStorage.setItem('lieuCP', '{cassé');
+    localStorage.setItem('selection', 'montreal');
+
+    render(App);
+
+    expect(await screen.findByText('Partiellement nuageux')).toBeTruthy();
+  });
+
+  it('démarre quand le stockage est refusé par le navigateur', async () => {
+    const refus = () => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    };
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(refus);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(refus);
+
+    render(App);
+
+    expect(await screen.findByText('Partiellement nuageux')).toBeTruthy();
+    expect(previsionsVille).toHaveBeenCalledWith('montreal', expect.any(AbortSignal));
+
+    vi.restoreAllMocks();
+  });
+});
+
+describe('App — liste des villes', () => {
+  it('remplit le sélecteur depuis /api/villes', async () => {
+    villesDisponibles.mockResolvedValue([
+      { id: 'montreal', nom: 'Montréal' },
+      { id: 'quebec', nom: 'Québec' },
+      { id: 'sherbrooke', nom: 'Sherbrooke' },
+    ]);
+
+    render(App);
+
+    expect(await screen.findByRole('button', { name: 'Sherbrooke' })).toBeTruthy();
+  });
+
+  // La PWA doit rester utilisable hors ligne : le sélecteur ne peut pas dépendre
+  // d'une requête réussie.
+  it('garde la liste de repli quand le backend ne répond pas', async () => {
+    villesDisponibles.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    render(App);
+
+    expect(await screen.findByRole('button', { name: 'Montréal' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Québec' })).toBeTruthy();
+  });
+
+  it('ignore une liste vide plutôt que de vider le sélecteur', async () => {
+    villesDisponibles.mockResolvedValue([]);
+
+    render(App);
+
+    expect(await screen.findByRole('button', { name: 'Montréal' })).toBeTruthy();
+  });
 });
 
 describe('App — changement de ville', () => {
@@ -98,8 +181,42 @@ describe('App — changement de ville', () => {
 
     await user.click(screen.getByRole('button', { name: 'Québec' }));
 
-    await waitFor(() => expect(previsionsVille).toHaveBeenCalledWith('quebec'));
+    await waitFor(() =>
+      expect(previsionsVille).toHaveBeenCalledWith('quebec', expect.any(AbortSignal))
+    );
     expect(localStorage.getItem('selection')).toBe('quebec');
+  });
+
+  // Régression : rien n'annulait la requête précédente. Si elle répondait en
+  // dernier, l'écran affichait une ville et le bouton actif en désignait une autre.
+  it('ignore la réponse d’une requête supplantée', async () => {
+    const user = userEvent.setup();
+    // La température vient de la réponse — contrairement au nom du lieu, qui est
+    // dérivé de la sélection et basculerait même sans requête.
+    const quebec: ReponseMeteo = { ...montreal, actuel: { ...montreal.actuel, temperature: 5.2 } };
+
+    // Montréal (le chargement initial) répond après Québec : sans annulation,
+    // c'est sa réponse périmée qui resterait affichée.
+    let rendreMontreal!: (v: ReponseMeteo) => void;
+    // `signal` optionnel à dessein : sans lui, la réponse tardive de Montréal
+    // écrase Québec — c'est précisément la régression que ce test surveille.
+    previsionsVille.mockImplementation((ville: string, signal?: AbortSignal) => {
+      if (ville === 'quebec') return Promise.resolve(quebec);
+      return new Promise<ReponseMeteo>((resolve, reject) => {
+        rendreMontreal = resolve;
+        signal?.addEventListener('abort', () => reject(signal.reason));
+      });
+    });
+
+    render(App);
+    await user.click(screen.getByRole('button', { name: 'Québec' }));
+    expect(await screen.findByText('5')).toBeTruthy();
+
+    rendreMontreal(montreal);
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(screen.getByText('5')).toBeTruthy();
+    expect(screen.queryByText('21')).toBeNull();
   });
 
   it('ne recharge pas si la ville est déjà active', async () => {
@@ -124,7 +241,9 @@ describe('App — recherche par code postal', () => {
     await user.type(screen.getByLabelText('Code postal canadien'), 'H2X 1Y4');
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
 
-    await waitFor(() => expect(previsionsCoordonnees).toHaveBeenCalledWith(lieu));
+    await waitFor(() =>
+      expect(previsionsCoordonnees).toHaveBeenCalledWith(lieu, expect.any(AbortSignal))
+    );
     expect(geocoder).toHaveBeenCalledWith('H2X 1Y4');
     expect(JSON.parse(localStorage.getItem('lieuCP')!)).toEqual(lieu);
   });

@@ -6,11 +6,11 @@ export const previsionsParVilleSchema = z.object({
 
 export const previsionsCoordonneesSchema = z.object({
   lat: z.coerce
-    .number({ invalid_type_error: 'lat doit être un nombre' })
+    .number({ message: 'lat doit être un nombre' })
     .min(-90, 'lat doit être >= -90')
     .max(90, 'lat doit être <= 90'),
   lon: z.coerce
-    .number({ invalid_type_error: 'lon doit être un nombre' })
+    .number({ message: 'lon doit être un nombre' })
     .min(-180, 'lon doit être >= -180')
     .max(180, 'lon doit être <= 180'),
   nom: z.string().max(80, 'nom max 80 caractères').optional().default('Position personnalisee'),

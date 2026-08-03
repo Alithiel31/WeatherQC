@@ -26,7 +26,11 @@ describe('GET /api/geocode/:codePostal', () => {
   it('doit retourner erreur 400 pour un format invalide', async () => {
     const response = await request(app).get('/api/geocode/INVALID').expect(400);
 
-    expect(response.body).toHaveProperty('erreur');
+    // Même enveloppe que les autres erreurs de l'API — le client n'a qu'une
+    // seule forme à lire, quel que soit le middleware qui l'a produite.
+    expect(response.body.status).toBe(400);
+    expect(response.body.error).toBe('Paramètres invalides');
+    expect(response.body.details).toBeInstanceOf(Array);
   });
 
   it('doit retourner erreur 404 pour un RTA inexistant', async () => {

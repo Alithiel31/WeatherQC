@@ -3,18 +3,25 @@
   import Horaire from './lib/Horaire.svelte';
   import Quotidien from './lib/Quotidien.svelte';
   import CarteNuages from './lib/CarteNuages.svelte';
-  import { descriptionMeteo, iconeMeteo, familleMeteo, heureMinute } from './lib/meteo.ts';
-  import { previsionsVille, previsionsCoordonnees, geocoder, ErreurApi } from './lib/api.ts';
-  import type { ReponseMeteo, LieuCP } from './lib/types.ts';
+  import ConditionsActuelles from './lib/ConditionsActuelles.svelte';
+  import RechercheCodePostal from './lib/RechercheCodePostal.svelte';
+  import { familleMeteo, heureMinute } from './lib/meteo.ts';
+  import {
+    previsionsVille,
+    previsionsCoordonnees,
+    geocoder,
+    villesDisponibles,
+    VILLES_REPLI,
+    ErreurApi,
+  } from './lib/api.ts';
+  import { creerPreferences } from './lib/preferences.svelte.ts';
+  import type { ReponseMeteo, VilleDisponible } from './lib/types.ts';
 
-  const villes = [
-    { id: 'montreal', nom: 'Montréal' },
-    { id: 'quebec', nom: 'Québec' },
-  ] as const;
+  const prefs = creerPreferences();
 
-  let selection  = $state<string>(localStorage.getItem('selection') ?? 'montreal');
-  let codePostal = $state<string>(localStorage.getItem('codePostal') ?? '');
-  let lieuCP     = $state<LieuCP | null>(JSON.parse(localStorage.getItem('lieuCP') ?? 'null'));
+  // `VILLES_REPLI` le temps que `/api/villes` réponde — et indéfiniment si le
+  // backend est injoignable : le sélecteur doit exister au premier rendu.
+  let villes     = $state<VilleDisponible[]>(VILLES_REPLI);
   let donnees    = $state<ReponseMeteo | null>(null);
   let chargement = $state(true);
   let erreur     = $state<string | null>(null);
@@ -25,44 +32,56 @@
   let nuit      = $derived(donnees ? !donnees.actuel.jour : false);
   let classeCiel = $derived(`ciel ${famille}${nuit ? ' nuit' : ''}`);
   let nomLieu   = $derived(
-    selection === 'cp' && lieuCP
-      ? `${lieuCP.nom} (${lieuCP.rta})`
-      : (villes.find((v) => v.id === selection)?.nom ?? '')
+    prefs.selection === 'cp' && prefs.lieuCP
+      ? `${prefs.lieuCP.nom} (${prefs.lieuCP.rta})`
+      : (villes.find((v) => v.id === prefs.selection)?.nom ?? '')
   );
 
+  let chargementEnCours: AbortController | null = null;
+
   async function charger(): Promise<void> {
+    // Deux clics rapides lançaient deux requêtes concurrentes : si la première
+    // répondait en dernier, l'écran affichait une ville et le bouton actif en
+    // désignait une autre. La requête devenue inutile est annulée pour de bon.
+    chargementEnCours?.abort();
+    const controleur = new AbortController();
+    chargementEnCours = controleur;
+
     chargement = true;
     erreur = null;
     try {
       donnees =
-        selection === 'cp' && lieuCP
-          ? await previsionsCoordonnees(lieuCP)
-          : await previsionsVille(selection);
-    } catch {
-      erreur = 'Les prévisions ne sont pas disponibles pour le moment. Vérifiez la connexion, puis réessayez.';
+        prefs.selection === 'cp' && prefs.lieuCP
+          ? await previsionsCoordonnees(prefs.lieuCP, controleur.signal)
+          : await previsionsVille(prefs.selection, controleur.signal);
+    } catch (e) {
+      // Remplacée par une requête plus récente : ni erreur, ni fin de chargement
+      // — celle qui l'a supplantée s'en charge.
+      if (controleur.signal.aborted) return;
+
+      // Le backend sait pourquoi il a échoué (ville inconnue, amont injoignable,
+      // quota dépassé) ; le message générique ne sert que pour une panne réseau.
+      erreur =
+        e instanceof ErreurApi
+          ? e.message
+          : 'Les prévisions ne sont pas disponibles pour le moment. Vérifiez la connexion, puis réessayez.';
     } finally {
-      chargement = false;
+      // Une requête supplantée ne rend pas la main : celle qui l'a remplacée est
+      // encore en vol, le spinner doit rester.
+      if (chargementEnCours === controleur) chargement = false;
     }
   }
 
   function choisirVille(id: string): void {
-    if (id === selection) return;
-    selection = id;
-    localStorage.setItem('selection', id);
+    if (id === prefs.selection) return;
+    prefs.choisirVille(id);
     charger();
   }
 
-  async function rechercherCP(): Promise<void> {
+  async function rechercherCP(saisie: string): Promise<void> {
     erreurCP = null;
-    const saisie = codePostal.trim();
-    if (!saisie) return;
     try {
-      const data = await geocoder(saisie);
-      lieuCP = data;
-      selection = 'cp';
-      localStorage.setItem('selection', 'cp');
-      localStorage.setItem('codePostal', saisie);
-      localStorage.setItem('lieuCP', JSON.stringify(data));
+      prefs.retenirLieu(await geocoder(saisie), saisie);
       charger();
     } catch (e) {
       erreurCP =
@@ -72,6 +91,13 @@
 
   onMount(() => {
     charger();
+    // Échec silencieux : `VILLES_REPLI` couvre déjà le sélecteur.
+    villesDisponibles()
+      .then((liste) => {
+        if (liste.length) villes = liste;
+      })
+      .catch(() => {});
+
     const enLigne      = () => { horsLigne = false; charger(); };
     const horsConnexion = () => { horsLigne = true; };
     window.addEventListener('online', enLigne);
@@ -79,6 +105,7 @@
     return () => {
       window.removeEventListener('online', enLigne);
       window.removeEventListener('offline', horsConnexion);
+      chargementEnCours?.abort();
     };
   });
 </script>
@@ -89,36 +116,25 @@
     <nav class="villes" aria-label="Choix de la ville">
       {#each villes as v (v.id)}
         <button
-          class:active={v.id === selection}
+          class:active={v.id === prefs.selection}
           onclick={() => choisirVille(v.id)}
-          aria-pressed={v.id === selection}
+          aria-pressed={v.id === prefs.selection}
         >{v.nom}</button>
       {/each}
-      {#if lieuCP}
+      {#if prefs.lieuCP}
         <button
-          class:active={selection === 'cp'}
+          class:active={prefs.selection === 'cp'}
           onclick={() => choisirVille('cp')}
-          aria-pressed={selection === 'cp'}
-        >{lieuCP.rta}</button>
+          aria-pressed={prefs.selection === 'cp'}
+        >{prefs.lieuCP.rta}</button>
       {/if}
     </nav>
 
-    <div class="recherche-cp">
-      <label class="visually-hidden" for="cp">Code postal canadien</label>
-      <input
-        id="cp"
-        type="text"
-        placeholder="Code postal (ex. K1A 0B1)"
-        bind:value={codePostal}
-        onkeydown={(e) => e.key === 'Enter' && rechercherCP()}
-        autocomplete="postal-code"
-        maxlength="7"
-      />
-      <button onclick={rechercherCP}>Rechercher</button>
-    </div>
-    {#if erreurCP}
-      <p class="erreur-cp" role="alert">{erreurCP}</p>
-    {/if}
+    <RechercheCodePostal
+      bind:valeur={prefs.codePostal}
+      erreur={erreurCP}
+      onrechercher={rechercherCP}
+    />
   </header>
 
   {#if horsLigne}
@@ -136,17 +152,7 @@
       <button class="reessayer" onclick={charger}>Réessayer</button>
     </div>
   {:else if donnees}
-    <section class="actuel" aria-label="Conditions actuelles">
-      <p class="lieu">{nomLieu}</p>
-      <span class="icone" aria-hidden="true">{iconeMeteo(donnees.actuel.code, donnees.actuel.jour)}</span>
-      <p class="temperature">{Math.round(donnees.actuel.temperature)}<sup>°C</sup></p>
-      <p class="condition">{descriptionMeteo(donnees.actuel.code)}</p>
-      <dl class="details">
-        <div><dt>Ressenti</dt><dd>{Math.round(donnees.actuel.ressenti)}°</dd></div>
-        <div><dt>Vent</dt><dd>{Math.round(donnees.actuel.vent)} km/h</dd></div>
-        <div><dt>Humidité</dt><dd>{donnees.actuel.humidite} %</dd></div>
-      </dl>
-    </section>
+    <ConditionsActuelles actuel={donnees.actuel} lieu={nomLieu} />
 
     <Horaire heures={donnees.horaire} />
 
@@ -211,29 +217,6 @@
   .villes button.active { background: #fff; color: #16314d; }
   .villes button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
-  .recherche-cp { display: flex; gap: 0.4rem; }
-  .recherche-cp input {
-    flex: 1; min-width: 0; border: 0; border-radius: 0.6rem;
-    padding: 0.55rem 0.8rem; font: inherit;
-    background: rgba(255,255,255,0.16); color: #fff; backdrop-filter: blur(6px);
-  }
-  .recherche-cp input::placeholder { color: rgba(255,255,255,0.65); }
-  .recherche-cp input:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
-  .recherche-cp button {
-    border: 0; border-radius: 0.6rem; padding: 0.55rem 0.95rem;
-    font: inherit; font-weight: 600; background: rgba(255,255,255,0.9); color: #16314d; cursor: pointer;
-  }
-  .recherche-cp button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-  .erreur-cp {
-    margin: 0; font-size: 0.85rem;
-    background: rgba(0,0,0,0.3); padding: 0.45rem 0.8rem; border-radius: 0.6rem;
-  }
-
-  .visually-hidden {
-    position: absolute; width: 1px; height: 1px;
-    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
-  }
-
   .bandeau-hors-ligne {
     margin: 1rem 0 0; padding: 0.5rem 0.9rem;
     background: rgba(0,0,0,0.3); border-radius: 0.6rem; font-size: 0.85rem;
@@ -254,21 +237,6 @@
     border: 1px solid rgba(255,255,255,0.5); background: transparent; color: #fff;
     font: inherit; padding: 0.5rem 1.25rem; border-radius: 999px; cursor: pointer;
   }
-
-  .actuel { text-align: center; padding: 1.75rem 0 1.5rem; }
-  .lieu { margin: 0 0 0.4rem; font-size: 1rem; font-weight: 600; opacity: 0.9; }
-  .icone { font-size: 3.25rem; line-height: 1; }
-  .temperature {
-    margin: 0.35rem 0 0;
-    font-size: clamp(4.5rem, 22vw, 6.5rem); font-weight: 200;
-    line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
-  }
-  .temperature sup { font-size: 0.35em; font-weight: 400; vertical-align: super; }
-  .condition { margin: 0.4rem 0 0; font-size: 1.15rem; font-weight: 500; }
-
-  .details { display: flex; justify-content: center; gap: 2rem; margin: 1.5rem 0 0; }
-  .details dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; }
-  .details dd { margin: 0.2rem 0 0; font-size: 1.1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 
   footer { margin-top: 1.75rem; text-align: center; font-size: 0.8rem; opacity: 0.7; }
   footer a { color: inherit; }

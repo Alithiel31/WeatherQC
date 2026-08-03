@@ -87,13 +87,29 @@ describe('geocodeRTA', () => {
       await expect(geocodeRTA('H2X')).rejects.toThrow(NotFoundError);
     });
 
-    it('lève NotFoundError si places est undefined', async () => {
+    // `places: []` ci-dessus respecte le contrat et signifie « aucun résultat » :
+    // c'est un 404. Une réponse sans `places` rompt le contrat — la faute est
+    // chez Zippopotam, pas dans la requête : c'est un 502.
+    it('lève BadGatewayError si places est absent du corps', async () => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) })
       );
 
-      await expect(geocodeRTA('H2X')).rejects.toThrow(NotFoundError);
+      await expect(geocodeRTA('H2X')).rejects.toThrow(BadGatewayError);
+    });
+
+    it('lève BadGatewayError si un lieu n’a pas de coordonnées', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          json: async () => ({ places: [{ 'place name': 'Montreal', state: 'Quebec' }] }),
+        })
+      );
+
+      await expect(geocodeRTA('H2X')).rejects.toThrow(BadGatewayError);
     });
   });
 });

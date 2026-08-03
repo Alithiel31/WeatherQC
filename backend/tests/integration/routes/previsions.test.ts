@@ -39,6 +39,22 @@ describe('Routes Prévisions', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
+    // Régression : ces clés sont héritées d'Object.prototype et renvoyaient une
+    // valeur truthy, si bien que la garde « ville inconnue » les laissait passer
+    // et qu'un appel partait chez Open-Meteo avec des coordonnées `undefined`.
+    // `toString` et `valueOf` ne sont pas listées : le `.toLowerCase()` du schéma
+    // les transforme en clés qui n'existent sur aucun prototype.
+    it.each(['constructor', '__proto__'])(
+      'doit retourner 404 sans appeler l’amont pour la clé héritée %s',
+      async (cle) => {
+        // Aucun stub : le filet de `tests/setup.ts` fait échouer tout appel réseau,
+        // donc un 404 ici prouve qu'aucun appel amont n'a été tenté.
+        const response = await request(app).get(`/api/previsions/${cle}`).expect(404);
+
+        expect(response.body.error).toContain('Ville inconnue');
+      }
+    );
+
     it('doit retourner erreur 404 pour une ville inconnue', async () => {
       const response = await request(app).get('/api/previsions/xyzabc').expect(404);
 
@@ -52,6 +68,16 @@ describe('Routes Prévisions', () => {
       const response = await request(app).get('/api/previsions/montreal').expect(502);
 
       expect(response.body.error).toContain('503');
+    });
+
+    // Régression : un 200 au contenu inattendu jetait un TypeError pendant le
+    // mapping et ressortait en 500, comme si le bug était de notre côté.
+    it('doit retourner 502 si Open-Meteo répond 200 avec un corps inexploitable', async () => {
+      stubFetchJson({ current: { time: '2026-01-15T14:00' } });
+
+      const response = await request(app).get('/api/previsions/montreal').expect(502);
+
+      expect(response.body.error).toContain('inexploitable');
     });
 
     it('doit retourner erreur 504 si Open-Meteo ne répond pas à temps', async () => {
@@ -81,8 +107,8 @@ describe('Routes Prévisions', () => {
         .get('/api/previsions-coordonnees?lat=abc&lon=-73.6')
         .expect(400);
 
-      expect(response.body).toHaveProperty('erreur');
-      expect(response.body.erreur).toBe('Paramètres invalides');
+      expect(response.body.status).toBe(400);
+      expect(response.body.error).toBe('Paramètres invalides');
     });
 
     it('doit retourner erreur 400 si lon est hors limites', async () => {
@@ -90,8 +116,8 @@ describe('Routes Prévisions', () => {
         .get('/api/previsions-coordonnees?lat=45.5&lon=-200')
         .expect(400);
 
-      expect(response.body).toHaveProperty('erreur');
-      expect(response.body.erreur).toBe('Paramètres invalides');
+      expect(response.body.status).toBe(400);
+      expect(response.body.error).toBe('Paramètres invalides');
     });
 
     it('doit accepter un nom personnalisé', async () => {
@@ -110,8 +136,8 @@ describe('Routes Prévisions', () => {
         .get(`/api/previsions-coordonnees?lat=45.5&lon=-73.6&nom=${longNom}`)
         .expect(400);
 
-      expect(response.body).toHaveProperty('erreur');
-      expect(response.body.erreur).toBe('Paramètres invalides');
+      expect(response.body.status).toBe(400);
+      expect(response.body.error).toBe('Paramètres invalides');
     });
 
     it('doit réutiliser le cache mais garder le nom de la requête', async () => {

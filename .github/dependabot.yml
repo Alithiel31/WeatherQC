@@ -1,0 +1,45 @@
+version: 2
+
+# Trois manifestes npm distincts (racine, backend, frontend) : chacun a besoin de
+# sa propre entrée, Dependabot ne parcourt pas les sous-dossiers tout seul.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: chore
+
+  - package-ecosystem: npm
+    directory: /backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+    groups:
+      # Une seule PR pour l'outillage de développement : ces montées se relisent
+      # ensemble et n'atteignent pas la production.
+      outils-dev:
+        dependency-type: development
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+    groups:
+      outils-dev:
+        dependency-type: development
+
+  # Les actions manipulant le keystore et la clé Play Store sont épinglées par
+  # SHA : sans Dependabot, ces épingles ne bougeraient plus jamais.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci

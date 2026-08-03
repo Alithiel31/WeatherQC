@@ -38,6 +38,11 @@ jobs:
       - run: npm run test:coverage
       - run: npm run build
 
+      # Les dépendances de production sont exposées publiquement : une faille
+      # haute ou critique doit bloquer, pas attendre une lecture de Dependabot.
+      - name: Audit des dépendances
+        run: npm audit --audit-level=high --omit=dev
+
   frontend:
     name: Frontend — lint, typecheck & build
     runs-on: ubuntu-latest
@@ -75,6 +80,11 @@ jobs:
           if-no-files-found: error
 
       - run: npm run build
+
+      # `leaflet` est la seule dépendance de production côté frontend ; l'audit
+      # complet inclurait toute la chaîne de build et bloquerait sur du bruit.
+      - name: Audit des dépendances
+        run: npm audit --audit-level=high --omit=dev
 
   docker:
     name: Docker — validate builds

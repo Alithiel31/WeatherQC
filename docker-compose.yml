@@ -1,3 +1,11 @@
+# La cible est un Raspberry Pi : sans bornes, une fuite mémoire emporte l'hôte
+# entier et les logs Docker finissent par remplir la carte SD.
+x-logs: &logs
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '3'
+
 services:
   backend:
     build:
@@ -6,6 +14,15 @@ services:
     env_file:
       - ./backend/.env
     restart: unless-stopped
+    logging: *logs
+    deploy:
+      resources:
+        limits:
+          # Node au repos tient dans ~80 Mo ; le cache plafonné à
+          # CACHE_MAX_ENTRIES en ajoute quelques dizaines. 256 Mo laisse de la
+          # marge tout en transformant une fuite en redémarrage plutôt qu'en
+          # machine à genoux.
+          memory: 256M
     healthcheck:
       test:
         [
@@ -24,8 +41,14 @@ services:
       context: ./frontend
       target: production
     ports:
-      - "80:80"
+      - '80:80'
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
+    logging: *logs
+    deploy:
+      resources:
+        limits:
+          # Nginx ne sert que des fichiers statiques et relaie /api/.
+          memory: 128M
