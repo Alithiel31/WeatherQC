@@ -1,6 +1,7 @@
 import { config } from '../config.js';
 import { BadGatewayError } from '../lib/errors.js';
 import { fetchAvecTimeout } from '../lib/http.js';
+import { previsionsOpenMeteoSchema } from '../schemas/openmeteo.schema.js';
 
 export interface Previsions {
   misAJour: string;
@@ -12,18 +13,20 @@ export interface Previsions {
     code: number;
     jour: boolean;
   };
+  // `null` là où Open-Meteo n'a pas de valeur — au-delà de la portée d'un modèle,
+  // typiquement pour les probabilités de précipitation les plus lointaines.
   horaire: {
     heure: string;
-    temperature: number;
-    code: number;
-    precipitation: number;
+    temperature: number | null;
+    code: number | null;
+    precipitation: number | null;
   }[];
   quotidien: {
     date: string;
-    code: number;
-    max: number;
-    min: number;
-    precipitation: number;
+    code: number | null;
+    max: number | null;
+    min: number | null;
+    precipitation: number | null;
     lever: string;
     coucher: string;
   }[];
@@ -69,12 +72,18 @@ export async function fetchForecast({
   });
   if (!res.ok) throw new BadGatewayError(`Open-Meteo a répondu ${res.status}`);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const raw: any = await res.json();
+  const analyse = previsionsOpenMeteoSchema.safeParse(await res.json());
+  if (!analyse.success) {
+    // Une dérive de contrat est une panne amont, pas un bug interne : 502, pas 500.
+    throw new BadGatewayError(
+      `Réponse Open-Meteo inexploitable : ${analyse.error.errors
+        .map((e) => e.path.join('.'))
+        .join(', ')}`
+    );
+  }
+  const raw = analyse.data;
 
-  const nowIndex = raw.hourly.time.findIndex(
-    (t: string) => new Date(t) >= new Date(raw.current.time)
-  );
+  const nowIndex = raw.hourly.time.findIndex((t) => new Date(t) >= new Date(raw.current.time));
   const start = Math.max(nowIndex, 0);
 
   return {
@@ -87,13 +96,13 @@ export async function fetchForecast({
       code: raw.current.weather_code,
       jour: raw.current.is_day === 1,
     },
-    horaire: raw.hourly.time.slice(start, start + 48).map((t: string, i: number) => ({
+    horaire: raw.hourly.time.slice(start, start + 48).map((t, i) => ({
       heure: t,
       temperature: raw.hourly.temperature_2m[start + i],
       code: raw.hourly.weather_code[start + i],
       precipitation: raw.hourly.precipitation_probability[start + i],
     })),
-    quotidien: raw.daily.time.map((t: string, i: number) => ({
+    quotidien: raw.daily.time.map((t, i) => ({
       date: t,
       code: raw.daily.weather_code[i],
       max: raw.daily.temperature_2m_max[i],

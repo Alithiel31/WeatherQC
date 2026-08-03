@@ -70,6 +70,16 @@ describe('Routes Prévisions', () => {
       expect(response.body.error).toContain('503');
     });
 
+    // Régression : un 200 au contenu inattendu jetait un TypeError pendant le
+    // mapping et ressortait en 500, comme si le bug était de notre côté.
+    it('doit retourner 502 si Open-Meteo répond 200 avec un corps inexploitable', async () => {
+      stubFetchJson({ current: { time: '2026-01-15T14:00' } });
+
+      const response = await request(app).get('/api/previsions/montreal').expect(502);
+
+      expect(response.body.error).toContain('inexploitable');
+    });
+
     it('doit retourner erreur 504 si Open-Meteo ne répond pas à temps', async () => {
       stubFetchTimeout();
 

@@ -1,5 +1,6 @@
 import { BadGatewayError, NotFoundError } from '../lib/errors.js';
 import { fetchAvecTimeout } from '../lib/http.js';
+import { reponseZippopotamSchema } from '../schemas/zippopotam.schema.js';
 
 export interface LieuGeocode {
   rta: string;
@@ -21,9 +22,17 @@ export async function geocodeRTA(rta: string): Promise<LieuGeocode> {
     throw new BadGatewayError(`Zippopotam a répondu ${res.status}`);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const data: any = await res.json();
-  const place = data.places?.[0];
+  const analyse = reponseZippopotamSchema.safeParse(await res.json());
+  if (!analyse.success) {
+    // Contrat rompu chez Zippopotam : panne amont (502), pas erreur interne (500).
+    throw new BadGatewayError(
+      `Réponse Zippopotam inexploitable : ${analyse.error.errors
+        .map((e) => e.path.join('.'))
+        .join(', ')}`
+    );
+  }
+
+  const place = analyse.data.places[0];
 
   if (!place) {
     throw new NotFoundError(`Aucun lieu trouvé pour ${rta}.`);

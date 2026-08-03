@@ -141,4 +141,51 @@ describe('fetchForecast', () => {
       );
     });
   });
+
+  // Régression : ces réponses sortaient en TypeError sur `raw.hourly.time`, donc
+  // en 500 « Internal server error », alors que la faute est chez le fournisseur.
+  describe('Dérive du contrat amont', () => {
+    const repondre = (corps: unknown) =>
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => corps })
+      );
+
+    it('lève BadGatewayError quand un bloc entier manque', async () => {
+      repondre({ current: mockRawResponse.current, daily: mockRawResponse.daily });
+
+      await expect(fetchForecast({ latitude: 45.5, longitude: -73.6 })).rejects.toThrow(
+        BadGatewayError
+      );
+    });
+
+    it('lève BadGatewayError quand une série est renommée', async () => {
+      const { temperature_2m, ...reste } = mockRawResponse.hourly;
+      repondre({ ...mockRawResponse, hourly: { ...reste, temperature_c: temperature_2m } });
+
+      await expect(fetchForecast({ latitude: 45.5, longitude: -73.6 })).rejects.toThrow(
+        BadGatewayError
+      );
+    });
+
+    it('nomme le champ fautif dans le message', async () => {
+      repondre({ ...mockRawResponse, daily: { ...mockRawResponse.daily, sunrise: undefined } });
+
+      await expect(fetchForecast({ latitude: 45.5, longitude: -73.6 })).rejects.toThrow(
+        'daily.sunrise'
+      );
+    });
+
+    it('accepte les valeurs nulles d’une série — Open-Meteo en produit', async () => {
+      const nulle = mockRawResponse.hourly.precipitation_probability.map(() => null);
+      repondre({
+        ...mockRawResponse,
+        hourly: { ...mockRawResponse.hourly, precipitation_probability: nulle },
+      });
+
+      const previsions = await fetchForecast({ latitude: 45.5, longitude: -73.6 });
+
+      expect(previsions.horaire[0].precipitation).toBeNull();
+    });
+  });
 });
