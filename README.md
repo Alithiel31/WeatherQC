@@ -46,6 +46,15 @@ cp backend/.env.example backend/.env
 docker compose up --build -d
 ```
 
+Nginx pose les en-têtes de sécurité du document — CSP, `X-Content-Type-Options`,
+`Referrer-Policy`, `Permissions-Policy`, HSTS. `helmet` ne couvre que les réponses JSON de
+`/api/` : le HTML qui exécute le JavaScript est servi par nginx, pas par Express.
+
+> **Avant d'éditer `frontend/nginx.conf`** — `add_header` ne fusionne pas : un bloc `location`
+> qui en déclare un seul perd **tous** ceux hérités du `server`. Les en-têtes sont donc posés
+> une seule fois, et la politique de cache s'appuie sur `expires`, qui n'a pas cet effet. Le
+> job `docker` de la CI vérifie que `assetlinks.json` porte toujours sa CSP.
+
 L'application tourne sur un **Raspberry Pi** et est exposée publiquement via un **tunnel Cloudflare** (aucun port à ouvrir sur le routeur).
 Nginx fait office de reverse proxy à l'intérieur du conteneur frontend : il sert les fichiers statiques et redirige les appels `/api/` vers le backend.
 Le tunnel Cloudflare gère le **HTTPS** et le nom de domaine `qcweather.alithiel31.dev` — aucun certificat à gérer manuellement.
