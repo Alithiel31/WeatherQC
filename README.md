@@ -190,12 +190,16 @@ c'est lui qui détecte une dérive de schéma chez les APIs externes. En cas d'�
 une issue** étiquetée `derive-contrat`, et la réutilise tant qu'elle est ouverte — une
 détection que personne ne lit n'est pas une détection.
 
-Le job `docker` de la CI ne se contente plus de construire les images : il valide
-`nginx.conf`, démarre la pile avec `docker compose up --wait` — ce qui exerce le healthcheck
-du backend et le `depends_on: service_healthy` du frontend — puis interroge `/api/sante`,
-`/api/villes` et la coquille applicative à travers nginx. Une variable d'environnement
-invalide, un healthcheck cassé ou une config nginx fautive échouent désormais en CI plutôt
-qu'au déploiement.
+Le job `docker` de la CI ne se contente plus de construire les images : il démarre la pile avec
+`docker compose up --wait` — ce qui exerce le healthcheck du backend, le
+`depends_on: service_healthy` du frontend et la configuration nginx dans son vrai réseau —
+puis interroge `/api/sante`, `/api/villes` et la coquille applicative à travers nginx. Une
+variable d'environnement invalide, un healthcheck cassé ou une config nginx fautive échouent
+désormais en CI plutôt qu'au déploiement.
+
+> `nginx -t` dans un conteneur isolé ne convient pas ici : `proxy_pass http://backend:3005`
+> exige de résoudre l'hôte `backend`, qui n'existe que dans le réseau du compose. C'est le
+> démarrage réel qui fait office de test.
 
 `test:coverage` échoue sous les seuils déclarés dans `backend/vitest.config.ts`. Ils sont
 calés **sous la mesure réelle**, pas sur un chiffre rond : ils bloquent une régression
