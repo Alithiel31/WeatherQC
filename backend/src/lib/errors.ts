@@ -31,3 +31,15 @@ export class GatewayTimeoutError extends HttpClientError {
     super(message, 504);
   }
 }
+
+/**
+ * Le disjoncteur refuse l'appel : l'amont a échoué de façon répétée.
+ *
+ * **503** plutôt que 502 : rien n'a été demandé au fournisseur cette fois-ci,
+ * c'est notre propre protection qui répond. Le client peut réessayer plus tard.
+ */
+export class ServiceIndisponibleError extends HttpClientError {
+  constructor(message: string) {
+    super(message, 503);
+  }
+}

@@ -7,6 +7,9 @@ import { zodErrorHandler } from './middlewares/zod-error-handler.js';
 import { globalErrorHandler } from './middlewares/global-error-handler.js';
 import { limiteurApi, limiteurGeocode } from './middlewares/rate-limit.js';
 import { requestId } from './middlewares/request-id.js';
+import { journalAcces } from './middlewares/acces.js';
+import { statistiquesCache } from './services/cache.service.js';
+import { etatDisjoncteurs } from './lib/breaker.js';
 
 import villesRouter from './routers/villes.router.js';
 import previsionsRouter from './routers/previsions.router.js';
@@ -22,6 +25,9 @@ app.set('trust proxy', config.trustProxyHops);
 
 // Avant tout le reste : même une requête rejetée par le quota doit être traçable.
 app.use(requestId);
+// Juste après, pour que la durée mesurée couvre bien toute la chaîne — y compris
+// les rejets du limiteur, jusqu'ici absents des logs.
+app.use(journalAcces);
 
 app.use(helmet());
 
@@ -43,8 +49,20 @@ app.use(express.json({ limit: '10kb' }));
 
 // Déclarée avant les limiteurs : le healthcheck Docker interroge cette route
 // toutes les 30 s et ne doit jamais consommer de quota.
+//
+// Elle ne rendait que `{ statut: 'ok' }` — vrai, mais inexploitable. Le contenu
+// ci-dessous est ce qu'on veut lire quand l'application « rame » sans qu'on
+// sache si la faute revient au Raspberry Pi ou à un fournisseur. Aucune donnée
+// personnelle, rien qu'on ne puisse exposer publiquement.
 app.get('/api/sante', (_req, res) => {
-  res.json({ statut: 'ok' });
+  res.json({
+    statut: 'ok',
+    versionNode: process.version,
+    demarreDepuisS: Math.round(process.uptime()),
+    memoireMo: Math.round(process.memoryUsage().rss / 1024 / 1024),
+    cache: statistiquesCache(),
+    amonts: etatDisjoncteurs(),
+  });
 });
 
 app.use('/api', limiteurApi);

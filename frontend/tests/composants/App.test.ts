@@ -140,6 +140,26 @@ describe('App — chargement initial', () => {
   });
 });
 
+describe('App — prévisions périmées servies par le backend', () => {
+  it('signale que les prévisions ne sont plus actualisées', async () => {
+    // Le backend sert une entrée périmée quand l'amont est en panne : sans le
+    // dire, l'heure de mise à jour du pied de page passerait pour l'heure réelle.
+    previsionsVille.mockResolvedValue({ ...montreal, depuisCache: true, obsolete: true });
+
+    render(App);
+
+    expect(await screen.findByText(/prévisions non actualisées/)).toBeTruthy();
+    expect(screen.getByText('Partiellement nuageux')).toBeTruthy();
+  });
+
+  it('ne signale rien quand les prévisions sont fraîches', async () => {
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    expect(screen.queryByText(/prévisions non actualisées/)).toBeNull();
+  });
+});
+
 describe('App — liste des villes', () => {
   it('remplit le sélecteur depuis /api/villes', async () => {
     villesDisponibles.mockResolvedValue([

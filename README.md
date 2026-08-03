@@ -105,6 +105,9 @@ L'application est publiée sur le **Google Play Store** sous forme de TWA (Trust
 | `CACHE_TTL_GEOCODE` | ❌ | `2592000000` | Durée du cache géocodage en ms (défaut : 30 jours) |
 | `CACHE_TTL_RAINVIEWER` | ❌ | `300000` | Durée du cache de l'index RainViewer en ms (défaut : 5 min) |
 | `CACHE_MAX_ENTRIES` | ❌ | `500` | Plafond du nombre d'entrées en cache (éviction LRU) |
+| `CACHE_FACTEUR_OBSOLETE` | ❌ | `6` | Une entrée reste servable `facteur × TTL` après péremption si l'amont échoue |
+| `BREAKER_SEUIL_ECHECS` | ❌ | `5` | Échecs consécutifs avant suspension des appels à un amont |
+| `BREAKER_REPOS_MS` | ❌ | `30000` | Durée de la suspension avant la requête de test |
 | `DEFAULT_TIMEZONE` | ❌ | `America/Toronto` | Timezone pour les prévisions Open-Meteo |
 
 ---
@@ -162,6 +165,33 @@ retrouve dans les logs. Un utilisateur qui signale une panne peut citer cet iden
 ```bash
 docker compose logs backend | grep <identifiant>
 ```
+
+Chaque requête terminée produit une ligne — méthode, chemin, statut, durée, et l'origine de la
+réponse (`frais`, `obsolete`, `amont`) — et chaque appel amont la sienne, avec sa latence.
+C'est ce qui permet de trancher « c'est Open-Meteo » de « c'est le Pi » sans instrumenter quoi
+que ce soit. Les rejets du limiteur, qui n'atteignent jamais le gestionnaire d'erreurs,
+apparaissent en `warn` avec leur 429.
+
+`GET /api/sante` complète le tableau : version de Node, temps depuis le démarrage, mémoire
+résidente, statistiques de cache (entrées, hits, misses, taux) et état des disjoncteurs amont.
+
+### Résilience des amonts
+
+Trois mécanismes, tous visibles dans `/api/sante` :
+
+- **Mutualisation** — N requêtes simultanées sur une clé froide ne déclenchent qu'un seul appel
+  amont. Le TTL étant fixe, toutes les clés chaudes expirent ensemble : sans cela, la rafale
+  suivant une expiration partait en entier chez le fournisseur.
+- **Service dégradé** — une entrée périmée reste servable `CACHE_FACTEUR_OBSOLETE × TTL`, mais
+  uniquement si l'amont vient d'échouer. La réponse porte alors `obsolete: true` et
+  l'application l'affiche : des prévisions d'il y a vingt minutes valent mieux qu'un écran
+  d'erreur. Côté service worker, un greffon Workbox traite un 5xx comme une panne réseau —
+  sans quoi `NetworkFirst` ne consultait jamais le cache, un 502 étant une réponse *résolue*.
+- **Disjoncteur** — au-delà de `BREAKER_SEUIL_ECHECS` échecs consécutifs, les appels à cet
+  amont sont suspendus pendant `BREAKER_REPOS_MS` et répondent **503** immédiatement, puis une
+  seule requête teste le retour du service. Sans lui, un amont mort immobilisait ~10 s de
+  connexion par requête, multipliées par le nombre de clients — sur un Pi borné à 256 Mo, une
+  panne tierce devenait un épuisement local.
 
 Une variable d'environnement invalide (`PORT=abc`, quota vide) fait échouer le démarrage en la
 nommant, au lieu de laisser tourner le serveur avec un `NaN`.

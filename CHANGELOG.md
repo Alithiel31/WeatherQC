@@ -1,7 +1,33 @@
 # CHANGELOG
 
 ## [Non publié]
+### Added
+- Journal d'accès : une ligne par requête terminée (méthode, chemin, statut, durée, origine de
+  la réponse) et une par appel amont, avec sa latence. Le journal n'existait qu'aux erreurs —
+  une requête réussie ne laissait aucune trace, si bien qu'on ne pouvait ni dire si la lenteur
+  venait d'Open-Meteo ou du Raspberry Pi, ni calculer un taux de cache, ni voir un seul 429,
+  les rejets du limiteur n'atteignant jamais le gestionnaire d'erreurs. Le README demandait
+  pourtant de chercher son `X-Request-Id` dans les logs : la recherche ne trouvait rien tant
+  que la requête n'avait pas échoué
+- `GET /api/sante` rend version de Node, temps depuis le démarrage, mémoire résidente,
+  statistiques de cache et état des disjoncteurs, au lieu du seul `{ statut: 'ok' }`
+- Mutualisation des appels amont concurrents : N requêtes simultanées sur une clé froide n'en
+  déclenchent plus qu'un. Le TTL étant fixe, toutes les clés chaudes expirent ensemble et la
+  rafale suivante partait en entier chez le fournisseur
+- Service dégradé : une entrée périmée reste servable `CACHE_FACTEUR_OBSOLETE × TTL` si l'amont
+  échoue, et la réponse porte `obsolete: true`, que l'application affiche
+- Disjoncteur par amont (`BREAKER_SEUIL_ECHECS`, `BREAKER_REPOS_MS`) : au-delà de N échecs
+  consécutifs les appels sont suspendus et répondent **503**. Un amont mort immobilisait ~10 s
+  de connexion par requête, multipliées par le nombre de clients — sur un Pi borné à 256 Mo,
+  une panne tierce devenait un épuisement local
+
 ### Fixed
+- Le cache du service worker était inopérant en cas de panne amont : `NetworkFirst` ne retombe
+  sur le cache que si le `fetch` *rejette*, or un 502 est une réponse *résolue*. Elle traversait
+  jusqu'à l'application, qui affichait une erreur alors que des prévisions valides dormaient
+  sur l'appareil — la promesse « dernières prévisions en cache » ne tenait donc pas dès que le
+  backend répondait en erreur. Un greffon Workbox traite désormais un 5xx comme une panne
+  réseau ; les 4xx continuent de remonter leur message
 - Une échéance sans donnée ne s'affiche plus « 0° » : le frontend déclarait non-nullables des
   champs qu'Open-Meteo laisse à `null` au-delà de la portée du modèle, et `Math.round(null)`
   vaut `0` — une température plausible en hiver, indiscernable d'une vraie mesure. Pire, ce
