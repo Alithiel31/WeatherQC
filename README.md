@@ -134,6 +134,21 @@ L'API est exposée publiquement : en-têtes de durcissement (`helmet`), corps JS
 10 ko et limitation de débit par IP cliente (**429** au-delà du quota). `/api/sante` n'est
 jamais limité — le healthcheck Docker l'interroge toutes les 30 s.
 
+Les réponses des APIs externes sont validées avant usage : une dérive de schéma chez Open-Meteo
+ou Zippopotam donne un **502** nommant le champ fautif, jamais un 500. Toutes les erreurs
+partagent la même enveloppe `{ status, error }`, à laquelle les erreurs de validation ajoutent
+`details`.
+
+Chaque réponse porte un en-tête `X-Request-Id` — repris de l'amont s'il est fourni — qu'on
+retrouve dans les logs. Un utilisateur qui signale une panne peut citer cet identifiant :
+
+```bash
+docker compose logs backend | grep <identifiant>
+```
+
+Une variable d'environnement invalide (`PORT=abc`, quota vide) fait échouer le démarrage en la
+nommant, au lieu de laisser tourner le serveur avec un `NaN`.
+
 > **Calibrage de `TRUST_PROXY_HOPS`** — la limitation de débit s'applique par IP cliente.
 > Derrière cloudflared puis nginx, il faut remonter 2 sauts pour retrouver le vrai client ;
 > mal réglé, tous les visiteurs partagent le même compteur. Après un changement d'infra,

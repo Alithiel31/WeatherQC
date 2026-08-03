@@ -23,6 +23,30 @@ describe('Durcissement de l’exposition publique', () => {
     });
   });
 
+  describe('Traçabilité', () => {
+    it('renvoie un identifiant de requête sur toute réponse', async () => {
+      const response = await request(app).get('/api/sante').expect(200);
+
+      expect(response.headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/);
+    });
+
+    it('donne un identifiant différent à chaque requête', async () => {
+      const a = await request(app).get('/api/sante').expect(200);
+      const b = await request(app).get('/api/sante').expect(200);
+
+      expect(a.headers['x-request-id']).not.toBe(b.headers['x-request-id']);
+    });
+
+    it('conserve l’identifiant fourni par le proxy amont', async () => {
+      const response = await request(app)
+        .get('/api/sante')
+        .set('X-Request-Id', 'cloudflared-42')
+        .expect(200);
+
+      expect(response.headers['x-request-id']).toBe('cloudflared-42');
+    });
+  });
+
   describe('Taille du corps de requête', () => {
     it('refuse un corps JSON au-delà de 10 ko', async () => {
       const gros = { donnees: 'a'.repeat(20_000) };

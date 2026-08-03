@@ -6,6 +6,7 @@ import { config } from './config.js';
 import { zodErrorHandler } from './middlewares/zod-error-handler.js';
 import { globalErrorHandler } from './middlewares/global-error-handler.js';
 import { limiteurApi, limiteurGeocode } from './middlewares/rate-limit.js';
+import { requestId } from './middlewares/request-id.js';
 
 import villesRouter from './routers/villes.router.js';
 import previsionsRouter from './routers/previsions.router.js';
@@ -17,6 +18,9 @@ const app = express();
 // portent l'IP du conteneur nginx et la limitation de débit bannirait tout le
 // monde d'un coup. Voir TRUST_PROXY_HOPS dans le README.
 app.set('trust proxy', config.trustProxyHops);
+
+// Avant tout le reste : même une requête rejetée par le quota doit être traçable.
+app.use(requestId);
 
 app.use(helmet());
 
