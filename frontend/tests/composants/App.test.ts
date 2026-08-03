@@ -88,6 +88,44 @@ describe('App — chargement initial', () => {
       expect.stringContaining('ne sont pas disponibles')
     );
   });
+
+  it('préfère le message du backend au message de repli', async () => {
+    previsionsVille.mockRejectedValue(new ErreurApi('Open-Meteo injoignable : timeout'));
+
+    render(App);
+
+    expect(await screen.findByRole('alert')).toHaveProperty(
+      'textContent',
+      expect.stringContaining('Open-Meteo injoignable')
+    );
+  });
+
+  // Régression : `JSON.parse(localStorage.getItem('lieuCP'))` s'exécutait pendant
+  // l'initialisation du composant, donc avant le premier rendu — une valeur
+  // corrompue laissait une page blanche jusqu'à un vidage manuel du stockage.
+  it('démarre malgré un lieu mémorisé corrompu', async () => {
+    localStorage.setItem('lieuCP', '{cassé');
+    localStorage.setItem('selection', 'montreal');
+
+    render(App);
+
+    expect(await screen.findByText('Partiellement nuageux')).toBeTruthy();
+  });
+
+  it('démarre quand le stockage est refusé par le navigateur', async () => {
+    const refus = () => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    };
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(refus);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(refus);
+
+    render(App);
+
+    expect(await screen.findByText('Partiellement nuageux')).toBeTruthy();
+    expect(previsionsVille).toHaveBeenCalledWith('montreal');
+
+    vi.restoreAllMocks();
+  });
 });
 
 describe('App — changement de ville', () => {

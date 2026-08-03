@@ -5,6 +5,7 @@
   import CarteNuages from './lib/CarteNuages.svelte';
   import { descriptionMeteo, iconeMeteo, familleMeteo, heureMinute } from './lib/meteo.ts';
   import { previsionsVille, previsionsCoordonnees, geocoder, ErreurApi } from './lib/api.ts';
+  import { lireTexte, lireJSON, ecrire, ecrireJSON } from './lib/stockage.ts';
   import type { ReponseMeteo, LieuCP } from './lib/types.ts';
 
   const villes = [
@@ -12,9 +13,9 @@
     { id: 'quebec', nom: 'Québec' },
   ] as const;
 
-  let selection  = $state<string>(localStorage.getItem('selection') ?? 'montreal');
-  let codePostal = $state<string>(localStorage.getItem('codePostal') ?? '');
-  let lieuCP     = $state<LieuCP | null>(JSON.parse(localStorage.getItem('lieuCP') ?? 'null'));
+  let selection  = $state<string>(lireTexte('selection', 'montreal'));
+  let codePostal = $state<string>(lireTexte('codePostal'));
+  let lieuCP     = $state<LieuCP | null>(lireJSON<LieuCP | null>('lieuCP', null));
   let donnees    = $state<ReponseMeteo | null>(null);
   let chargement = $state(true);
   let erreur     = $state<string | null>(null);
@@ -53,7 +54,7 @@
   function choisirVille(id: string): void {
     if (id === selection) return;
     selection = id;
-    localStorage.setItem('selection', id);
+    ecrire('selection', id);
     charger();
   }
 
@@ -65,9 +66,9 @@
       const data = await geocoder(saisie);
       lieuCP = data;
       selection = 'cp';
-      localStorage.setItem('selection', 'cp');
-      localStorage.setItem('codePostal', saisie);
-      localStorage.setItem('lieuCP', JSON.stringify(data));
+      ecrire('selection', 'cp');
+      ecrire('codePostal', saisie);
+      ecrireJSON('lieuCP', data);
       charger();
     } catch (e) {
       erreurCP =
