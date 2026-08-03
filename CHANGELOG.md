@@ -1,6 +1,14 @@
 # CHANGELOG
 
 ## [Non publié]
+### Changed
+- Montées de dépendances de développement regroupées : `eslint` 10.8, `typescript-eslint` 8.66,
+  `prettier` 3.9, `vite` 8.2, `svelte` 5.56.8, `svelte-check` 4.7, `lint-staged` 17.3, `tsx` 4.23
+  et les greffons associés — plus quatre majeures vérifiées une par une : `supertest` 7,
+  `@types/supertest` 7, `@types/node` 26 et `jsdom` 30
+- `actions/checkout`, `actions/setup-node` et `actions/upload-artifact` passent en v7. Les runners
+  signalaient déjà la dépréciation de Node 20 sur `checkout@v4`
+
 ### Fixed
 - Une échéance sans donnée ne s'affiche plus « 0° » : le frontend déclarait non-nullables des
   champs qu'Open-Meteo laisse à `null` au-delà de la portée du modèle, et `Math.round(null)`
