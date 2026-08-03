@@ -51,6 +51,15 @@
   machine d'animation extraite de `CarteNuages.svelte`
 - `err.issues` et `{ message }` à la place de `err.errors` et `invalid_type_error` :
   APIs supprimées en Zod 4, la montée de version n'est plus bloquée
+- Zod 4 — la montée préparée plus haut est effectuée. `z.url()` remplace `z.string().url()`,
+  déprécié en v4
+- Node unifié sur 22 : `engines` annonçait 18, la CI tournait sur 20 et les images Docker sur
+  22. Trois cibles, aucune testée ensemble — c'est celle qui tourne en production qui l'emporte
+- `package.json` racine déclarait la licence ISC, `LICENSE` et le README disaient MIT
+- `twa-manifest.json` annonçait `appVersionCode: 1` alors que `build.gradle` était à 3
+- `README` documentait `GET /api/geocode/:rta` ; le paramètre s'appelle `:codePostal`
+- L'accent manquant de « Position personnalisée », seule chaîne visible du projet à en être
+  privée
 - Le hook `pre-push` lance `svelte-check`, comme la CI
 
 ### Added

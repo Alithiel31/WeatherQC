@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/Alithiel31/WeatherQC.git"
   },
-  "license": "ISC",
+  "license": "MIT",
   "author": "",
   "private": true,
   "scripts": {

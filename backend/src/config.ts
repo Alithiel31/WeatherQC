@@ -38,7 +38,7 @@ const origines = z.preprocess(
           .map((o) => o.trim().replace(/\/+$/, ''))
           .filter(Boolean)
       : [],
-  z.array(z.string().url('doit être une origine absolue, ex. https://exemple.com'))
+  z.array(z.url({ message: 'doit être une origine absolue, ex. https://exemple.com' }))
 );
 
 const environnementSchema = z.object({

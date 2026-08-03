@@ -1,6 +1,6 @@
 # 🌤️ Météo Québec
 
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green?logo=node.js)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-22+-green?logo=node.js)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Svelte](https://img.shields.io/badge/Svelte-5-orange?logo=svelte)](https://svelte.dev/)
 [![Docker](https://img.shields.io/badge/Docker-Enabled-blue?logo=docker)](https://www.docker.com/)
@@ -302,7 +302,7 @@ Ajouter une entrée dans `backend/src/data/cities.ts`.
 
 | Couche | Technologie |
 |---|---|
-| Backend | Express 5 · Node.js 18+ · TypeScript 5.6 |
+| Backend | Express 5 · Node.js 22+ · TypeScript 5.6 |
 | Frontend | Svelte 5 · TypeScript · Vite 8 |
 | PWA | vite-plugin-pwa · Service Worker (network-first) |
 | Carte | Leaflet · RainViewer |
