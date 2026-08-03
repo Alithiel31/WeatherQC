@@ -65,7 +65,9 @@ describe('App — chargement initial', () => {
 
     render(App);
 
-    await waitFor(() => expect(previsionsVille).toHaveBeenCalledWith('quebec'));
+    await waitFor(() =>
+      expect(previsionsVille).toHaveBeenCalledWith('quebec', expect.any(AbortSignal))
+    );
   });
 
   it('affiche les conditions actuelles arrondies', async () => {
@@ -122,7 +124,7 @@ describe('App — chargement initial', () => {
     render(App);
 
     expect(await screen.findByText('Partiellement nuageux')).toBeTruthy();
-    expect(previsionsVille).toHaveBeenCalledWith('montreal');
+    expect(previsionsVille).toHaveBeenCalledWith('montreal', expect.any(AbortSignal));
 
     vi.restoreAllMocks();
   });
@@ -136,8 +138,42 @@ describe('App — changement de ville', () => {
 
     await user.click(screen.getByRole('button', { name: 'Québec' }));
 
-    await waitFor(() => expect(previsionsVille).toHaveBeenCalledWith('quebec'));
+    await waitFor(() =>
+      expect(previsionsVille).toHaveBeenCalledWith('quebec', expect.any(AbortSignal))
+    );
     expect(localStorage.getItem('selection')).toBe('quebec');
+  });
+
+  // Régression : rien n'annulait la requête précédente. Si elle répondait en
+  // dernier, l'écran affichait une ville et le bouton actif en désignait une autre.
+  it('ignore la réponse d’une requête supplantée', async () => {
+    const user = userEvent.setup();
+    // La température vient de la réponse — contrairement au nom du lieu, qui est
+    // dérivé de la sélection et basculerait même sans requête.
+    const quebec: ReponseMeteo = { ...montreal, actuel: { ...montreal.actuel, temperature: 5.2 } };
+
+    // Montréal (le chargement initial) répond après Québec : sans annulation,
+    // c'est sa réponse périmée qui resterait affichée.
+    let rendreMontreal!: (v: ReponseMeteo) => void;
+    // `signal` optionnel à dessein : sans lui, la réponse tardive de Montréal
+    // écrase Québec — c'est précisément la régression que ce test surveille.
+    previsionsVille.mockImplementation((ville: string, signal?: AbortSignal) => {
+      if (ville === 'quebec') return Promise.resolve(quebec);
+      return new Promise<ReponseMeteo>((resolve, reject) => {
+        rendreMontreal = resolve;
+        signal?.addEventListener('abort', () => reject(signal.reason));
+      });
+    });
+
+    render(App);
+    await user.click(screen.getByRole('button', { name: 'Québec' }));
+    expect(await screen.findByText('5')).toBeTruthy();
+
+    rendreMontreal(montreal);
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(screen.getByText('5')).toBeTruthy();
+    expect(screen.queryByText('21')).toBeNull();
   });
 
   it('ne recharge pas si la ville est déjà active', async () => {
@@ -162,7 +198,9 @@ describe('App — recherche par code postal', () => {
     await user.type(screen.getByLabelText('Code postal canadien'), 'H2X 1Y4');
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
 
-    await waitFor(() => expect(previsionsCoordonnees).toHaveBeenCalledWith(lieu));
+    await waitFor(() =>
+      expect(previsionsCoordonnees).toHaveBeenCalledWith(lieu, expect.any(AbortSignal))
+    );
     expect(geocoder).toHaveBeenCalledWith('H2X 1Y4');
     expect(JSON.parse(localStorage.getItem('lieuCP')!)).toEqual(lieu);
   });

@@ -32,7 +32,21 @@ describe('previsionsVille', () => {
     const mock = stubFetchJson(previsions);
 
     await expect(previsionsVille('montreal')).resolves.toEqual(previsions);
-    expect(mock).toHaveBeenCalledWith('/api/previsions/montreal');
+    expect(mock).toHaveBeenCalledWith('/api/previsions/montreal', {
+      signal: expect.any(AbortSignal),
+    });
+  });
+
+  it('compose l’annulation de l’appelant avec le délai maximal', async () => {
+    const mock = stubFetchJson(previsions);
+    const controleur = new AbortController();
+
+    await previsionsVille('montreal', controleur.signal);
+    const transmis = mock.mock.calls[0][1].signal as AbortSignal;
+
+    expect(transmis.aborted).toBe(false);
+    controleur.abort();
+    expect(transmis.aborted).toBe(true);
   });
 
   it('relaie le message du backend sur un 404', async () => {
@@ -80,7 +94,9 @@ describe('geocoder', () => {
     const mock = stubFetchJson(lieu);
 
     await expect(geocoder('H2X 1Y4')).resolves.toEqual(lieu);
-    expect(mock).toHaveBeenCalledWith('/api/geocode/H2X%201Y4');
+    expect(mock).toHaveBeenCalledWith('/api/geocode/H2X%201Y4', {
+      signal: expect.any(AbortSignal),
+    });
   });
 
   it('lève une ErreurApi portant le message du backend sur un 404', async () => {

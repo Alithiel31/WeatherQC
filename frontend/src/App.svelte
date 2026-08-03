@@ -31,15 +31,28 @@
       : (villes.find((v) => v.id === selection)?.nom ?? '')
   );
 
+  let chargementEnCours: AbortController | null = null;
+
   async function charger(): Promise<void> {
+    // Deux clics rapides lançaient deux requêtes concurrentes : si la première
+    // répondait en dernier, l'écran affichait une ville et le bouton actif en
+    // désignait une autre. La requête devenue inutile est annulée pour de bon.
+    chargementEnCours?.abort();
+    const controleur = new AbortController();
+    chargementEnCours = controleur;
+
     chargement = true;
     erreur = null;
     try {
       donnees =
         selection === 'cp' && lieuCP
-          ? await previsionsCoordonnees(lieuCP)
-          : await previsionsVille(selection);
+          ? await previsionsCoordonnees(lieuCP, controleur.signal)
+          : await previsionsVille(selection, controleur.signal);
     } catch (e) {
+      // Remplacée par une requête plus récente : ni erreur, ni fin de chargement
+      // — celle qui l'a supplantée s'en charge.
+      if (controleur.signal.aborted) return;
+
       // Le backend sait pourquoi il a échoué (ville inconnue, amont injoignable,
       // quota dépassé) ; le message générique ne sert que pour une panne réseau.
       erreur =
@@ -47,7 +60,9 @@
           ? e.message
           : 'Les prévisions ne sont pas disponibles pour le moment. Vérifiez la connexion, puis réessayez.';
     } finally {
-      chargement = false;
+      // Une requête supplantée ne rend pas la main : celle qui l'a remplacée est
+      // encore en vol, le spinner doit rester.
+      if (chargementEnCours === controleur) chargement = false;
     }
   }
 
@@ -85,6 +100,7 @@
     return () => {
       window.removeEventListener('online', enLigne);
       window.removeEventListener('offline', horsConnexion);
+      chargementEnCours?.abort();
     };
   });
 </script>
