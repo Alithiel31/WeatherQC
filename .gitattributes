@@ -1,0 +1,12 @@
+# Le dépôt stocke tout en LF, quelle que soit la plateforme du contributeur.
+#
+# Sans ceci, un clone Windows avec core.autocrlf=true écrit des CRLF dans le
+# working tree, et `prettier --check` — dont le défaut est endOfLine: "lf" —
+# échoue sur l'intégralité des fichiers. Le hook pre-push devient alors
+# impossible à satisfaire sur Windows alors que la CI, sous Linux, passe.
+* text=auto eol=lf
+
+# Binaires : jamais de conversion.
+*.png binary
+*.aab binary
+*.keystore binary
