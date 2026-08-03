@@ -114,6 +114,26 @@ describe('Routes Prévisions', () => {
       expect(response.body.erreur).toBe('Paramètres invalides');
     });
 
+    it('doit réutiliser le cache mais garder le nom de la requête', async () => {
+      // La clé de cache est purement géographique : deux utilisateurs sur la
+      // même position doivent partager les prévisions sans hériter du libellé
+      // saisi par l'autre.
+      const fetchMock = stubFetchJson(reponseOpenMeteo);
+
+      const premiere = await request(app)
+        .get('/api/previsions-coordonnees?lat=45.5&lon=-73.6&nom=Verdun')
+        .expect(200);
+      const seconde = await request(app)
+        .get('/api/previsions-coordonnees?lat=45.5&lon=-73.6&nom=Rosemont')
+        .expect(200);
+
+      expect(premiere.body.depuisCache).toBe(false);
+      expect(seconde.body.depuisCache).toBe(true);
+      expect(seconde.body.ville.nom).toBe('Rosemont');
+      expect(seconde.body.ville.latitude).toBe(45.5);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
     it('doit utiliser le nom par défaut si non fourni', async () => {
       stubFetchJson(reponseOpenMeteo);
 

@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { globalErrorHandler } from '../../../src/middlewares/global-error-handler.js';
 import { NotFoundError, BadGatewayError, BadRequestError } from '../../../src/lib/errors.js';
+import { config } from '../../../src/config.js';
 import type { Request, Response, NextFunction } from 'express';
 
 function makeRes() {
@@ -90,6 +91,46 @@ describe('globalErrorHandler', () => {
 
       const body = (res.json as ReturnType<typeof vi.fn>).mock.calls[0][0];
       expect(body.error).not.toContain('secret db password');
+    });
+  });
+
+  describe('Divulgation de la stack', () => {
+    const isProdInitial = config.isProd;
+
+    afterEach(() => {
+      config.isProd = isProdInitial;
+    });
+
+    it('joint la stack hors production, pour le débogage', () => {
+      config.isProd = false;
+      const res = makeRes();
+
+      globalErrorHandler(new Error('crash inattendu'), req, res, next);
+
+      const body = (res.json as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(body.stack).toBeDefined();
+    });
+
+    it('ne joint jamais la stack en production', () => {
+      // L'API est exposée publiquement : une stack révèle l'arborescence du
+      // serveur et les versions des dépendances.
+      config.isProd = true;
+      const res = makeRes();
+
+      globalErrorHandler(new Error('crash inattendu'), req, res, next);
+
+      const body = (res.json as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(body).not.toHaveProperty('stack');
+    });
+
+    it('ne joint pas non plus la stack sur une erreur cliente en production', () => {
+      config.isProd = true;
+      const res = makeRes();
+
+      globalErrorHandler(new NotFoundError('Ville inconnue'), req, res, next);
+
+      const body = (res.json as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(body).not.toHaveProperty('stack');
     });
   });
 });
