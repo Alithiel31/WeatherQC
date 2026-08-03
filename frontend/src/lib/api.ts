@@ -1,8 +1,13 @@
 import type { ReponseMeteo, LieuCP, FramesRainViewer, VilleDisponible } from './types.ts';
 
+/**
+ * Hôte des tuiles, en repli si le backend n'en déclare pas.
+ *
+ * Les tuiles restent chargées en direct depuis RainViewer : seul l'index JSON
+ * passe par le backend. Les faire transiter par le Raspberry Pi coûterait bien
+ * plus cher que ce que le cache ferait gagner.
+ */
 export const HOTE_TUILES_DEFAUT = 'https://tilecache.rainviewer.com';
-
-const URL_RAINVIEWER = 'https://api.rainviewer.com/public/weather-maps.json';
 
 /**
  * Erreur portant un message destiné à l'utilisateur, fourni par le backend.
@@ -88,16 +93,24 @@ export async function geocoder(codePostal: string): Promise<LieuCP> {
 }
 
 /**
- * `hoteActuel` sert de repli : RainViewer renvoie parfois un index sans champ
- * `host`, auquel cas on conserve l'hôte déjà utilisé pour les tuiles.
+ * Index des images satellite et radar, servi par le backend.
+ *
+ * L'appel partait autrefois droit sur `api.rainviewer.com` : seule dépendance
+ * tierce sans cache ni quota côté serveur, alors qu'Open-Meteo et Zippopotam
+ * sont bornés. Le passer par `/api/rainviewer` lui donne le même traitement —
+ * délai maximal, nouvelle tentative, validation de schéma et cache partagé —
+ * et le découpage des séries se fait désormais en amont.
+ *
+ * `hoteActuel` reste un repli : le backend garantit un hôte, mais conserver
+ * celui déjà utilisé pour les tuiles ne coûte rien.
  */
 export async function framesRainViewer(hoteActuel = HOTE_TUILES_DEFAUT): Promise<FramesRainViewer> {
-  const res = await fetch(URL_RAINVIEWER, { signal: signalRequete() });
-  if (!res.ok) throw new Error('RainViewer indisponible');
-  const data = await res.json();
+  const res = await fetch('/api/rainviewer', { signal: signalRequete() });
+  if (!res.ok) throw new ErreurApi(await messageErreur(res, 'RainViewer indisponible'));
+  const data = (await res.json()) as FramesRainViewer;
   return {
-    hote: data.host || hoteActuel,
-    satellite: (data.satellite?.infrared ?? []).slice(-10),
-    radar: [...(data.radar?.past ?? []), ...(data.radar?.nowcast ?? [])].slice(-12),
+    hote: data.hote || hoteActuel,
+    satellite: data.satellite ?? [],
+    radar: data.radar ?? [],
   };
 }

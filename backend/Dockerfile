@@ -15,7 +15,7 @@ FROM deps AS build
 COPY . .
 RUN npx tsc
 
-# ── production : image minimale — dernier stage = cible Railway par défaut ─
+# ── production : image minimale, cible de docker-compose ──────────────────
 FROM node:22-alpine AS production
 WORKDIR /app
 COPY package*.json ./

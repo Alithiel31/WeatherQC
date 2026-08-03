@@ -2,11 +2,13 @@ import { describe, it, expect } from 'vitest';
 import {
   descriptionMeteo,
   iconeMeteo,
+  degres,
   familleMeteo,
   jourCourt,
   jourLong,
   heureCourte,
   heureMinute,
+  VALEUR_ABSENTE,
 } from '../../src/lib/meteo.ts';
 
 describe('descriptionMeteo', () => {
@@ -17,6 +19,10 @@ describe('descriptionMeteo', () => {
 
   it('retombe sur un libellé neutre pour un code inconnu', () => {
     expect(descriptionMeteo(999)).toBe('Conditions inconnues');
+  });
+
+  it('retombe sur un libellé neutre quand Open-Meteo n’a pas de code', () => {
+    expect(descriptionMeteo(null)).toBe('Conditions inconnues');
   });
 });
 
@@ -36,6 +42,30 @@ describe('iconeMeteo', () => {
   it('retombe sur ❔ pour un code inconnu', () => {
     expect(iconeMeteo(999)).toBe('❔');
     expect(iconeMeteo(999, false)).toBe('❔');
+  });
+
+  it('retombe sur ❔ quand Open-Meteo n’a pas de code', () => {
+    expect(iconeMeteo(null)).toBe('❔');
+    expect(iconeMeteo(null, false)).toBe('❔');
+  });
+});
+
+describe('degres', () => {
+  it('arrondit une température au degré', () => {
+    expect(degres(21.4)).toBe('21°');
+    expect(degres(21.6)).toBe('22°');
+    expect(degres(-3.5)).toBe('-3°');
+  });
+
+  it('rend un vrai zéro comme tel', () => {
+    expect(degres(0)).toBe('0°');
+  });
+
+  it('rend une valeur absente sans jamais l’afficher comme 0°', () => {
+    // C'est tout le bug : `Math.round(null)` vaut 0, et « 0° » est une
+    // température parfaitement plausible en hiver québécois.
+    expect(degres(null)).toBe(VALEUR_ABSENTE);
+    expect(degres(null)).not.toContain('0');
   });
 });
 

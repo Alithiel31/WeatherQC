@@ -20,19 +20,28 @@ export interface ConditionsActuelles {
   jour: boolean;
 }
 
+/**
+ * `null` là où Open-Meteo n'a pas de valeur — typiquement les probabilités de
+ * précipitation les plus lointaines, au-delà de la portée du modèle.
+ *
+ * Ces champs étaient déclarés non-nullables alors que le backend les type
+ * honnêtement (`backend/src/services/openmeteo.service.ts`, qui fait foi) :
+ * TypeScript ne voyait rien et `Math.round(null)` affichait « 0° », une valeur
+ * plausible en hiver. Le mensonge coûtait plus cher que la donnée manquante.
+ */
 export interface PrevisionsHoraires {
   heure: string;
-  temperature: number;
-  code: number;
-  precipitation: number;
+  temperature: number | null;
+  code: number | null;
+  precipitation: number | null;
 }
 
 export interface PrevisionsQuotidiennes {
   date: string;
-  code: number;
-  max: number;
-  min: number;
-  precipitation: number;
+  code: number | null;
+  max: number | null;
+  min: number | null;
+  precipitation: number | null;
   lever: string;
   coucher: string;
 }

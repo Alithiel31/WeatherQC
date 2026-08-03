@@ -31,7 +31,9 @@ export default defineConfig({
       workbox: {
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/api\.rainviewer\.com\/.*/,
+            // L'index passe désormais par le backend : même motif fonction que
+            // /api/previsions, pour couvrir nginx en prod et le proxy Vite en dev.
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/rainviewer'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'rainviewer-index',

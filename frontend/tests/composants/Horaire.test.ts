@@ -58,3 +58,28 @@ describe('Horaire', () => {
     expect(screen.queryAllByRole('listitem')).toHaveLength(0);
   });
 });
+
+/** Voir `Quotidien.test.ts` : Open-Meteo laisse des `null` en fin de série. */
+describe('Horaire — échéances sans donnée', () => {
+  const vide = { temperature: null, code: null, precipitation: null };
+
+  it('n’affiche jamais « 0° » à la place d’une température absente', () => {
+    render(Horaire, { heures: [heure(9), heure(10, vide)] });
+
+    expect(screen.queryByText('0°')).toBeNull();
+    expect(screen.getByText('—')).toBeTruthy();
+  });
+
+  it('rend l’échéance malgré tout, avec l’icône de repli', () => {
+    render(Horaire, { heures: [heure(9, vide)] });
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(screen.getByText('❔')).toBeTruthy();
+  });
+
+  it('n’affiche pas de probabilité de précipitation absente', () => {
+    render(Horaire, { heures: [heure(9, vide)] });
+
+    expect(screen.queryByText(/%/)).toBeNull();
+  });
+});

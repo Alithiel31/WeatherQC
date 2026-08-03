@@ -50,7 +50,7 @@ describe('Validation Schemas', () => {
         lat: 45.5,
         lon: -73.6,
       });
-      expect(result.nom).toBe('Position personnalisee');
+      expect(result.nom).toBe('Position personnalisée');
     });
   });
 

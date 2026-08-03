@@ -167,7 +167,7 @@ describe('Routes Prévisions', () => {
         .get('/api/previsions-coordonnees?lat=45.5&lon=-73.6')
         .expect(200);
 
-      expect(response.body.ville.nom).toBe('Position personnalisee');
+      expect(response.body.ville.nom).toBe('Position personnalisée');
     });
   });
 });
