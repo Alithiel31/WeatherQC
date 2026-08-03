@@ -81,8 +81,8 @@ describe('Routes Prévisions', () => {
         .get('/api/previsions-coordonnees?lat=abc&lon=-73.6')
         .expect(400);
 
-      expect(response.body).toHaveProperty('erreur');
-      expect(response.body.erreur).toBe('Paramètres invalides');
+      expect(response.body.status).toBe(400);
+      expect(response.body.error).toBe('Paramètres invalides');
     });
 
     it('doit retourner erreur 400 si lon est hors limites', async () => {
@@ -90,8 +90,8 @@ describe('Routes Prévisions', () => {
         .get('/api/previsions-coordonnees?lat=45.5&lon=-200')
         .expect(400);
 
-      expect(response.body).toHaveProperty('erreur');
-      expect(response.body.erreur).toBe('Paramètres invalides');
+      expect(response.body.status).toBe(400);
+      expect(response.body.error).toBe('Paramètres invalides');
     });
 
     it('doit accepter un nom personnalisé', async () => {
@@ -110,8 +110,8 @@ describe('Routes Prévisions', () => {
         .get(`/api/previsions-coordonnees?lat=45.5&lon=-73.6&nom=${longNom}`)
         .expect(400);
 
-      expect(response.body).toHaveProperty('erreur');
-      expect(response.body.erreur).toBe('Paramètres invalides');
+      expect(response.body.status).toBe(400);
+      expect(response.body.error).toBe('Paramètres invalides');
     });
 
     it('doit réutiliser le cache mais garder le nom de la requête', async () => {

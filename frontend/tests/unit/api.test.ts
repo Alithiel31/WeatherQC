@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   previsionsVille,
   previsionsCoordonnees,
@@ -35,10 +35,11 @@ describe('previsionsVille', () => {
     expect(mock).toHaveBeenCalledWith('/api/previsions/montreal');
   });
 
-  it('rejette sur une réponse 404', async () => {
-    stubFetchJson({ erreur: 'Ville inconnue' }, 404);
+  it('relaie le message du backend sur un 404', async () => {
+    stubFetchJson({ status: 404, error: 'Ville inconnue. Villes disponibles : montreal.' }, 404);
 
-    await expect(previsionsVille('laval')).rejects.toThrow('Réponse invalide du serveur');
+    await expect(previsionsVille('laval')).rejects.toThrow(ErreurApi);
+    await expect(previsionsVille('laval')).rejects.toThrow('Ville inconnue');
   });
 
   it('rejette sur une réponse 500', async () => {
@@ -83,14 +84,43 @@ describe('geocoder', () => {
   });
 
   it('lève une ErreurApi portant le message du backend sur un 404', async () => {
-    stubFetchJson({ erreur: 'Code postal introuvable : ZZZ' }, 404);
+    stubFetchJson({ status: 404, error: 'Code postal introuvable : ZZZ' }, 404);
 
     await expect(geocoder('ZZZ')).rejects.toThrow(ErreurApi);
     await expect(geocoder('ZZZ')).rejects.toThrow('Code postal introuvable : ZZZ');
   });
 
+  // Régression : le message par défaut était affiché quel que soit le statut, et
+  // une panne de Zippopotam envoyait l'utilisateur corriger un code postal valide.
+  it('relaie l’indisponibilité amont plutôt que « code postal introuvable »', async () => {
+    stubFetchJson({ status: 502, error: 'Zippopotam injoignable : timeout' }, 502);
+
+    await expect(geocoder('H2X')).rejects.toThrow('Zippopotam injoignable : timeout');
+  });
+
+  it('relaie le dépassement de quota', async () => {
+    stubFetchJson({ status: 429, error: 'Trop de requêtes — réessayez dans un instant.' }, 429);
+
+    await expect(geocoder('H2X')).rejects.toThrow('Trop de requêtes');
+  });
+
   it('retombe sur un message par défaut si le backend n’en fournit pas', async () => {
     stubFetchJson({}, 500);
+
+    await expect(geocoder('H2X')).rejects.toThrow('Code postal introuvable.');
+  });
+
+  it('retombe sur le message par défaut quand le corps n’est pas du JSON', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 502,
+        json: async () => {
+          throw new SyntaxError('Unexpected token < in JSON');
+        },
+      })
+    );
 
     await expect(geocoder('H2X')).rejects.toThrow('Code postal introuvable.');
   });

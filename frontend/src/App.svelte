@@ -38,8 +38,13 @@
         selection === 'cp' && lieuCP
           ? await previsionsCoordonnees(lieuCP)
           : await previsionsVille(selection);
-    } catch {
-      erreur = 'Les prévisions ne sont pas disponibles pour le moment. Vérifiez la connexion, puis réessayez.';
+    } catch (e) {
+      // Le backend sait pourquoi il a échoué (ville inconnue, amont injoignable,
+      // quota dépassé) ; le message générique ne sert que pour une panne réseau.
+      erreur =
+        e instanceof ErreurApi
+          ? e.message
+          : 'Les prévisions ne sont pas disponibles pour le moment. Vérifiez la connexion, puis réessayez.';
     } finally {
       chargement = false;
     }

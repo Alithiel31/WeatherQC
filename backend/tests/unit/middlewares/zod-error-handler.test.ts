@@ -31,7 +31,8 @@ describe('zodErrorHandler', () => {
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
-        erreur: 'Paramètres invalides',
+        status: 400,
+        error: 'Paramètres invalides',
         details: expect.arrayContaining([
           expect.objectContaining({ chemin: 'lat', message: expect.any(String) }),
         ]),

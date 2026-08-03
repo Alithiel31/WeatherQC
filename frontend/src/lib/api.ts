@@ -23,17 +23,32 @@ export async function previsionsCoordonnees(lieu: LieuCP): Promise<ReponseMeteo>
   return recupererPrevisions(`/api/previsions-coordonnees?${q}`);
 }
 
+/**
+ * Toutes les erreurs du backend partagent l'enveloppe `{ status, error }`.
+ * Un corps illisible — page HTML d'un proxy, réponse vide — retombe sur `defaut`
+ * plutôt que de masquer la panne derrière une erreur de parsing.
+ */
+async function messageErreur(res: Response, defaut: string): Promise<string> {
+  try {
+    const corps = (await res.json()) as { error?: string };
+    return corps.error ?? defaut;
+  } catch {
+    return defaut;
+  }
+}
+
 async function recupererPrevisions(url: string): Promise<ReponseMeteo> {
   const res = await fetch(url);
-  if (!res.ok) throw new Error('Réponse invalide du serveur');
+  if (!res.ok) throw new ErreurApi(await messageErreur(res, 'Réponse invalide du serveur'));
   return (await res.json()) as ReponseMeteo;
 }
 
 export async function geocoder(codePostal: string): Promise<LieuCP> {
   const res = await fetch(`/api/geocode/${encodeURIComponent(codePostal)}`);
-  const data = (await res.json()) as LieuCP & { erreur?: string };
-  if (!res.ok) throw new ErreurApi(data.erreur ?? 'Code postal introuvable.');
-  return data;
+  // Sans le message du backend, une panne amont (502) ou un quota dépassé (429)
+  // s'affichait « Code postal introuvable » — un diagnostic faux.
+  if (!res.ok) throw new ErreurApi(await messageErreur(res, 'Code postal introuvable.'));
+  return (await res.json()) as LieuCP;
 }
 
 /**
