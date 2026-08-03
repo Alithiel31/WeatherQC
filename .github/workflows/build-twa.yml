@@ -19,6 +19,11 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # `push` est déjà borné à main, mais `workflow_dispatch` ne l'était pas : le
+    # keystore de production pouvait être déchiffré depuis n'importe quelle
+    # branche, en contradiction avec ce que promettait le README. Même garde que
+    # `deploy-twa.yml`.
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout
@@ -35,8 +40,15 @@ jobs:
         with:
           node-version: '20'
 
+      # Version épinglée : cette étape s'exécute dans le job qui déchiffre le
+      # keystore et porte les mots de passe en environnement. Les actions tierces
+      # y sont épinglées par SHA ; laisser cette installation flotter en ferait
+      # la seule porte ouverte du dépôt.
+      #
+      # Dependabot ne lit pas les étapes `run` : cette version se relève à la main
+      # (`npm view @bubblewrap/cli version`).
       - name: Install Bubblewrap
-        run: npm install -g @bubblewrap/cli
+        run: npm install -g @bubblewrap/cli@1.25.0
 
       - name: Decode Keystore
         run: |
@@ -55,6 +67,9 @@ jobs:
           KSPASS: ${{ secrets.KEYSTORE_PASSWORD }}
           KPASS: ${{ secrets.KEY_PASSWORD }}
         run: |
+          # Sans `update`, l'installation échoue dès que l'index de paquets de
+          # l'image du runner a pris du retard sur les miroirs.
+          sudo apt-get update > /dev/null
           sudo apt-get install -y expect > /dev/null
           chmod +x gradlew
           expect -c '

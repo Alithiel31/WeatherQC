@@ -62,12 +62,15 @@ L'application est publiée sur le **Google Play Store** sous forme de TWA (Trust
 
 | Workflow | Déclencheur | Rôle |
 |---|---|---|
-| `build-twa.yml` | Push sur `twa-qcweather/**` **depuis `main`** ou manuel | Build + signature du `.aab` |
+| `build-twa.yml` | Push sur `twa-qcweather/**` **depuis `main`**, ou manuel **depuis `main`** | Build + signature du `.aab` |
 | `deploy-twa.yml` | Après `build-twa.yml` réussi, ou manuel depuis `main` | Publication sur Play Store (Internal Testing) |
 
-> Le build n'est déclenché que depuis `main` : le keystore de production n'est jamais
-> déchiffré sur une branche de travail. Pour tester un changement TWA avant merge,
-> utiliser le déclenchement manuel (`workflow_dispatch`).
+> Le keystore de production n'est déchiffré que depuis `main` — les deux workflows portent la
+> garde `github.ref == 'refs/heads/main'`, qui couvre aussi le déclenchement manuel.
+>
+> **Un changement TWA ne peut donc pas être construit avant son merge.** Pour le valider en
+> amont : `cd twa-qcweather && ./gradlew bundleRelease` en local, avec un keystore de
+> développement. La signature de production, elle, n'existe que sur `main`.
 
 > `deploy-twa.yml` nécessite une **première soumission manuelle** dans Play Console — Google exige qu'une version existe déjà sur la piste avant d'accepter les uploads via API.
 
