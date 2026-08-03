@@ -3,8 +3,10 @@ name: CI
 on:
   push:
     branches: [main]
+  # Sans filtre de base : une PR qui vise autre chose que `main` — cas d'une
+  # série de PR empilées — n'obtenait aucun check du tout. Une PR sans CI est
+  # exactement le filet qu'on cherche à rétablir ici.
   pull_request:
-    branches: [main]
 
 permissions:
   contents: read
