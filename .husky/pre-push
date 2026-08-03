@@ -2,8 +2,12 @@
 echo "▶ Backend : format + lint..."
 cd backend && npm run format:check && npm run lint || exit 1
 
-echo "▶ Backend : tests unitaires..."
-npm run test:unit || exit 1
+# `test:run` et non `test:unit` : la suite d'intégration — routes, durcissement,
+# CORS, cache — n'était jamais jouée avant un push, alors que le frontend, lui,
+# passe déjà par sa suite complète. Le README annonçait d'ailleurs `test:run`.
+# Aucun appel réseau ici, tout tient sur les fixtures : le coût reste marginal.
+echo "▶ Backend : tests unitaires et d'intégration..."
+npm run test:run || exit 1
 
 echo "▶ Frontend : format + lint..."
 cd ../frontend && npm run format:check && npm run lint || exit 1

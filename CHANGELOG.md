@@ -1,6 +1,26 @@
 # CHANGELOG
 
 ## [Non publié]
+### Added
+- Le job `docker` de la CI démarre réellement la pile : validation de `nginx.conf`,
+  `docker compose up --wait` — donc healthcheck du backend et `depends_on: service_healthy`
+  exercés — puis appels à `/api/sante`, `/api/villes` et la coquille applicative à travers
+  nginx. Il se contentait de construire deux images : la syntaxe du compose, la commande de
+  healthcheck, la config nginx et une variable d'environnement invalide n'étaient découvertes
+  qu'au déploiement sur le Pi
+- Un échec de `contract.yml` ouvre une issue étiquetée `derive-contrat`, réutilisée tant
+  qu'elle reste ouverte. Ce workflow est le seul détecteur de dérive de schéma des trois
+  amonts, et son échec ne produisait qu'une coche rouge dans un onglet que personne n'ouvre
+- Dependabot suit désormais les images Docker (`node:22-alpine`, `nginx:alpine`) et Gradle —
+  ce dernier étant le module signé et envoyé au Play Store, jusqu'ici le seul sans
+  automatisation de dépendances
+
+### Changed
+- Le hook `pre-push` lance `test:run` et non `test:unit` côté backend : la suite
+  d'intégration — routes, durcissement, CORS, cache — n'était jamais jouée avant un push,
+  alors que le frontend passait déjà par sa suite complète. Le README annonçait `test:run`,
+  décrivant un filet qui n'existait pas
+
 ### Fixed
 - Une échéance sans donnée ne s'affiche plus « 0° » : le frontend déclarait non-nullables des
   champs qu'Open-Meteo laisse à `null` au-delà de la portée du modèle, et `Math.round(null)`
