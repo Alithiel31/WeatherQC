@@ -88,4 +88,5 @@ export function stopCacheSweeper(): void {
 export const TTL = {
   PREVISIONS: config.cache.ttlPrevisions,
   GEOCODE: config.cache.ttlGeocode,
+  RAINVIEWER: config.cache.ttlRainviewer,
 };

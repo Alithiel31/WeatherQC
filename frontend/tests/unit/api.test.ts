@@ -165,66 +165,78 @@ describe('geocoder', () => {
   });
 });
 
+/**
+ * L'index ne vient plus d'`api.rainviewer.com` mais du backend, qui le borne,
+ * le valide et le met en cache comme les deux autres amonts. Le découpage des
+ * séries est vérifié côté serveur — `backend/tests/integration/routes/rainviewer`.
+ */
 describe('framesRainViewer', () => {
-  const index = {
-    host: 'https://tilecache.rainviewer.com',
-    satellite: { infrared: Array.from({ length: 14 }, (_, i) => ({ path: `/s${i}`, time: i })) },
-    radar: {
-      past: Array.from({ length: 10 }, (_, i) => ({ path: `/p${i}`, time: i })),
-      nowcast: Array.from({ length: 5 }, (_, i) => ({ path: `/n${i}`, time: 100 + i })),
-    },
+  const frames = {
+    hote: 'https://tilecache.rainviewer.com',
+    satellite: Array.from({ length: 10 }, (_, i) => ({ path: `/s${i}`, time: i })),
+    radar: Array.from({ length: 12 }, (_, i) => ({ path: `/r${i}`, time: 100 + i })),
+    depuisCache: false,
   };
 
-  it('garde les 10 dernières images satellite', async () => {
-    stubFetchJson(index);
+  it('interroge le backend, jamais RainViewer en direct', async () => {
+    const fetchMock = stubFetchJson(frames);
 
-    const frames = await framesRainViewer();
+    await framesRainViewer();
 
-    expect(frames.satellite).toHaveLength(10);
-    expect(frames.satellite[9].path).toBe('/s13');
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/rainviewer');
   });
 
-  it('concatène passé et prévision radar en gardant les 12 dernières', async () => {
-    stubFetchJson(index);
+  it('relaie les séries telles que le backend les a découpées', async () => {
+    stubFetchJson(frames);
 
-    const frames = await framesRainViewer();
+    const recues = await framesRainViewer();
 
-    expect(frames.radar).toHaveLength(12);
-    expect(frames.radar[11].path).toBe('/n4');
+    expect(recues.satellite).toHaveLength(10);
+    expect(recues.radar).toHaveLength(12);
+    expect(recues.radar[11].path).toBe('/r11');
   });
 
-  it('conserve l’hôte courant si l’index n’en fournit pas', async () => {
-    stubFetchJson({ ...index, host: undefined });
+  it('conserve l’hôte courant si la réponse n’en fournit pas', async () => {
+    stubFetchJson({ ...frames, hote: undefined });
 
-    const frames = await framesRainViewer('https://ancien.exemple');
+    const recues = await framesRainViewer('https://ancien.exemple');
 
-    expect(frames.hote).toBe('https://ancien.exemple');
+    expect(recues.hote).toBe('https://ancien.exemple');
   });
 
   it('retombe sur l’hôte par défaut sans argument', async () => {
-    stubFetchJson({ ...index, host: undefined });
+    stubFetchJson({ ...frames, hote: undefined });
 
     await expect(framesRainViewer()).resolves.toMatchObject({ hote: HOTE_TUILES_DEFAUT });
   });
 
-  it('tolère un index sans aucune couche', async () => {
+  it('tolère une réponse sans aucune couche', async () => {
     stubFetchJson({});
 
-    const frames = await framesRainViewer();
+    const recues = await framesRainViewer();
 
-    expect(frames.satellite).toEqual([]);
-    expect(frames.radar).toEqual([]);
+    expect(recues.satellite).toEqual([]);
+    expect(recues.radar).toEqual([]);
   });
 
-  it('rejette quand RainViewer répond en erreur', async () => {
+  it('reprend le message du backend quand il est en erreur', async () => {
+    // Même enveloppe `{ status, error }` que les autres routes : la carte n'a
+    // plus à deviner si la panne vient du backend ou de RainViewer.
+    stubFetchJson({ status: 502, error: 'RainViewer injoignable : timeout' }, 502);
+
+    await expect(framesRainViewer()).rejects.toThrow('RainViewer injoignable : timeout');
+  });
+
+  it('retombe sur un message générique si le corps est illisible', async () => {
     stubFetchJson({}, 503);
 
     await expect(framesRainViewer()).rejects.toThrow('RainViewer indisponible');
   });
 
-  it('propage une panne réseau', async () => {
+  it('propage une panne réseau sans la déguiser en ErreurApi', async () => {
     stubFetchErreurReseau();
 
-    await expect(framesRainViewer()).rejects.toThrow(TypeError);
+    await expect(framesRainViewer()).rejects.not.toThrow(ErreurApi);
   });
 });

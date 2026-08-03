@@ -29,11 +29,21 @@
   navigateur → nginx → backend, et une requête pendue faisait tourner le spinner sans fin
 - Journalisation structurée (horodatage, niveau, contexte ; JSON en production) et en-tête
   `X-Request-Id` sur chaque réponse, repris de l'amont s'il est fourni
+- `PUBLIC_ORIGINS` — le domaine public ne figurait pas dans l'allowlist CORS. L'oubli était
+  invisible : nginx proxifie `/api/` en same-origin, donc aucune requête réelle ne porte
+  d'en-tête `Origin`. Tout client servi depuis un autre hôte aurait été bloqué sans message
+  exploitable
 - `dependabot.yml` (trois manifestes npm + actions GitHub) et `npm audit` en CI sur les
   dépendances de production
 - Limites mémoire et rotation des logs sur les deux conteneurs — la cible est un Raspberry Pi
 
 ### Changed
+- L'index RainViewer passe par `GET /api/rainviewer` : c'était la seule dépendance tierce
+  appelée en direct depuis le navigateur, sans délai maximal, sans validation de schéma et
+  sans cache — chaque visiteur ouvrant la carte tapait l'API. Elle hérite du traitement des
+  deux autres amonts, et le découpage des séries se fait désormais côté serveur. Seul
+  l'index est proxifié : les tuiles restent chargées en direct. En contrepartie, la carte
+  dépend du backend et affiche son repli quand il est injoignable
 - Le sélecteur de villes est alimenté par `GET /api/villes`, jusque-là inutilisée : la liste
   était recopiée dans `App.svelte`, et ajouter une ville demandait deux éditions. La liste en
   dur subsiste comme repli hors ligne

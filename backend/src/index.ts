@@ -11,6 +11,7 @@ import { requestId } from './middlewares/request-id.js';
 import villesRouter from './routers/villes.router.js';
 import previsionsRouter from './routers/previsions.router.js';
 import geocodeRouter from './routers/geocode.router.js';
+import rainviewerRouter from './routers/rainviewer.router.js';
 
 const app = express();
 
@@ -24,11 +25,16 @@ app.use(requestId);
 
 app.use(helmet());
 
+// Le domaine public n'y figurait pas : en production nginx proxifie `/api/` en
+// same-origin, donc aucune requête ne portait d'en-tête `Origin` et l'oubli
+// restait invisible. Tout client servi depuis un autre hôte aurait été bloqué
+// sans message exploitable. `PUBLIC_ORIGINS` le déclare explicitement.
 const allowedOrigins = [
   'http://localhost:5173',
   ...(config.tailscaleIp
     ? [`http://${config.tailscaleIp}:5173`, `http://${config.tailscaleIp}`]
     : []),
+  ...config.publicOrigins,
 ];
 
 app.use(cors({ origin: allowedOrigins }));
@@ -47,6 +53,7 @@ app.use('/api/geocode', limiteurGeocode);
 app.use('/api', villesRouter);
 app.use('/api', previsionsRouter);
 app.use('/api', geocodeRouter);
+app.use('/api', rainviewerRouter);
 
 app.use(zodErrorHandler);
 app.use(globalErrorHandler);

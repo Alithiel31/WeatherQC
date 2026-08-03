@@ -95,6 +95,7 @@ L'application est publiée sur le **Google Play Store** sous forme de TWA (Trust
 | `PORT` | ❌ | `3005` | Port du backend |
 | `NODE_ENV` | ❌ | `development` | Environnement (`production` en prod) |
 | `TAILSCALE_IP` | ❌ | — | IP Tailscale pour l'accès réseau distant |
+| `PUBLIC_ORIGINS` | ❌ | — | Origines CORS autorisées en plus du poste local et de Tailscale, séparées par des virgules |
 | `FETCH_TIMEOUT_MS` | ❌ | `5000` | Délai maximal d'un appel à Open-Meteo / Zippopotam |
 | `TRUST_PROXY_HOPS` | ❌ | `2` | Nombre de proxies devant l'API (cloudflared + nginx) |
 | `RATE_LIMIT_WINDOW_MS` | ❌ | `60000` | Fenêtre de la limitation de débit |
@@ -102,6 +103,7 @@ L'application est publiée sur le **Google Play Store** sous forme de TWA (Trust
 | `RATE_LIMIT_GEOCODE_MAX` | ❌ | `20` | Requêtes/fenêtre/IP sur `/api/geocode` |
 | `CACHE_TTL_PREVISIONS` | ❌ | `600000` | Durée du cache météo en ms (défaut : 10 min) |
 | `CACHE_TTL_GEOCODE` | ❌ | `2592000000` | Durée du cache géocodage en ms (défaut : 30 jours) |
+| `CACHE_TTL_RAINVIEWER` | ❌ | `300000` | Durée du cache de l'index RainViewer en ms (défaut : 5 min) |
 | `CACHE_MAX_ENTRIES` | ❌ | `500` | Plafond du nombre d'entrées en cache (éviction LRU) |
 | `DEFAULT_TIMEZONE` | ❌ | `America/Toronto` | Timezone pour les prévisions Open-Meteo |
 
@@ -123,12 +125,27 @@ Routes disponibles :
 | `GET /api/villes` | Liste des villes disponibles |
 | `GET /api/previsions/:ville` | Prévisions par ville (`montreal`, `quebec`) |
 | `GET /api/previsions-coordonnees?lat=&lon=&nom=` | Prévisions pour un point GPS |
-| `GET /api/geocode/:rta` | Géocode une RTA québécoise (ex. `H2X`) |
+| `GET /api/geocode/:codePostal` | Géocode une RTA québécoise (ex. `H2X`) |
+| `GET /api/rainviewer` | Index des images satellite et radar pour la carte animée |
 | `GET /api/sante` | Vérification de l'état du service |
 
 Les appels aux APIs externes sont bornés par `FETCH_TIMEOUT_MS` et rejoués une fois en cas
 d'erreur réseau ou 5xx. Un amont qui ne répond pas à temps donne un **504**, un amont en
 erreur un **502** — jamais une requête suspendue.
+
+Les trois amonts passent par ce même chemin, RainViewer compris : son index transitait
+autrefois directement du navigateur vers `api.rainviewer.com`, sans cache ni quota. Seul
+l'**index** est proxifié — les tuiles restent chargées en direct depuis
+`tilecache.rainviewer.com`, les faire transiter par le Raspberry Pi coûterait bien plus cher
+que ce que le cache ferait gagner. En contrepartie, la carte dépend désormais du backend :
+si celui-ci est injoignable, elle affiche son message de repli au lieu de se débrouiller
+seule.
+
+Les origines CORS autorisées sont le poste de développement, l'IP Tailscale si elle est
+configurée, et celles déclarées par `PUBLIC_ORIGINS`. En production, nginx proxifie `/api/`
+en same-origin : aucune requête ne porte d'en-tête `Origin`, donc un domaine public absent de
+la liste ne se voit sur aucune requête réelle — jusqu'au jour où un client est servi depuis
+un autre hôte.
 
 L'API est exposée publiquement : en-têtes de durcissement (`helmet`), corps JSON plafonné à
 10 ko et limitation de débit par IP cliente (**429** au-delà du quota). `/api/sante` n'est
