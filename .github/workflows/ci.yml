@@ -108,9 +108,13 @@ jobs:
       - name: Préparer la configuration
         run: cp backend/.env.example backend/.env
 
-      - name: Valider la configuration nginx
-        run: docker run --rm -v "$PWD/frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro" nginx:alpine nginx -t
-
+      # Pas de `nginx -t` isolé : `proxy_pass http://backend:3005` exige de
+      # résoudre l'hôte `backend`, qui n'existe que dans le réseau du compose.
+      # Un conteneur seul échoue donc sur une configuration pourtant valide.
+      # C'est le démarrage réel ci-dessous qui fait office de test : nginx y
+      # relit sa configuration dans le bon réseau, et refuse de démarrer si elle
+      # est fautive — ce que `--wait` puis les `curl` détectent.
+      #
       # `--wait` rend la main quand le healthcheck du backend est passé et que
       # le frontend a démarré derrière son `service_healthy`. Un healthcheck
       # cassé ou un boot qui échoue fait échouer cette étape, pas le déploiement.

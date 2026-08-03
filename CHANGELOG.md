@@ -2,10 +2,9 @@
 
 ## [Non publié]
 ### Added
-- Le job `docker` de la CI démarre réellement la pile : validation de `nginx.conf`,
-  `docker compose up --wait` — donc healthcheck du backend et `depends_on: service_healthy`
-  exercés — puis appels à `/api/sante`, `/api/villes` et la coquille applicative à travers
-  nginx. Il se contentait de construire deux images : la syntaxe du compose, la commande de
+- Le job `docker` de la CI démarre réellement la pile : `docker compose up --wait` — donc
+  healthcheck du backend, `depends_on: service_healthy` et configuration nginx exercés — puis
+  appels à `/api/sante`, `/api/villes` et la coquille applicative à travers nginx. Il se contentait de construire deux images : la syntaxe du compose, la commande de
   healthcheck, la config nginx et une variable d'environnement invalide n'étaient découvertes
   qu'au déploiement sur le Pi
 - Un échec de `contract.yml` ouvre une issue étiquetée `derive-contrat`, réutilisée tant
