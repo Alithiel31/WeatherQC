@@ -58,8 +58,9 @@
 </section>
 
 <style>
+  /* Même voile que `Horaire` : cf. le commentaire de contraste qui s'y trouve. */
   section {
-    background: rgba(255,255,255,0.12); border-radius: 1rem;
+    background: rgba(0,0,0,0.2); border-radius: 1rem;
     padding: 1rem; margin-top: 0.9rem; backdrop-filter: blur(6px);
   }
   h2 { margin: 0 0 0.5rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.75; }

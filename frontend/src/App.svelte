@@ -137,7 +137,7 @@
 
 <main class={classeCiel}>
   <header>
-    <p class="eyebrow">Prévisions · Canada</p>
+    <h1 class="eyebrow">Prévisions · Canada</h1>
     <nav class="villes" aria-label="Choix de la ville">
       {#each villes as v (v.id)}
         <button
@@ -162,6 +162,19 @@
       onrechercher={rechercherCP}
     />
   </header>
+
+  <!--
+    Les erreurs étaient bien annoncées — `role="alert"` plus bas crée une région
+    assertive implicite. Le succès, lui, ne l'était par rien : changer de ville
+    remplaçait la totalité du contenu sans qu'un lecteur d'écran l'apprenne.
+    Cette région doit exister dans le DOM avant la mise à jour pour être lue,
+    d'où sa place ici, hors des branches conditionnelles.
+  -->
+  <p class="annonce" aria-live="polite">
+    {#if !chargement && donnees}
+      Prévisions pour {nomLieu}, mises à jour à {heureMinute(donnees.misAJour)}
+    {/if}
+  </p>
 
   {#if horsLigne}
     <p class="bandeau-hors-ligne">Hors ligne — dernières prévisions enregistrées</p>
@@ -231,31 +244,59 @@
     background: #10243b;
   }
 
+  /*
+    Le voile est une couche de fond constante posée par-dessus le ciel, pas une
+    couleur de chaque dégradé : les ciels ne fournissent plus que leurs deux
+    teintes, et la règle de contraste ne s'écrit qu'ici.
+
+    Sans lui, le blanc pur échouait sur quatre des sept ciels — neige 1.64:1,
+    dégagé 1.93, brouillard 2.06, nuageux 2.66, pour un seuil de 4.5. À 0.45 le
+    pire cas remonte à 5.04:1, toutes les teintes étant conservées.
+  */
   main {
     min-height: 100dvh;
     color: #fff;
     padding: max(env(safe-area-inset-top), 1.25rem) 1.25rem 2rem;
     max-width: 32rem;
     margin: 0 auto;
-    transition: background 0.8s ease;
+    transition: background-color 0.8s ease;
+    background-color: #10243b;
+    background-image:
+      linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)),
+      linear-gradient(180deg, var(--ciel-haut, #10243b) 0%, var(--ciel-bas, #10243b) var(--ciel-fin, 130%));
   }
 
-  .ciel.degage       { background: linear-gradient(180deg, #1f6fc4 0%, #7fc2ee 130%); }
-  .ciel.degage.nuit  { background: linear-gradient(180deg, #081226 0%, #1d3a61 130%); }
-  .ciel.nuageux      { background: linear-gradient(180deg, #4a5d72 0%, #8da1b4 130%); }
-  .ciel.nuageux.nuit { background: linear-gradient(180deg, #1a2531 0%, #3c4d5f 130%); }
-  .ciel.pluie, .ciel.pluie.nuit { background: linear-gradient(180deg, #2e3d4e 0%, #5d7186 130%); }
-  .ciel.neige        { background: linear-gradient(180deg, #5b7493 0%, #b9cce0 140%); }
-  .ciel.neige.nuit   { background: linear-gradient(180deg, #232f42 0%, #5b7493 140%); }
-  .ciel.orage, .ciel.orage.nuit { background: linear-gradient(180deg, #141c29 0%, #3d4d63 130%); }
-  .ciel.brouillard, .ciel.brouillard.nuit { background: linear-gradient(180deg, #6c7b89 0%, #aab6c1 140%); }
+  .ciel.degage       { --ciel-haut: #1f6fc4; --ciel-bas: #7fc2ee; }
+  .ciel.degage.nuit  { --ciel-haut: #081226; --ciel-bas: #1d3a61; }
+  .ciel.nuageux      { --ciel-haut: #4a5d72; --ciel-bas: #8da1b4; }
+  .ciel.nuageux.nuit { --ciel-haut: #1a2531; --ciel-bas: #3c4d5f; }
+  .ciel.pluie, .ciel.pluie.nuit { --ciel-haut: #2e3d4e; --ciel-bas: #5d7186; }
+  .ciel.neige        { --ciel-haut: #5b7493; --ciel-bas: #b9cce0; --ciel-fin: 140%; }
+  .ciel.neige.nuit   { --ciel-haut: #232f42; --ciel-bas: #5b7493; --ciel-fin: 140%; }
+  .ciel.orage, .ciel.orage.nuit { --ciel-haut: #141c29; --ciel-bas: #3d4d63; }
+  .ciel.brouillard, .ciel.brouillard.nuit { --ciel-haut: #6c7b89; --ciel-bas: #aab6c1; --ciel-fin: 140%; }
 
   header { display: flex; flex-direction: column; gap: 0.75rem; }
-  .eyebrow { margin: 0; font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.75; }
+  /*
+    Les textes secondaires posés à nu sur le ciel n'ont plus d'`opacity` : sous
+    le voile, il faudrait au moins 0.93 pour tenir 4.5:1, ce qui ne se distingue
+    plus de 1. La hiérarchie tient déjà par la taille, la graisse et l'interlettrage.
+  */
+  .eyebrow { margin: 0; font-size: 0.75rem; font-weight: 400; letter-spacing: 0.18em; text-transform: uppercase; }
 
+  /* Lue par les lecteurs d'écran, jamais affichée. `clip-path` plutôt que
+     `display: none`, qui la retirerait de l'arbre d'accessibilité. */
+  .annonce {
+    position: absolute; width: 1px; height: 1px; margin: -1px;
+    padding: 0; overflow: hidden; white-space: nowrap;
+    clip-path: inset(50%); border: 0;
+  }
+
+  /* Voile sombre, comme les cartes : à blanc 14 % le libellé d'un onglet inactif
+     ne tenait que 3.80:1. L'onglet actif reste blanc plein, texte sombre. */
   .villes {
     display: inline-flex; gap: 0.25rem;
-    background: rgba(255,255,255,0.14); border-radius: 999px;
+    background: rgba(0,0,0,0.25); border-radius: 999px;
     padding: 0.25rem; width: fit-content; backdrop-filter: blur(6px);
   }
   .villes button {
@@ -295,6 +336,6 @@
     font: inherit; padding: 0.5rem 1.25rem; border-radius: 999px; cursor: pointer;
   }
 
-  footer { margin-top: 1.75rem; text-align: center; font-size: 0.8rem; opacity: 0.7; }
+  footer { margin-top: 1.75rem; text-align: center; font-size: 0.8rem; }
   footer a { color: inherit; }
 </style>

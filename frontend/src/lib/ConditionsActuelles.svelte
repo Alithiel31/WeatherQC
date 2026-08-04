@@ -24,7 +24,9 @@
 
 <style>
   .actuel { text-align: center; padding: 1.75rem 0 1.5rem; }
-  .lieu { margin: 0 0 0.4rem; font-size: 1rem; font-weight: 600; opacity: 0.9; }
+  /* Bloc posé à nu sur le ciel : cf. le commentaire de contraste dans `App.svelte`.
+     Aucune `opacity` réduite ici, elle ferait retomber sous 4.5:1. */
+  .lieu { margin: 0 0 0.4rem; font-size: 1rem; font-weight: 600; }
   .icone { font-size: 3.25rem; line-height: 1; }
   .temperature {
     margin: 0.35rem 0 0;
@@ -35,6 +37,6 @@
   .condition { margin: 0.4rem 0 0; font-size: 1.15rem; font-weight: 500; }
 
   .details { display: flex; justify-content: center; gap: 2rem; margin: 1.5rem 0 0; }
-  .details dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; }
+  .details dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; }
   .details dd { margin: 0.2rem 0 0; font-size: 1.1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 </style>
