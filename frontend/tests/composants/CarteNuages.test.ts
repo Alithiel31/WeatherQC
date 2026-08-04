@@ -132,3 +132,54 @@ describe('CarteNuages', () => {
     expect(tuiles).toHaveLength(avant);
   });
 });
+
+/**
+ * Régression : le mode était réaffecté sans condition à chaque chargement, et
+ * `rafraichirFrames` rappelle `chargerFrames` toutes les 10 minutes. Un
+ * utilisateur en train de regarder le radar était ramené sur « Nuages » en
+ * pleine session, sans avoir rien fait.
+ */
+describe('CarteNuages — rafraîchissement automatique', () => {
+  const pressed = (nom: string) =>
+    screen.getByRole('button', { name: nom }).getAttribute('aria-pressed');
+
+  it('conserve le mode choisi par l’utilisateur', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(CarteNuages, props);
+      await screen.findByRole('slider');
+
+      await user.click(screen.getByRole('button', { name: 'Radar' }));
+      expect(pressed('Radar')).toBe('true');
+
+      const appelsAvant = framesRainViewer.mock.calls.length;
+      await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+      await waitFor(() => expect(framesRainViewer.mock.calls.length).toBeGreaterThan(appelsAvant));
+
+      expect(pressed('Radar')).toBe('true');
+      expect(pressed('Nuages')).toBe('false');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('bascule malgré tout si la série choisie revient vide', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(CarteNuages, props);
+      await screen.findByRole('slider');
+
+      await user.click(screen.getByRole('button', { name: 'Radar' }));
+      // Le radar disparaît de l'index : rester dessus n'afficherait plus rien.
+      framesRainViewer.mockResolvedValue(frames(3, 0));
+
+      await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+
+      await waitFor(() => expect(pressed('Nuages')).toBe('true'));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
