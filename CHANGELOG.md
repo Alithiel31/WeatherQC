@@ -32,6 +32,14 @@
 - Le curseur d'animation de la carte s'annonçait « 5 sur 13 » — un index brut. Il dit désormais
   l'horodatage, déjà calculé pour l'affichage voisin
 
+### Changed
+
+- Les deux images Docker passent de `node:22-alpine` à **`node:24-alpine`**, et la CI teste
+  désormais sur la même version — tester sur une version que la production n'exécute pas revient
+  à ne pas tester la production. Dependabot proposait la 26 : au 2026-08 elle est encore
+  _Current_, elle ne passe LTS que le 2026-10-28. La 24 est LTS depuis le 2025-10-28 et suivie
+  jusqu'au 2028-04-30, soit deux ans de plus que la 22 qu'elle remplace
+
 ### Security
 
 - En-têtes de sécurité sur le document servi : CSP, `X-Content-Type-Options`, `Referrer-Policy`,
