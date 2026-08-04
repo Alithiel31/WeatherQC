@@ -38,7 +38,7 @@ jobs:
       # Même JDK que `build-twa.yml` : AGP 8.9.1 exige 17. Tester sur un autre
       # reviendrait à ne pas tester la chaîne de release.
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
