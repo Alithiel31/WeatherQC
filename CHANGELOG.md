@@ -2,6 +2,72 @@
 
 ## [Non publié]
 
+## [3.0.0] - 2026-08-04
+
+> **Changement cassant** : `minSdkVersion` passe de 21 à 23. L'application Android n'est plus
+> distribuée aux appareils sous Android 5.0/5.1 — `androidbrowserhelper` 2.7.x déclare ce
+> plancher et la fusion de manifeste échoue en dessous.
+
+### Added
+
+- Workflow `android.yml` — le module Android est enfin construit **avant** son merge. `ci.yml`
+  ne touche pas `twa-qcweather/` et `build-twa.yml` est borné à `push` sur `main` : une PR
+  Dependabot sur le wrapper Gradle ou `androidbrowserhelper` affichait quatre checks verts
+  qui n'avaient pas compilé une ligne de Java, et l'échec ne serait apparu que sur `main`,
+  dans le workflow qui signe et publie. Le nouveau job exécute `bundleRelease` — la tâche
+  réelle de la chaîne de release, seule à faire passer R8 — sans aucun secret : le projet ne
+  déclare pas de `signingConfig`, le bundle produit est non signé et n'est jamais publié. La
+  garde `github.ref == 'refs/heads/main'` de `build-twa.yml` reste intacte
+- Deux garde-fous d'accessibilité, complémentaires parce qu'aucun des deux ne suffit. Une passe
+  `@axe-core/playwright` sur les six familles de ciel couvre rôles, noms accessibles et
+  structure — elle a d'ailleurs attrapé une régression écrite en corrigeant la bande horaire.
+  Elle ne couvre **pas** le contraste : axe ne sait pas le mesurer sur un fond en dégradé et
+  classe ces nœuds en `incomplete`, jamais en `violations`, ce qui laisse passer du texte à
+  1.15:1. Le contraste est donc vérifié numériquement sur les constantes CSS, relues dans les
+  composants plutôt que recopiées
+- Compression gzip et politique de cache nginx : cache long sur les assets hachés, aucun sur
+  `index.html`, `sw.js` et le manifeste — sans quoi un déploiement resterait invisible jusqu'à
+  expiration du cache
+- Le job `docker` de la CI démarre réellement la pile : `docker compose up --wait` — donc
+  healthcheck du backend, `depends_on: service_healthy` et configuration nginx exercés — puis
+  appels à `/api/sante`, `/api/villes`, la coquille applicative, les en-têtes de sécurité et
+  la politique de cache, à travers nginx. Il se contentait de construire deux images : la
+  syntaxe du compose, la commande de
+  healthcheck, la config nginx et une variable d'environnement invalide n'étaient découvertes
+  qu'au déploiement sur le Pi
+- Un échec de `contract.yml` ouvre une issue étiquetée `derive-contrat`, réutilisée tant
+  qu'elle reste ouverte. Ce workflow est le seul détecteur de dérive de schéma des trois
+  amonts, et son échec ne produisait qu'une coche rouge dans un onglet que personne n'ouvre
+- Dependabot suit désormais les images Docker de base (`node`, `nginx:alpine`) et Gradle —
+  ce dernier étant le module signé et envoyé au Play Store, jusqu'ici le seul sans
+  automatisation de dépendances
+- Tests de bout en bout Playwright (`frontend/e2e/`) : l'application construite est ouverte dans
+  Chromium et parcourue pour de vrai. Deux chemins n'étaient couverts nulle part — le bouton
+  « Réessayer », qu'aucun test ne cliquait, et le bandeau hors ligne, qu'aucun test ne faisait
+  apparaître faute d'émettre `online`/`offline`. L'API y est doublée par Playwright : une suite
+  de bout en bout qui dépend d'Open-Meteo redevient ce que `tests/setup.ts` interdit partout
+  ailleurs
+- Délai maximal de 10 s sur les appels du frontend : rien ne bornait le trajet
+  navigateur → nginx → backend, et une requête pendue faisait tourner le spinner sans fin
+- Journalisation structurée (horodatage, niveau, contexte ; JSON en production) et en-tête
+  `X-Request-Id` sur chaque réponse, repris de l'amont s'il est fourni
+- `PUBLIC_ORIGINS` — le domaine public ne figurait pas dans l'allowlist CORS. L'oubli était
+  invisible : nginx proxifie `/api/` en same-origin, donc aucune requête réelle ne porte
+  d'en-tête `Origin`. Tout client servi depuis un autre hôte aurait été bloqué sans message
+  exploitable
+- `dependabot.yml` (trois manifestes npm + actions GitHub) et `npm audit` en CI sur les
+  dépendances de production
+- Limites mémoire et rotation des logs sur les deux conteneurs — la cible est un Raspberry Pi
+- Durcissement de l'API publique : en-têtes `helmet`, corps JSON plafonné à 10 ko,
+  limitation de débit par IP (100 req/min sur `/api`, 20 sur `/api/geocode`)
+- `TRUST_PROXY_HOPS` — retrouve l'IP réelle derrière cloudflared + nginx, sans quoi tous
+  les clients partageraient le même compteur de quota
+- Arrêt gracieux sur SIGTERM/SIGINT : les requêtes en vol ne sont plus coupées net
+- `healthcheck` du backend dans `docker-compose.yml`, le frontend attend `service_healthy`
+- `npm run test:contract` + workflow nocturne `contract.yml` — vérifient le contrat réel
+  des APIs externes hors du chemin critique des PR
+- Couverture d'intégration : mise en cache, erreur 502 en amont, RTA inexistant
+
 ### Changed
 
 - TWA Android : `androidbrowserhelper` 2.6.2 → **2.7.2**, et `minSdkVersion` 21 → **23** dans
@@ -24,69 +90,12 @@
   n'est testé qu'avec AGP 9.0+. Sans cette règle la montée serait reproposée à chaque release
   9.x, alors qu'elle ne peut pas aboutir avant une migration d'AGP. La règle vise la 9.x seule,
   et devra sauter en même temps que le passage à AGP 9
-
-### Added
-
-- Workflow `android.yml` — le module Android est enfin construit **avant** son merge. `ci.yml`
-  ne touche pas `twa-qcweather/` et `build-twa.yml` est borné à `push` sur `main` : une PR
-  Dependabot sur le wrapper Gradle ou `androidbrowserhelper` affichait quatre checks verts
-  qui n'avaient pas compilé une ligne de Java, et l'échec ne serait apparu que sur `main`,
-  dans le workflow qui signe et publie. Le nouveau job exécute `bundleRelease` — la tâche
-  réelle de la chaîne de release, seule à faire passer R8 — sans aucun secret : le projet ne
-  déclare pas de `signingConfig`, le bundle produit est non signé et n'est jamais publié. La
-  garde `github.ref == 'refs/heads/main'` de `build-twa.yml` reste intacte
-
-### Accessibility
-
-- **Le texte était illisible sur cinq des sept ciels.** `.pluie` tombait à 1.15:1 sur ciel de
-  neige, pour un seuil WCAG AA de 4.5:1 — et le blanc pur posé à nu sur le dégradé échouait
-  aussi, jusqu'à 1.64:1. Aucune couleur de texte fixe ne pouvait convenir, les fonds allant de
-  `#b9cce0` à `#3d4d63` : un voile constant, posé entre le ciel et le contenu, découple les deux.
-  Les ciels ne fournissent plus que leurs deux teintes, via propriétés personnalisées, et les
-  couleurs de texte d'origine sont conservées telles quelles
-- La bande horaire de 48 h était inatteignable au clavier : `overflow-x: auto` sans `tabindex`
-  n'est focusable par aucun moyen, donc tout ce qui dépassait la sixième heure était hors
-  d'atteinte
-- L'icône météo horaire portait `aria-hidden` sans équivalent textuel : un lecteur d'écran
-  annonçait une heure et une température, jamais le temps qu'il fait. `Quotidien` donnait déjà
-  la condition
-- Aucun `<h1>` dans l'application, et aucune annonce du changement de ville : les erreurs étaient
-  couvertes par `role="alert"`, le succès par rien, alors qu'il remplace tout le contenu
-- Le curseur d'animation de la carte s'annonçait « 5 sur 13 » — un index brut. Il dit désormais
-  l'horodatage, déjà calculé pour l'affichage voisin
-
-### Changed
-
-- Les deux images Docker passent de `node:22-alpine` à **`node:24-alpine`**, et la CI teste
-  désormais sur la même version — tester sur une version que la production n'exécute pas revient
-  à ne pas tester la production. Dependabot proposait la 26 : au 2026-08 elle est encore
-  _Current_, elle ne passe LTS que le 2026-10-28. La 24 est LTS depuis le 2025-10-28 et suivie
-  jusqu'au 2028-04-30, soit deux ans de plus que la 22 qu'elle remplace
-
-### Security
-
-- En-têtes de sécurité sur le document servi : CSP, `X-Content-Type-Options`, `Referrer-Policy`,
-  `Permissions-Policy` et HSTS. `helmet` ne couvrait que les réponses JSON de `/api/`, où une
-  CSP est décorative — le HTML qui exécute réellement le JavaScript est servi par nginx, et il
-  n'en portait aucun
-- `assetlinks.json` et la politique de confidentialité renvoyaient un `Content-Type` **dupliqué** :
-  `mime.types` assigne déjà ces types, l'`add_header` s'y ajoutait. C'est exactement ce qui fait
-  échouer la vérification Digital Asset Links d'Android, donc la vérification d'URL du TWA. Le
-  retrait rétablit au passage l'héritage des en-têtes de sécurité, qu'`add_header` remplace au
-  lieu de fusionner
-
-### Added
-
-- Deux garde-fous d'accessibilité, complémentaires parce qu'aucun des deux ne suffit. Une passe
-  `@axe-core/playwright` sur les six familles de ciel couvre rôles, noms accessibles et
-  structure — elle a d'ailleurs attrapé une régression écrite en corrigeant la bande horaire.
-  Elle ne couvre **pas** le contraste : axe ne sait pas le mesurer sur un fond en dégradé et
-  classe ces nœuds en `incomplete`, jamais en `violations`, ce qui laisse passer du texte à
-  1.15:1. Le contraste est donc vérifié numériquement sur les constantes CSS, relues dans les
-  composants plutôt que recopiées
-
-### Changed
-
+- Node unifié sur **24**, images Docker et CI comprises. Trois cibles coexistaient — `engines`
+  annonçait 18, la CI tournait sur 20 et les images sur 22 — sans qu'aucune ne soit jamais
+  testée avec les autres ; c'est celle qui tourne en production qui l'emporte. La cible retenue
+  est la 24 et non la 26 que proposait Dependabot : au 2026-08 la 26 est encore _Current_ et ne
+  passe LTS que le 2026-10-28, quand la 24 l'est depuis le 2025-10-28 et suivie jusqu'au
+  2028-04-30 — deux ans de plus que la 22 qu'elle remplace
 - `deploy-twa.yml` passe de `track:` à `tracks:` sur `r0adkll/upload-google-play`. L'entrée au
   singulier est dépréciée et l'action émet un avertissement à chaque publication ; renseigner
   les deux est déjà une erreur dure côté action
@@ -96,28 +105,6 @@
   `@types/supertest` 7, `@types/node` 26 et `jsdom` 30
 - `actions/checkout`, `actions/setup-node` et `actions/upload-artifact` passent en v7. Les runners
   signalaient déjà la dépréciation de Node 20 sur `checkout@v4`
-
-### Added
-
-- Compression gzip et politique de cache nginx : cache long sur les assets hachés, aucun sur
-  `index.html`, `sw.js` et le manifeste — sans quoi un déploiement resterait invisible jusqu'à
-  expiration du cache
-- Le job `docker` de la CI démarre réellement la pile : `docker compose up --wait` — donc
-  healthcheck du backend, `depends_on: service_healthy` et configuration nginx exercés — puis
-  appels à `/api/sante`, `/api/villes`, la coquille applicative, les en-têtes de sécurité et
-  la politique de cache, à travers nginx. Il se contentait de construire deux images : la
-  syntaxe du compose, la commande de
-  healthcheck, la config nginx et une variable d'environnement invalide n'étaient découvertes
-  qu'au déploiement sur le Pi
-- Un échec de `contract.yml` ouvre une issue étiquetée `derive-contrat`, réutilisée tant
-  qu'elle reste ouverte. Ce workflow est le seul détecteur de dérive de schéma des trois
-  amonts, et son échec ne produisait qu'une coche rouge dans un onglet que personne n'ouvre
-- Dependabot suit désormais les images Docker (`node:22-alpine`, `nginx:alpine`) et Gradle —
-  ce dernier étant le module signé et envoyé au Play Store, jusqu'ici le seul sans
-  automatisation de dépendances
-
-### Changed
-
 - Le hook `pre-push` lance `test:run` et non `test:unit` côté backend : la suite
   d'intégration — routes, durcissement, CORS, cache — n'était jamais jouée avant un push,
   alors que le frontend passait déjà par sa suite complète. Le README annonçait `test:run`,
@@ -140,6 +127,30 @@
   consécutifs les appels sont suspendus et répondent **503**. Un amont mort immobilisait ~10 s
   de connexion par requête, multipliées par le nombre de clients — sur un Pi borné à 256 Mo,
   une panne tierce devenait un épuisement local
+- L'index RainViewer passe par `GET /api/rainviewer` : c'était la seule dépendance tierce
+  appelée en direct depuis le navigateur, sans délai maximal, sans validation de schéma et
+  sans cache — chaque visiteur ouvrant la carte tapait l'API. Elle hérite du traitement des
+  deux autres amonts, et le découpage des séries se fait désormais côté serveur. Seul
+  l'index est proxifié : les tuiles restent chargées en direct. En contrepartie, la carte
+  dépend du backend et affiche son repli quand il est injoignable
+- Le sélecteur de villes est alimenté par `GET /api/villes`, jusque-là inutilisée : la liste
+  était recopiée dans `App.svelte`, et ajouter une ville demandait deux éditions. La liste en
+  dur subsiste comme repli hors ligne
+- `App.svelte` découpé (préférences, recherche par code postal, conditions actuelles) et
+  machine d'animation extraite de `CarteNuages.svelte`
+- `err.issues` et `{ message }` à la place de `err.errors` et `invalid_type_error` :
+  APIs supprimées en Zod 4, la montée de version n'est plus bloquée
+- Zod 4 — la montée préparée plus haut est effectuée. `z.url()` remplace `z.string().url()`,
+  déprécié en v4
+- `package.json` racine déclarait la licence ISC, `LICENSE` et le README disaient MIT
+- `twa-manifest.json` annonçait `appVersionCode: 1` alors que `build.gradle` était à 3
+- `README` documentait `GET /api/geocode/:rta` ; le paramètre s'appelle `:codePostal`
+- L'accent manquant de « Position personnalisée », seule chaîne visible du projet à en être
+  privée
+- Le hook `pre-push` lance `svelte-check`, comme la CI
+- Les tests d'intégration n'appellent plus Open-Meteo ni Zippopotam : ils s'appuient sur
+  les fixtures de `backend/tests/fixtures/` — une panne d'API externe ne casse plus la CI
+- `tests/setup.ts` fait échouer tout appel réseau non mocké et isole le cache entre tests
 
 ### Fixed
 
@@ -149,15 +160,6 @@
   sur l'appareil — la promesse « dernières prévisions en cache » ne tenait donc pas dès que le
   backend répondait en erreur. Un greffon Workbox traite désormais un 5xx comme une panne
   réseau ; les 4xx continuent de remonter leur message
-- Tests de bout en bout Playwright (`frontend/e2e/`) : l'application construite est ouverte dans
-  Chromium et parcourue pour de vrai. Deux chemins n'étaient couverts nulle part — le bouton
-  « Réessayer », qu'aucun test ne cliquait, et le bandeau hors ligne, qu'aucun test ne faisait
-  apparaître faute d'émettre `online`/`offline`. L'API y est doublée par Playwright : une suite
-  de bout en bout qui dépend d'Open-Meteo redevient ce que `tests/setup.ts` interdit partout
-  ailleurs
-
-### Fixed
-
 - Une erreur n'efface plus les prévisions affichées : `{:else if erreur}` était évalué avant
   `{:else if donnees}`, et `charger()` ne vide jamais `donnees`. Un échec de rafraîchissement
   faisait donc disparaître de l'écran des prévisions parfaitement lisibles, toujours en
@@ -203,57 +205,6 @@
   donne un **502** nommant le champ fautif, au lieu d'un 500 laissant croire à un bug interne
 - Une variable d'environnement invalide (`PORT=abc`, quota vide) fait échouer le démarrage en
   la nommant, au lieu de laisser tourner le serveur avec un `NaN`
-
-### Added
-
-- Délai maximal de 10 s sur les appels du frontend : rien ne bornait le trajet
-  navigateur → nginx → backend, et une requête pendue faisait tourner le spinner sans fin
-- Journalisation structurée (horodatage, niveau, contexte ; JSON en production) et en-tête
-  `X-Request-Id` sur chaque réponse, repris de l'amont s'il est fourni
-- `PUBLIC_ORIGINS` — le domaine public ne figurait pas dans l'allowlist CORS. L'oubli était
-  invisible : nginx proxifie `/api/` en same-origin, donc aucune requête réelle ne porte
-  d'en-tête `Origin`. Tout client servi depuis un autre hôte aurait été bloqué sans message
-  exploitable
-- `dependabot.yml` (trois manifestes npm + actions GitHub) et `npm audit` en CI sur les
-  dépendances de production
-- Limites mémoire et rotation des logs sur les deux conteneurs — la cible est un Raspberry Pi
-
-### Changed
-
-- L'index RainViewer passe par `GET /api/rainviewer` : c'était la seule dépendance tierce
-  appelée en direct depuis le navigateur, sans délai maximal, sans validation de schéma et
-  sans cache — chaque visiteur ouvrant la carte tapait l'API. Elle hérite du traitement des
-  deux autres amonts, et le découpage des séries se fait désormais côté serveur. Seul
-  l'index est proxifié : les tuiles restent chargées en direct. En contrepartie, la carte
-  dépend du backend et affiche son repli quand il est injoignable
-- Le sélecteur de villes est alimenté par `GET /api/villes`, jusque-là inutilisée : la liste
-  était recopiée dans `App.svelte`, et ajouter une ville demandait deux éditions. La liste en
-  dur subsiste comme repli hors ligne
-- `App.svelte` découpé (préférences, recherche par code postal, conditions actuelles) et
-  machine d'animation extraite de `CarteNuages.svelte`
-- `err.issues` et `{ message }` à la place de `err.errors` et `invalid_type_error` :
-  APIs supprimées en Zod 4, la montée de version n'est plus bloquée
-- Zod 4 — la montée préparée plus haut est effectuée. `z.url()` remplace `z.string().url()`,
-  déprécié en v4
-- Node unifié sur 22 : `engines` annonçait 18, la CI tournait sur 20 et les images Docker sur 22. Trois cibles, aucune testée ensemble — c'est celle qui tourne en production qui l'emporte
-- `package.json` racine déclarait la licence ISC, `LICENSE` et le README disaient MIT
-- `twa-manifest.json` annonçait `appVersionCode: 1` alors que `build.gradle` était à 3
-- `README` documentait `GET /api/geocode/:rta` ; le paramètre s'appelle `:codePostal`
-- L'accent manquant de « Position personnalisée », seule chaîne visible du projet à en être
-  privée
-- Le hook `pre-push` lance `svelte-check`, comme la CI
-
-### Added
-
-- Durcissement de l'API publique : en-têtes `helmet`, corps JSON plafonné à 10 ko,
-  limitation de débit par IP (100 req/min sur `/api`, 20 sur `/api/geocode`)
-- `TRUST_PROXY_HOPS` — retrouve l'IP réelle derrière cloudflared + nginx, sans quoi tous
-  les clients partageraient le même compteur de quota
-- Arrêt gracieux sur SIGTERM/SIGINT : les requêtes en vol ne sont plus coupées net
-- `healthcheck` du backend dans `docker-compose.yml`, le frontend attend `service_healthy`
-
-### Fixed
-
 - Les appels à Open-Meteo et Zippopotam sont bornés par `FETCH_TIMEOUT_MS` (5 s par défaut) :
   une API amont lente ne laisse plus la requête Express pendue indéfiniment — dépassement
   du délai = **504**
@@ -267,8 +218,36 @@
 - `frontend/.prettierignore` — `npm run format:check` échouait sur `dist/` dès qu'un build
   local avait été fait (la CI ne le voyait pas, elle vérifie le format avant de builder)
 
+### Accessibility
+
+- **Le texte était illisible sur cinq des sept ciels.** `.pluie` tombait à 1.15:1 sur ciel de
+  neige, pour un seuil WCAG AA de 4.5:1 — et le blanc pur posé à nu sur le dégradé échouait
+  aussi, jusqu'à 1.64:1. Aucune couleur de texte fixe ne pouvait convenir, les fonds allant de
+  `#b9cce0` à `#3d4d63` : un voile constant, posé entre le ciel et le contenu, découple les deux.
+  Les ciels ne fournissent plus que leurs deux teintes, via propriétés personnalisées, et les
+  couleurs de texte d'origine sont conservées telles quelles
+- La bande horaire de 48 h était inatteignable au clavier : `overflow-x: auto` sans `tabindex`
+  n'est focusable par aucun moyen, donc tout ce qui dépassait la sixième heure était hors
+  d'atteinte
+- L'icône météo horaire portait `aria-hidden` sans équivalent textuel : un lecteur d'écran
+  annonçait une heure et une température, jamais le temps qu'il fait. `Quotidien` donnait déjà
+  la condition
+- Aucun `<h1>` dans l'application, et aucune annonce du changement de ville : les erreurs étaient
+  couvertes par `role="alert"`, le succès par rien, alors qu'il remplace tout le contenu
+- Le curseur d'animation de la carte s'annonçait « 5 sur 13 » — un index brut. Il dit désormais
+  l'horodatage, déjà calculé pour l'affichage voisin
+
 ### Security
 
+- En-têtes de sécurité sur le document servi : CSP, `X-Content-Type-Options`, `Referrer-Policy`,
+  `Permissions-Policy` et HSTS. `helmet` ne couvrait que les réponses JSON de `/api/`, où une
+  CSP est décorative — le HTML qui exécute réellement le JavaScript est servi par nginx, et il
+  n'en portait aucun
+- `assetlinks.json` et la politique de confidentialité renvoyaient un `Content-Type` **dupliqué** :
+  `mime.types` assigne déjà ces types, l'`add_header` s'y ajoutait. C'est exactement ce qui fait
+  échouer la vérification Digital Asset Links d'Android, donc la vérification d'URL du TWA. Le
+  retrait rétablit au passage l'héritage des en-têtes de sécurité, qu'`add_header` remplace au
+  lieu de fusionner
 - CI/CD Android : le keystore de production n'est plus déchiffrable depuis une branche de
   travail. La restriction précédente ne portait que sur le déclencheur `push` ; le
   `workflow_dispatch` de `build-twa.yml` restait ouvert à n'importe quelle ref, alors que le
@@ -283,18 +262,6 @@
   `action-download-artifact`, `upload-google-play`)
 - Bloc `permissions` minimal et groupe de concurrence sur tous les workflows
 - Keystore supprimé du workspace en fin de job de build
-
-### Changed
-
-- Les tests d'intégration n'appellent plus Open-Meteo ni Zippopotam : ils s'appuient sur
-  les fixtures de `backend/tests/fixtures/` — une panne d'API externe ne casse plus la CI
-- `tests/setup.ts` fait échouer tout appel réseau non mocké et isole le cache entre tests
-
-### Added
-
-- `npm run test:contract` + workflow nocturne `contract.yml` — vérifient le contrat réel
-  des APIs externes hors du chemin critique des PR
-- Couverture d'intégration : mise en cache, erreur 502 en amont, RTA inexistant
 
 ## [2.1.1] - 2026-08-02
 
