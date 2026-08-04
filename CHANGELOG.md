@@ -97,8 +97,14 @@
   local avait été fait (la CI ne le voyait pas, elle vérifie le format avant de builder)
 
 ### Security
-- CI/CD Android : `build-twa.yml` n'est plus déclenché que depuis `main` — le keystore
-  de production n'est plus déchiffré sur une branche de travail quelconque
+- CI/CD Android : le keystore de production n'est plus déchiffrable depuis une branche de
+  travail. La restriction précédente ne portait que sur le déclencheur `push` ; le
+  `workflow_dispatch` de `build-twa.yml` restait ouvert à n'importe quelle ref, alors que le
+  README annonçait la garantie inverse — et recommandait justement ce déclenchement manuel
+  pour tester avant merge. Le job porte désormais la même garde que `deploy-twa.yml`
+- CI/CD Android : `@bubblewrap/cli` est épinglé. Installé sans version, il s'exécutait dans le
+  job où le keystore est déchiffré et les mots de passe présents en environnement — seule
+  dépendance non épinglée du dépôt, quand toutes les actions tierces le sont par SHA
 - CI/CD Android : `deploy-twa.yml` ne récupère plus que les artefacts construits sur
   `main`, et son déclenchement manuel est restreint à `main`
 - Actions tierces manipulant les secrets épinglées par SHA (`setup-android`,
