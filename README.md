@@ -1,5 +1,7 @@
 # 🌤️ Météo Québec
 
+🇬🇧 [English version](./README.en.md)
+
 [![Node.js](https://img.shields.io/badge/Node.js-22+-green?logo=node.js)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Svelte](https://img.shields.io/badge/Svelte-5-orange?logo=svelte)](https://svelte.dev/)
@@ -22,7 +24,7 @@ Données fournies par [Open-Meteo](https://open-meteo.com) — gratuit, sans cl�
 | 📅 Prévisions quotidiennes | 7 jours avec barres min–max et heures de lever/coucher |
 | 🛰️ Carte animée | Satellite nuages (infrarouge) + radar précipitations via RainViewer + Leaflet |
 | 📮 Recherche par code postal | Géocodage de la RTA québécoise (G, H, J) via Zippopotam |
-| 🏙️ Bascule Montréal ↔ Québec | Choix mémorisé entre les sessions |
+| 🏙️ Sélection de ville | 6 villes disponibles (Montréal, Québec, Gatineau, Sherbrooke, Trois-Rivières, Saguenay), choix mémorisé entre les sessions |
 | 🌅 Ciel dynamique | Dégradé d'arrière-plan selon les conditions et le jour/nuit |
 | 📱 PWA installable | Fonctionne hors ligne — dernières prévisions en cache |
 | ⚡ Cache serveur | Configurable via `.env` pour limiter les appels à Open-Meteo |
@@ -138,7 +140,7 @@ Routes disponibles :
 | Route | Description |
 |---|---|
 | `GET /api/villes` | Liste des villes disponibles |
-| `GET /api/previsions/:ville` | Prévisions par ville (`montreal`, `quebec`) |
+| `GET /api/previsions/:ville` | Prévisions par ville (`montreal`, `quebec`, `gatineau`, `sherbrooke`, `trois-rivieres`, `saguenay`) |
 | `GET /api/previsions-coordonnees?lat=&lon=&nom=` | Prévisions pour un point GPS |
 | `GET /api/geocode/:codePostal` | Géocode une RTA québécoise (ex. `H2X`) |
 | `GET /api/rainviewer` | Index des images satellite et radar pour la carte animée |
@@ -334,26 +336,34 @@ cd frontend && npm run test:pwa
 meteo-qc/
 ├── docker-compose.yml
 ├── backend/
-│   ├── app.ts                      # Point d'entrée
-│   ├── .env.example                # Template des variables d'environnement
+│   ├── app.ts                        # Point d'entrée (démarrage, arrêt gracieux)
+│   ├── .env.example                  # Template des variables d'environnement
 │   └── src/
-│       ├── config.ts               # Port, timezone, cache, Tailscale
-│       ├── data/cities.ts          # Villes et coordonnées
-│       ├── routers/                # Définition des routes
-│       ├── controllers/            # Logique des requêtes
-│       ├── services/               # Open-Meteo, géocodage, cache
-│       └── middlewares/            # Gestion globale des erreurs
+│       ├── index.ts                  # Construction de l'app Express
+│       ├── config.ts                 # Variables d'environnement validées (Zod)
+│       ├── data/cities.ts            # Villes et coordonnées
+│       ├── routers/                  # Définition des routes
+│       ├── controllers/              # Logique des requêtes
+│       ├── services/                 # Open-Meteo, géocodage, RainViewer, cache
+│       ├── middlewares/              # Erreurs, rate-limit, request-id, accès
+│       ├── schemas/                  # Validation Zod des réponses amont
+│       └── lib/                      # Disjoncteur, erreurs, log, requêtes HTTP
 └── frontend/
     ├── src/
-    │   ├── main.ts                 # Montage de l'app + service worker
-    │   ├── App.svelte              # Ville active, ciel dynamique, conditions
+    │   ├── main.ts                        # Montage de l'app + service worker
+    │   ├── App.svelte                     # Ville active, ciel dynamique
     │   └── lib/
-    │       ├── Horaire.svelte      # Bandeau 48 h
-    │       ├── CarteNuages.svelte  # Carte Leaflet animée
-    │       ├── Quotidien.svelte    # Prévisions 7 jours
-    │       ├── api.ts              # Appels backend et RainViewer
-    │       ├── meteo.ts            # Codes WMO → labels FR, icônes
-    │       └── types.ts            # Interfaces TypeScript
+    │       ├── Horaire.svelte             # Bandeau 48 h
+    │       ├── CarteNuages.svelte         # Carte Leaflet animée
+    │       ├── Quotidien.svelte           # Prévisions 7 jours
+    │       ├── ConditionsActuelles.svelte # Température, ressenti, vent, humidité
+    │       ├── RechercheCodePostal.svelte # Recherche par code postal
+    │       ├── animationFrames.svelte.ts  # Machine d'animation de la carte
+    │       ├── preferences.svelte.ts      # Ville et préférences mémorisées
+    │       ├── stockage.ts                # Accès localStorage tolérant aux pannes
+    │       ├── api.ts                     # Appels backend et RainViewer
+    │       ├── meteo.ts                   # Codes WMO → labels FR, icônes
+    │       └── types.ts                   # Interfaces TypeScript
     └── tests/
         ├── unit/                   # meteo.ts, api.ts
         ├── composants/             # Rendu Svelte (Testing Library)
@@ -388,6 +398,14 @@ Ajouter une entrée dans `backend/src/data/cities.ts`.
 | APIs externes | Open-Meteo · Zippopotam.us · CARTO / OpenStreetMap |
 | Android | TWA · Bubblewrap · Google Play Store |
 | CI/CD | GitHub Actions (`ci.yml` · `build-twa.yml` · `deploy-twa.yml`) |
+
+## Contribuer
+
+Environnement de développement, reproduction de la CI en local, convention de commit : voir [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## Dépannage
+
+Cas connus (config nginx, calibrage réseau, CI) : voir [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
 
 ## License
 

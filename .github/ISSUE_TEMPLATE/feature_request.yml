@@ -1,0 +1,51 @@
+name: Suggestion / amélioration
+description: Proposer un changement à l'API, au frontend, à l'application Android ou à la documentation
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Le guide de contribution demande d'ouvrir une issue avant d'envoyer une pull
+        request pour tout changement non trivial — c'est cette issue-là.
+
+  - type: textarea
+    attributes:
+      label: Quel problème ça résout
+      description: La situation rencontrée, pas encore la solution.
+      placeholder: |
+        Ajouter une ville demande de connaître les coordonnées GPS exactes à la main ;
+        un géocodage par nom de ville simplifierait l'ajout.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Ce que tu proposes
+      description: Le changement envisagé, aussi concrètement que possible.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Alternatives envisagées
+      description: Autres façons de résoudre le problème, et pourquoi elles ont été écartées.
+
+  - type: dropdown
+    attributes:
+      label: Ce que ça touche
+      multiple: true
+      options:
+        - Backend / API
+        - Frontend / PWA
+        - Application Android (TWA)
+        - Documentation
+        - CI/CD
+        - Pas sûr
+    validations:
+      required: true
+
+  - type: checkboxes
+    attributes:
+      label: Contribution
+      options:
+        - label: Je suis prêt à ouvrir la pull request moi-même

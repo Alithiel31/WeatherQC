@@ -1,0 +1,105 @@
+name: Rapport de bug
+description: Quelque chose ne fonctionne pas — l'API renvoie une erreur, la PWA affiche un écran vide, la carte ne charge pas...
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de signaler ce problème.
+
+        Plusieurs cas déjà rencontrés sont documentés dans
+        [`TROUBLESHOOTING.md`](https://github.com/Alithiel31/WeatherQC/blob/main/TROUBLESHOOTING.md) —
+        ça vaut le coup d'y jeter un œil avant de continuer.
+
+        ⚠️ **Ne colle jamais une vraie IP Tailscale, un vrai `X-Request-Id` sensible,
+        ou un secret Android** (`KEYSTORE_PASSWORD`, `PLAY_SERVICE_ACCOUNT_JSON`...).
+        Retire-les de tout log ou config copié ici.
+
+  - type: checkboxes
+    attributes:
+      label: Avant de signaler
+      options:
+        - label: J'ai vérifié TROUBLESHOOTING.md et mon problème n'y est pas déjà documenté
+          required: true
+        - label: J'ai cherché dans les issues existantes
+          required: true
+        - label: J'ai retiré tout secret des logs et de la config ci-dessous
+          required: true
+
+  - type: textarea
+    attributes:
+      label: Ce qui se passe
+      description: Ce que tu observes, et ce que tu attendais à la place.
+      placeholder: |
+        La carte animée reste sur "Chargement..." indéfiniment sur Montréal,
+        mais fonctionne sur Québec.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Étapes pour reproduire
+      description: Ce que tu as fait, dans l'ordre, à partir d'un état connu.
+      placeholder: |
+        1. Ouvrir https://qcweather.alithiel31.dev
+        2. Sélectionner Montréal
+        3. Ouvrir l'onglet Carte
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Ville concernée
+      options:
+        - Montréal
+        - Québec
+        - Gatineau
+        - Sherbrooke
+        - Trois-Rivières
+        - Saguenay
+        - Recherche par code postal
+        - Non applicable
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Endpoint ou route concernée
+      description: Ex. /api/previsions/montreal, /api/geocode/H2X, ou l'écran de l'application.
+      placeholder: "/api/previsions-coordonnees?lat=...&lon=..."
+
+  - type: input
+    attributes:
+      label: X-Request-Id
+      description: >-
+        Si l'erreur vient de l'API, cet identifiant est dans la réponse JSON (`{ status, error }`)
+        ou dans les logs backend (`docker compose logs backend | grep <identifiant>`).
+      placeholder: "ex. 3f9a2b1c-..."
+
+  - type: textarea
+    attributes:
+      label: Logs backend
+      description: Sortie de `docker compose logs backend` autour de l'incident, si disponible.
+      render: text
+
+  - type: input
+    attributes:
+      label: Navigateur et version
+      description: Pertinent pour un problème d'affichage, de PWA ou de service worker.
+      placeholder: "Chrome 130 sur Android 14"
+
+  - type: dropdown
+    attributes:
+      label: Où le problème se produit
+      options:
+        - Production (qcweather.alithiel31.dev)
+        - Développement local
+        - Application Android (TWA, Play Store)
+        - Docker local (docker compose up)
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Autre contexte
+      description: Tout ce qui peut aider — capture d'écran, comportement intermittent, etc.

@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Notes de dépannage
+    url: https://github.com/Alithiel31/WeatherQC/blob/main/TROUBLESHOOTING.md
+    about: Cas déjà rencontrés (nginx, rate limiting, CI, dérive de contrat), avec la démarche de diagnostic suivie.
+  - name: Guide de contribution
+    url: https://github.com/Alithiel31/WeatherQC/blob/main/CONTRIBUTING.md
+    about: Environnement de développement, reproduction de la CI en local, format des pull requests.
+  - name: État du service
+    url: https://qcweather.alithiel31.dev/api/sante
+    about: Vérifier si le backend répond avant de signaler une panne.
