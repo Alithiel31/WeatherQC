@@ -42,4 +42,6 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: dev.alithiel31.qcweather
           releaseFiles: app-release-bundle.aab
-          track: internal
+          # `track` (au singulier) est déprécié. `tracks` prend une liste séparée
+          # par des virgules ; renseigner les deux est désormais une erreur dure.
+          tracks: internal

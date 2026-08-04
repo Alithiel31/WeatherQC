@@ -13,6 +13,9 @@
   lieu de fusionner
 
 ### Changed
+- `deploy-twa.yml` passe de `track:` à `tracks:` sur `r0adkll/upload-google-play`. L'entrée au
+  singulier est dépréciée et l'action émet un avertissement à chaque publication ; renseigner
+  les deux est déjà une erreur dure côté action
 - Montées de dépendances de développement regroupées : `eslint` 10.8, `typescript-eslint` 8.66,
   `prettier` 3.9, `vite` 8.2, `svelte` 5.56.8, `svelte-check` 4.7, `lint-staged` 17.3, `tsx` 4.23
   et les greffons associés — plus quatre majeures vérifiées une par une : `supertest` 7,
