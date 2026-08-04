@@ -13,6 +13,9 @@ on:
 
 permissions:
   contents: read
+  # Une dérive de contrat doit ouvrir une issue : sans elle, l'échec nocturne se
+  # résume à une coche rouge dans un onglet que personne n'ouvre.
+  issues: write
 
 concurrency:
   group: contract
@@ -37,3 +40,32 @@ jobs:
 
       - run: npm ci
       - run: npm run test:contract
+
+      # Ce workflow est le seul détecteur de dérive de schéma chez Open-Meteo,
+      # Zippopotam et RainViewer. Une détection que personne ne lit n'est pas une
+      # détection : on ouvre une issue, et on la réutilise tant qu'elle est
+      # ouverte pour ne pas en empiler une par nuit.
+      - name: Signaler la dérive de contrat
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          existante=$(gh issue list --label derive-contrat --state open \
+            --json number --jq '.[0].number // empty')
+
+          if [ -n "$existante" ]; then
+            gh issue comment "$existante" --body "Toujours en échec — $RUN_URL"
+          else
+            gh issue create \
+              --title "Dérive de contrat détectée chez une API externe" \
+              --label derive-contrat \
+              --body "$(printf '%s\n' \
+                "Les tests de contrat nocturnes ont échoué : le schéma d'une API amont ne correspond plus à ce que \`backend/src/schemas/\` attend." \
+                "" \
+                "Exécution : $RUN_URL" \
+                "" \
+                "Les tests d'intégration s'appuient sur des fixtures et ne verront pas cette dérive — la production, si." \
+                "" \
+                "Cette issue est réutilisée tant qu'elle reste ouverte ; la refermer une fois le schéma réaligné.")"
+          fi
