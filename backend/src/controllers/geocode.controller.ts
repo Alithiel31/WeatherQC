@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { geocodeRTA } from '../services/geocode.service.js';
-import { getCached, setCached, TTL } from '../services/cache.service.js';
+import { avecCache, TTL } from '../services/cache.service.js';
 import { geocodeSchema } from '../schemas/validation.js';
 
 // Format FSA canadien valide : lettre - chiffre - lettre (ex. H2X, K1A, V6B)
@@ -9,15 +9,11 @@ export default {
     const { codePostal } = geocodeSchema.parse({ codePostal: req.params.codePostal });
     const fsa = codePostal.slice(0, 3);
 
-    const cacheKey = `geo:${fsa}`;
-    const cached = getCached<object>(cacheKey);
-    if (cached) {
-      res.json(cached);
-      return;
-    }
+    const { data, depuisCache, obsolete } = await avecCache(`geo:${fsa}`, TTL.GEOCODE, () =>
+      geocodeRTA(fsa)
+    );
 
-    const result = await geocodeRTA(fsa);
-    setCached(cacheKey, result, TTL.GEOCODE);
-    res.json(result);
+    res.origineCache = obsolete ? 'obsolete' : depuisCache ? 'frais' : 'amont';
+    res.json(data);
   },
 };

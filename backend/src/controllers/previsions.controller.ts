@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { CITIES } from '../data/cities.js';
 import { fetchForecast } from '../services/openmeteo.service.js';
-import { getCached, setCached, TTL } from '../services/cache.service.js';
+import { avecCache, TTL } from '../services/cache.service.js';
 import { NotFoundError } from '../lib/errors.js';
 import { previsionsParVilleSchema, previsionsCoordonneesSchema } from '../schemas/validation.js';
 
@@ -20,38 +20,41 @@ export default {
       );
     }
 
-    const cacheKey = `prev:${city.id}`;
-    const cached = getCached<object>(cacheKey);
-    if (cached) {
-      res.json({ ...cached, depuisCache: true });
-      return;
-    }
+    const { data, depuisCache, obsolete } = await avecCache(
+      `prev:${city.id}`,
+      TTL.PREVISIONS,
+      async () => ({
+        ville: { id: city.id, nom: city.nom, latitude: city.latitude, longitude: city.longitude },
+        ...(await fetchForecast(city)),
+      })
+    );
 
-    const data = await fetchForecast(city);
-    const payload = {
-      ville: { id: city.id, nom: city.nom, latitude: city.latitude, longitude: city.longitude },
-      ...data,
-    };
-    setCached(cacheKey, payload, TTL.PREVISIONS);
-    res.json({ ...payload, depuisCache: false });
+    res.origineCache = obsolete ? 'obsolete' : depuisCache ? 'frais' : 'amont';
+    res.json({ ...data, depuisCache, obsolete });
   },
 
   getByCoordonnees: async (req: Request, res: Response) => {
     const { lat, lon, nom } = previsionsCoordonneesSchema.parse(req.query);
 
-    const cacheKey = `prev:${lat.toFixed(2)},${lon.toFixed(2)}`;
-    const cached = getCached<Record<string, unknown>>(cacheKey);
-    if (cached) {
-      res.json({ ...cached, ville: { ...(cached.ville as object), nom }, depuisCache: true });
-      return;
-    }
+    const { data, depuisCache, obsolete } = await avecCache(
+      // Arrondi à deux décimales : la clé est pilotée depuis Internet, sans quoi
+      // son espace serait illimité.
+      `prev:${lat.toFixed(2)},${lon.toFixed(2)}`,
+      TTL.PREVISIONS,
+      async () => ({
+        ville: { id: 'personnalise', nom, latitude: lat, longitude: lon },
+        ...(await fetchForecast({ latitude: lat, longitude: lon })),
+      })
+    );
 
-    const data = await fetchForecast({ latitude: lat, longitude: lon });
-    const payload = {
-      ville: { id: 'personnalise', nom, latitude: lat, longitude: lon },
+    res.origineCache = obsolete ? 'obsolete' : depuisCache ? 'frais' : 'amont';
+    // Le `nom` accompagne la requête, pas les données : deux RTA voisines
+    // partagent la même clé arrondie et doivent garder leur libellé.
+    res.json({
       ...data,
-    };
-    setCached(cacheKey, payload, TTL.PREVISIONS);
-    res.json({ ...payload, depuisCache: false });
+      ville: { ...((data as Record<string, unknown>).ville as object), nom },
+      depuisCache,
+      obsolete,
+    });
   },
 };
