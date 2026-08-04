@@ -26,18 +26,20 @@
   let chargement = $state(true);
   let erreur     = $state<string | null>(null);
   let erreurCP   = $state<string | null>(null);
+  let rechercheCP = $state(false);
   let horsLigne  = $state(!navigator.onLine);
 
   let famille   = $derived(donnees ? familleMeteo(donnees.actuel.code) : 'nuageux');
   let nuit      = $derived(donnees ? !donnees.actuel.jour : false);
   let classeCiel = $derived(`ciel ${famille}${nuit ? ' nuit' : ''}`);
-  let nomLieu   = $derived(
-    prefs.selection === 'cp' && prefs.lieuCP
-      ? `${prefs.lieuCP.nom} (${prefs.lieuCP.rta})`
-      : (villes.find((v) => v.id === prefs.selection)?.nom ?? '')
-  );
+  // Figé au moment où les données arrivent, et non dérivé des préférences :
+  // celles-ci changent dès le clic, alors que `donnees` peut rester sur la ville
+  // précédente si le chargement échoue. Dérivé, le libellé annonçait alors une
+  // ville dont on affichait les prévisions d'une autre.
+  let nomLieu   = $state('');
 
   let chargementEnCours: AbortController | null = null;
+  let rechercheEnCours: AbortController | null = null;
 
   async function charger(): Promise<void> {
     // Deux clics rapides lançaient deux requêtes concurrentes : si la première
@@ -47,13 +49,20 @@
     const controleur = new AbortController();
     chargementEnCours = controleur;
 
+    // Cible et libellé capturés avec la requête : ils ne bougeront plus, même si
+    // l'utilisateur reclique pendant qu'elle est en vol.
+    const lieu = prefs.selection === 'cp' && prefs.lieuCP ? prefs.lieuCP : null;
+    const etiquette = lieu
+      ? `${lieu.nom} (${lieu.rta})`
+      : (villes.find((v) => v.id === prefs.selection)?.nom ?? '');
+
     chargement = true;
     erreur = null;
     try {
-      donnees =
-        prefs.selection === 'cp' && prefs.lieuCP
-          ? await previsionsCoordonnees(prefs.lieuCP, controleur.signal)
-          : await previsionsVille(prefs.selection, controleur.signal);
+      donnees = lieu
+        ? await previsionsCoordonnees(lieu, controleur.signal)
+        : await previsionsVille(prefs.selection, controleur.signal);
+      nomLieu = etiquette;
     } catch (e) {
       // Remplacée par une requête plus récente : ni erreur, ni fin de chargement
       // — celle qui l'a supplantée s'en charge.
@@ -74,18 +83,33 @@
 
   function choisirVille(id: string): void {
     if (id === prefs.selection) return;
+    // L'erreur de code postal précédente n'a plus de rapport avec ce qui est
+    // affiché : la laisser à l'écran à côté d'une ville chargée est trompeur.
+    erreurCP = null;
     prefs.choisirVille(id);
     charger();
   }
 
   async function rechercherCP(saisie: string): Promise<void> {
+    // Même raisonnement que `charger()` : sans annulation, deux soumissions
+    // rapides laissaient la dernière réponse gagner, et `retenirLieu` persistait
+    // la saisie de la fermeture périmée — `codePostal` et `lieuCP` pouvaient
+    // alors décrire deux codes différents.
+    rechercheEnCours?.abort();
+    const controleur = new AbortController();
+    rechercheEnCours = controleur;
+
     erreurCP = null;
+    rechercheCP = true;
     try {
-      prefs.retenirLieu(await geocoder(saisie), saisie);
+      prefs.retenirLieu(await geocoder(saisie, controleur.signal), saisie);
       charger();
     } catch (e) {
+      if (controleur.signal.aborted) return;
       erreurCP =
         e instanceof ErreurApi ? e.message : 'Recherche impossible. Vérifiez la connexion.';
+    } finally {
+      if (rechercheEnCours === controleur) rechercheCP = false;
     }
   }
 
@@ -106,6 +130,7 @@
       window.removeEventListener('online', enLigne);
       window.removeEventListener('offline', horsConnexion);
       chargementEnCours?.abort();
+      rechercheEnCours?.abort();
     };
   });
 </script>
@@ -133,6 +158,7 @@
     <RechercheCodePostal
       bind:valeur={prefs.codePostal}
       erreur={erreurCP}
+      enCours={rechercheCP}
       onrechercher={rechercherCP}
     />
   </header>
@@ -141,12 +167,25 @@
     <p class="bandeau-hors-ligne">Hors ligne — dernières prévisions enregistrées</p>
   {/if}
 
+  <!--
+    Une erreur survenue alors qu'on a encore des prévisions valides devient un
+    bandeau, pas un écran plein : l'ordre des branches faisait disparaître des
+    données parfaitement lisibles, toujours présentes en mémoire — l'inverse de
+    ce que promet une application hors ligne d'abord.
+  -->
+  {#if erreur && donnees && !chargement}
+    <div class="bandeau-erreur" role="alert">
+      <p>{erreur}</p>
+      <button class="reessayer" onclick={charger}>Réessayer</button>
+    </div>
+  {/if}
+
   {#if chargement}
     <div class="etat">
       <span class="spinner" aria-hidden="true"></span>
       <p>Chargement des prévisions…</p>
     </div>
-  {:else if erreur}
+  {:else if erreur && !donnees}
     <div class="etat erreur" role="alert">
       <p>{erreur}</p>
       <button class="reessayer" onclick={charger}>Réessayer</button>
@@ -221,6 +260,15 @@
     margin: 1rem 0 0; padding: 0.5rem 0.9rem;
     background: rgba(0,0,0,0.3); border-radius: 0.6rem; font-size: 0.85rem;
   }
+
+  .bandeau-erreur {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 0.75rem; flex-wrap: wrap;
+    margin: 1rem 0 0; padding: 0.6rem 0.9rem;
+    background: rgba(120,20,20,0.45); border-radius: 0.6rem; font-size: 0.85rem;
+  }
+  .bandeau-erreur p { margin: 0; }
+  .bandeau-erreur .reessayer { padding: 0.35rem 0.9rem; font-size: 0.85rem; }
 
   .etat { text-align: center; padding: 4rem 1rem; }
   .spinner {

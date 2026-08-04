@@ -86,6 +86,41 @@ jobs:
       - name: Audit des dépendances
         run: npm audit --audit-level=high --omit=dev
 
+  e2e:
+    name: Frontend — parcours de bout en bout
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      # Chromium seul : la suite ne cible que lui, inutile de tirer Firefox et
+      # WebKit à chaque run.
+      - run: npx playwright install --with-deps chromium
+
+      # `playwright.config.ts` construit puis sert `dist/` : le parcours passe
+      # par le bundle réellement déployé, pas par le serveur de développement.
+      - run: npm run test:e2e
+
+      - name: Publier le rapport Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-e2e
+          path: frontend/playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
+
   docker:
     name: Docker — validate builds
     runs-on: ubuntu-latest
