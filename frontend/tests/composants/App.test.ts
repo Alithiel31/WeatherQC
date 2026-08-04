@@ -173,9 +173,10 @@ describe('App — unités', () => {
     render(App);
     await screen.findByText('Partiellement nuageux');
 
-    expect(
-      screen.getByRole('button', { name: 'Unités impériales' })
-    ).toHaveProperty('textContent', '°F');
+    expect(screen.getByRole('button', { name: 'Unités impériales' })).toHaveProperty(
+      'textContent',
+      '°F'
+    );
     expect(screen.getByText('71')).toBeTruthy();
   });
 });
