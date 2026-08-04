@@ -1,7 +1,17 @@
 # CHANGELOG
 
 ## [Non publié]
+
+### Changed
+
+- Les deux images Docker passent de `node:22-alpine` à **`node:24-alpine`**, et la CI teste
+  désormais sur la même version — tester sur une version que la production n'exécute pas revient
+  à ne pas tester la production. Dependabot proposait la 26 : au 2026-08 elle est encore
+  _Current_, elle ne passe LTS que le 2026-10-28. La 24 est LTS depuis le 2025-10-28 et suivie
+  jusqu'au 2028-04-30, soit deux ans de plus que la 22 qu'elle remplace
+
 ### Security
+
 - En-têtes de sécurité sur le document servi : CSP, `X-Content-Type-Options`, `Referrer-Policy`,
   `Permissions-Policy` et HSTS. `helmet` ne couvrait que les réponses JSON de `/api/`, où une
   CSP est décorative — le HTML qui exécute réellement le JavaScript est servi par nginx, et il
@@ -13,6 +23,7 @@
   lieu de fusionner
 
 ### Changed
+
 - `deploy-twa.yml` passe de `track:` à `tracks:` sur `r0adkll/upload-google-play`. L'entrée au
   singulier est dépréciée et l'action émet un avertissement à chaque publication ; renseigner
   les deux est déjà une erreur dure côté action
@@ -22,7 +33,9 @@
   `@types/supertest` 7, `@types/node` 26 et `jsdom` 30
 - `actions/checkout`, `actions/setup-node` et `actions/upload-artifact` passent en v7. Les runners
   signalaient déjà la dépréciation de Node 20 sur `checkout@v4`
+
 ### Added
+
 - Compression gzip et politique de cache nginx : cache long sur les assets hachés, aucun sur
   `index.html`, `sw.js` et le manifeste — sans quoi un déploiement resterait invisible jusqu'à
   expiration du cache
@@ -41,6 +54,7 @@
   automatisation de dépendances
 
 ### Changed
+
 - Le hook `pre-push` lance `test:run` et non `test:unit` côté backend : la suite
   d'intégration — routes, durcissement, CORS, cache — n'était jamais jouée avant un push,
   alors que le frontend passait déjà par sa suite complète. Le README annonçait `test:run`,
@@ -65,8 +79,9 @@
   une panne tierce devenait un épuisement local
 
 ### Fixed
+
 - Le cache du service worker était inopérant en cas de panne amont : `NetworkFirst` ne retombe
-  sur le cache que si le `fetch` *rejette*, or un 502 est une réponse *résolue*. Elle traversait
+  sur le cache que si le `fetch` _rejette_, or un 502 est une réponse _résolue_. Elle traversait
   jusqu'à l'application, qui affichait une erreur alors que des prévisions valides dormaient
   sur l'appareil — la promesse « dernières prévisions en cache » ne tenait donc pas dès que le
   backend répondait en erreur. Un greffon Workbox traite désormais un 5xx comme une panne
@@ -79,6 +94,7 @@
   ailleurs
 
 ### Fixed
+
 - Une erreur n'efface plus les prévisions affichées : `{:else if erreur}` était évalué avant
   `{:else if donnees}`, et `charger()` ne vide jamais `donnees`. Un échec de rafraîchissement
   faisait donc disparaître de l'écran des prévisions parfaitement lisibles, toujours en
@@ -126,6 +142,7 @@
   la nommant, au lieu de laisser tourner le serveur avec un `NaN`
 
 ### Added
+
 - Délai maximal de 10 s sur les appels du frontend : rien ne bornait le trajet
   navigateur → nginx → backend, et une requête pendue faisait tourner le spinner sans fin
 - Journalisation structurée (horodatage, niveau, contexte ; JSON en production) et en-tête
@@ -139,6 +156,7 @@
 - Limites mémoire et rotation des logs sur les deux conteneurs — la cible est un Raspberry Pi
 
 ### Changed
+
 - L'index RainViewer passe par `GET /api/rainviewer` : c'était la seule dépendance tierce
   appelée en direct depuis le navigateur, sans délai maximal, sans validation de schéma et
   sans cache — chaque visiteur ouvrant la carte tapait l'API. Elle hérite du traitement des
@@ -154,8 +172,7 @@
   APIs supprimées en Zod 4, la montée de version n'est plus bloquée
 - Zod 4 — la montée préparée plus haut est effectuée. `z.url()` remplace `z.string().url()`,
   déprécié en v4
-- Node unifié sur 22 : `engines` annonçait 18, la CI tournait sur 20 et les images Docker sur
-  22. Trois cibles, aucune testée ensemble — c'est celle qui tourne en production qui l'emporte
+- Node unifié sur 22 : `engines` annonçait 18, la CI tournait sur 20 et les images Docker sur 22. Trois cibles, aucune testée ensemble — c'est celle qui tourne en production qui l'emporte
 - `package.json` racine déclarait la licence ISC, `LICENSE` et le README disaient MIT
 - `twa-manifest.json` annonçait `appVersionCode: 1` alors que `build.gradle` était à 3
 - `README` documentait `GET /api/geocode/:rta` ; le paramètre s'appelle `:codePostal`
@@ -164,6 +181,7 @@
 - Le hook `pre-push` lance `svelte-check`, comme la CI
 
 ### Added
+
 - Durcissement de l'API publique : en-têtes `helmet`, corps JSON plafonné à 10 ko,
   limitation de débit par IP (100 req/min sur `/api`, 20 sur `/api/geocode`)
 - `TRUST_PROXY_HOPS` — retrouve l'IP réelle derrière cloudflared + nginx, sans quoi tous
@@ -172,6 +190,7 @@
 - `healthcheck` du backend dans `docker-compose.yml`, le frontend attend `service_healthy`
 
 ### Fixed
+
 - Les appels à Open-Meteo et Zippopotam sont bornés par `FETCH_TIMEOUT_MS` (5 s par défaut) :
   une API amont lente ne laisse plus la requête Express pendue indéfiniment — dépassement
   du délai = **504**
@@ -186,6 +205,7 @@
   local avait été fait (la CI ne le voyait pas, elle vérifie le format avant de builder)
 
 ### Security
+
 - CI/CD Android : le keystore de production n'est plus déchiffrable depuis une branche de
   travail. La restriction précédente ne portait que sur le déclencheur `push` ; le
   `workflow_dispatch` de `build-twa.yml` restait ouvert à n'importe quelle ref, alors que le
@@ -202,17 +222,21 @@
 - Keystore supprimé du workspace en fin de job de build
 
 ### Changed
+
 - Les tests d'intégration n'appellent plus Open-Meteo ni Zippopotam : ils s'appuient sur
   les fixtures de `backend/tests/fixtures/` — une panne d'API externe ne casse plus la CI
 - `tests/setup.ts` fait échouer tout appel réseau non mocké et isole le cache entre tests
 
 ### Added
+
 - `npm run test:contract` + workflow nocturne `contract.yml` — vérifient le contrat réel
   des APIs externes hors du chemin critique des PR
 - Couverture d'intégration : mise en cache, erreur 502 en amont, RTA inexistant
 
 ## [2.1.1] - 2026-08-02
+
 ### Changed
+
 - TWA Android : `targetSdkVersion` 35 → 36 (Android 16) pour respecter l'exigence
   Google Play du 31 août 2026 sur le niveau d'API cible
 - TWA Android : `versionCode` 2 → 3 et `versionName` "2" → "3" (obligatoire pour
@@ -222,31 +246,40 @@
 - TWA Android : dépôt `jcenter()` (arrêté depuis 2021) remplacé par `mavenCentral()`
 
 ### Removed
+
 - `backend/dist/` retiré du suivi git — artefact de build régénéré par `tsc`
 - `backend/server.js` — monolithe pré-refactorisation, remplacé par `src/`
 - `frontend/src/main.js` et `frontend/src/lib/meteo.js` — doublons obsolètes
   des versions TypeScript (`main.ts`, `meteo.ts`)
 
 ## [2.1.0] - 2026-06-18
+
 ### Added
+
 - Workflow CI/CD `build-twa.yml` — build et signature automatiques du `.aab` Android
 - Workflow `deploy-twa.yml` — publication automatique sur Play Store (Internal Testing)
 - Hook Husky `pre-push` — tests lancés automatiquement avant chaque push
 
 ### Fixed
+
 - Linter et formatage Prettier corrigés sur backend et frontend
 
 ## [2.0.1] - 2026-06-15
+
 ### Added
+
 - Validation stricte des inputs avec Zod
 - Tests automatisés (unit + intégration)
 - Prettier pour le formatage
 
 ### Fixed
+
 - Gestion d'erreurs Zod dans le middleware
 
 ## [2.0.0] - 2026-06-11
+
 ### Initial Release
+
 - API REST Express + Frontend Svelte PWA
 - Cache configurable
 - Prévisions météo Open-Meteo
