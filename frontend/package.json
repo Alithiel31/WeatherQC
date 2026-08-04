@@ -14,9 +14,12 @@
     "test:coverage": "vitest run --coverage",
     "test:ci": "vitest run --coverage --reporter=default --reporter=json --outputFile.json=./rapport-tests.json",
     "test:pwa": "vitest run tests/pwa",
-    "lint": "eslint src/ tests/",
+    "lint": "eslint src/ tests/ e2e/ playwright.config.ts",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "pretest:e2e": "vite build"
   },
   "lint-staged": {
     "*.ts": [
@@ -30,6 +33,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@testing-library/svelte": "^5.4.2",
     "@testing-library/user-event": "^14.6.1",
