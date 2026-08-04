@@ -50,6 +50,13 @@ describe('Quotidien', () => {
     expect(screen.getByText('24°')).toBeTruthy();
   });
 
+  it('convertit les températures en Fahrenheit quand l’unité est impériale', () => {
+    render(Quotidien, { jours: [jour('2026-08-03', { min: 0, max: 100 })], unite: 'imperial' });
+
+    expect(screen.getByText('32°')).toBeTruthy();
+    expect(screen.getByText('212°')).toBeTruthy();
+  });
+
   it('affiche la probabilité de précipitation à partir de 20 %', () => {
     render(Quotidien, { jours: semaine });
 

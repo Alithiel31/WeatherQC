@@ -1,23 +1,33 @@
 <script lang="ts">
-  import { descriptionMeteo, iconeMeteo } from './meteo.ts';
+  import {
+    descriptionMeteo,
+    iconeMeteo,
+    degres,
+    temperatureArrondie,
+    vitesseVent,
+    libelleUniteTemp,
+    libelleUniteVent,
+  } from './meteo.ts';
+  import type { Unite } from './meteo.ts';
   import type { ConditionsActuelles } from './types.ts';
 
   interface Props {
     actuel: ConditionsActuelles;
     lieu: string;
+    unite?: Unite;
   }
 
-  const { actuel, lieu }: Props = $props();
+  const { actuel, lieu, unite = 'metrique' }: Props = $props();
 </script>
 
 <section class="actuel" aria-label="Conditions actuelles">
   <p class="lieu">{lieu}</p>
   <span class="icone" aria-hidden="true">{iconeMeteo(actuel.code, actuel.jour)}</span>
-  <p class="temperature">{Math.round(actuel.temperature)}<sup>°C</sup></p>
+  <p class="temperature">{temperatureArrondie(actuel.temperature, unite)}<sup>°{libelleUniteTemp(unite)}</sup></p>
   <p class="condition">{descriptionMeteo(actuel.code)}</p>
   <dl class="details">
-    <div><dt>Ressenti</dt><dd>{Math.round(actuel.ressenti)}°</dd></div>
-    <div><dt>Vent</dt><dd>{Math.round(actuel.vent)} km/h</dd></div>
+    <div><dt>Ressenti</dt><dd>{degres(actuel.ressenti, unite)}</dd></div>
+    <div><dt>Vent</dt><dd>{vitesseVent(actuel.vent, unite)} {libelleUniteVent(unite)}</dd></div>
     <div><dt>Humidité</dt><dd>{actuel.humidite} %</dd></div>
   </dl>
 </section>

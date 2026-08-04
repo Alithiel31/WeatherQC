@@ -39,6 +39,13 @@ const WMO: Record<number, EntreeWMO> = {
 export const VALEUR_ABSENTE = '—';
 
 /**
+ * Le backend et Open-Meteo ne parlent que le système métrique (°C, km/h) : la
+ * conversion est purement un choix d'affichage, elle reste donc côté client
+ * plutôt que de dédoubler la clé de cache du backend par unité.
+ */
+export type Unite = 'metrique' | 'imperial';
+
+/**
  * `code` est nullable : Open-Meteo laisse des trous en fin de série. Les corps
  * ci-dessous le toléraient déjà — seules les signatures affirmaient le contraire.
  */
@@ -53,14 +60,54 @@ export function iconeMeteo(code: number | null, jour = true): string {
   return jour ? entry.iconJour : entry.iconNuit;
 }
 
+/** Conversion Celsius → Fahrenheit, sans arrondi. */
+function versFahrenheit(celsius: number): number {
+  return (celsius * 9) / 5 + 32;
+}
+
+/** Conversion km/h → mph, sans arrondi. */
+function versMph(kmh: number): number {
+  return kmh * 0.621371;
+}
+
 /**
- * Température arrondie, ou `—` quand Open-Meteo n'a rien à cette échéance.
+ * Température convertie et arrondie, sans signe degré ni repli sur `—` : pour
+ * `ConditionsActuelles`, qui met le degré en exposant séparément du nombre.
+ * `degres()`, ci-dessous, s'appuie dessus pour le cas courant (nombre et degré
+ * dans le même texte).
+ */
+export function temperatureArrondie(valeur: number, unite: Unite = 'metrique'): number {
+  return Math.round(unite === 'imperial' ? versFahrenheit(valeur) : valeur);
+}
+
+/**
+ * Température arrondie dans l'unité demandée, ou `—` quand Open-Meteo n'a rien
+ * à cette échéance.
  *
  * Sans ce garde-fou, `Math.round(null)` vaut `0` : une valeur absente s'affichait
  * « 0° », indiscernable d'un vrai zéro — le pire résultat possible ici.
  */
-export function degres(valeur: number | null): string {
-  return valeur === null ? VALEUR_ABSENTE : `${Math.round(valeur)}°`;
+export function degres(valeur: number | null, unite: Unite = 'metrique'): string {
+  return valeur === null ? VALEUR_ABSENTE : `${temperatureArrondie(valeur, unite)}°`;
+}
+
+/**
+ * Vitesse du vent arrondie dans l'unité demandée. Reçoit toujours du km/h —
+ * l'unité de Open-Meteo et du backend — et rend un nombre plutôt qu'une chaîne :
+ * contrairement à la température, l'appelant doit encore y accoler l'unité.
+ */
+export function vitesseVent(valeurKmh: number, unite: Unite = 'metrique'): number {
+  return Math.round(unite === 'imperial' ? versMph(valeurKmh) : valeurKmh);
+}
+
+/** Libellé de l'unité de température affichée, sans le symbole degré. */
+export function libelleUniteTemp(unite: Unite): 'C' | 'F' {
+  return unite === 'imperial' ? 'F' : 'C';
+}
+
+/** Libellé de l'unité de vent affichée. */
+export function libelleUniteVent(unite: Unite): 'km/h' | 'mph' {
+  return unite === 'imperial' ? 'mph' : 'km/h';
 }
 
 export function familleMeteo(code: number): string {

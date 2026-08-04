@@ -141,3 +141,35 @@ describe('creerPreferences — mutations', () => {
     expect(localStorage.getItem('codePostal')).toBeNull();
   });
 });
+
+describe('creerPreferences — unité', () => {
+  it('retombe sur le métrique quand rien n’est mémorisé', () => {
+    expect(creerPreferences().unite).toBe('metrique');
+  });
+
+  it('relit une unité mémorisée valide', () => {
+    localStorage.setItem('unite', 'imperial');
+
+    expect(creerPreferences().unite).toBe('imperial');
+  });
+
+  it('retombe sur le métrique quand la valeur mémorisée est étrangère', () => {
+    localStorage.setItem('unite', 'yolo');
+
+    expect(creerPreferences().unite).toBe('metrique');
+  });
+
+  it('bascule et mémorise l’unité', () => {
+    const prefs = creerPreferences();
+
+    prefs.basculerUnite();
+
+    expect(prefs.unite).toBe('imperial');
+    expect(localStorage.getItem('unite')).toBe('imperial');
+
+    prefs.basculerUnite();
+
+    expect(prefs.unite).toBe('metrique');
+    expect(localStorage.getItem('unite')).toBe('metrique');
+  });
+});

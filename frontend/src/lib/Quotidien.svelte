@@ -1,12 +1,14 @@
 <script lang="ts">
   import { iconeMeteo, descriptionMeteo, degres, jourCourt, jourLong } from './meteo.ts';
+  import type { Unite } from './meteo.ts';
   import type { PrevisionsQuotidiennes } from './types.ts';
 
   interface Props {
     jours?: PrevisionsQuotidiennes[];
+    unite?: Unite;
   }
 
-  const { jours = [] }: Props = $props();
+  const { jours = [], unite = 'metrique' }: Props = $props();
 
   // Les nulls sont écartés avant le calcul : `Math.min` les convertit en `0`, et
   // une seule journée sans donnée en queue de série écrasait l'échelle des barres
@@ -40,7 +42,7 @@
         <span class="pluie"
           >{j.precipitation !== null && j.precipitation >= 20 ? `${j.precipitation} %` : ''}</span
         >
-        <span class="min">{degres(j.min)}</span>
+        <span class="min">{degres(j.min, unite)}</span>
         <span class="barre" aria-hidden="true">
           <!-- Pas de barre sans les deux bornes : `pct(null)` en dessinerait une
                partant du minimum de la semaine, un mensonge graphique. -->
@@ -51,7 +53,7 @@
             ></span>
           {/if}
         </span>
-        <span class="max">{degres(j.max)}</span>
+        <span class="max">{degres(j.max, unite)}</span>
       </li>
     {/each}
   </ol>

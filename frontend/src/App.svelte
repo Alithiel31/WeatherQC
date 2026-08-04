@@ -5,7 +5,7 @@
   import CarteNuages from './lib/CarteNuages.svelte';
   import ConditionsActuelles from './lib/ConditionsActuelles.svelte';
   import RechercheCodePostal from './lib/RechercheCodePostal.svelte';
-  import { familleMeteo, heureMinute } from './lib/meteo.ts';
+  import { familleMeteo, heureMinute, libelleUniteTemp } from './lib/meteo.ts';
   import {
     previsionsVille,
     previsionsCoordonnees,
@@ -137,7 +137,15 @@
 
 <main class={classeCiel}>
   <header>
-    <h1 class="eyebrow">Prévisions · Canada</h1>
+    <div class="ligne-titre">
+      <h1 class="eyebrow">Prévisions · Canada</h1>
+      <button
+        class="bascule-unite"
+        onclick={() => prefs.basculerUnite()}
+        aria-pressed={prefs.unite === 'imperial'}
+        aria-label="Unités impériales"
+      >°{libelleUniteTemp(prefs.unite)}</button>
+    </div>
     <nav class="villes" aria-label="Choix de la ville">
       {#each villes as v (v.id)}
         <button
@@ -213,9 +221,9 @@
       <button class="reessayer" onclick={charger}>Réessayer</button>
     </div>
   {:else if donnees}
-    <ConditionsActuelles actuel={donnees.actuel} lieu={nomLieu} />
+    <ConditionsActuelles actuel={donnees.actuel} lieu={nomLieu} unite={prefs.unite} />
 
-    <Horaire heures={donnees.horaire} />
+    <Horaire heures={donnees.horaire} unite={prefs.unite} />
 
     {#if !horsLigne}
       <CarteNuages
@@ -225,7 +233,7 @@
       />
     {/if}
 
-    <Quotidien jours={donnees.quotidien} />
+    <Quotidien jours={donnees.quotidien} unite={prefs.unite} />
 
     <footer>
       <p>
@@ -283,6 +291,18 @@
     plus de 1. La hiérarchie tient déjà par la taille, la graisse et l'interlettrage.
   */
   .eyebrow { margin: 0; font-size: 0.75rem; font-weight: 400; letter-spacing: 0.18em; text-transform: uppercase; }
+
+  .ligne-titre { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+
+  /* Même voile que `.villes` : cf. son commentaire de contraste. */
+  .bascule-unite {
+    flex-shrink: 0;
+    border: 0; background: rgba(0,0,0,0.25); color: #fff; font: inherit;
+    font-weight: 700; font-size: 0.8rem; line-height: 1;
+    width: 2.1rem; height: 2.1rem; border-radius: 50%; cursor: pointer;
+    backdrop-filter: blur(6px);
+  }
+  .bascule-unite:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
   /* Lue par les lecteurs d'écran, jamais affichée. `clip-path` plutôt que
      `display: none`, qui la retirerait de l'arbre d'accessibilité. */

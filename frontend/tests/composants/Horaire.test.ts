@@ -43,6 +43,12 @@ describe('Horaire', () => {
     expect(screen.getByText('22°')).toBeTruthy();
   });
 
+  it('convertit la température en Fahrenheit quand l’unité est impériale', () => {
+    render(Horaire, { heures: [heure(9, { temperature: 0 })], unite: 'imperial' });
+
+    expect(screen.getByText('32°')).toBeTruthy();
+  });
+
   it('affiche la probabilité de précipitation à partir de 20 %', () => {
     render(Horaire, {
       heures: [heure(9, { precipitation: 20 }), heure(10, { precipitation: 19 })],

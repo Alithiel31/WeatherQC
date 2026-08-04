@@ -140,6 +140,46 @@ describe('App — chargement initial', () => {
   });
 });
 
+describe('App — unités', () => {
+  it('affiche le métrique par défaut', async () => {
+    render(App);
+
+    await screen.findByText('Partiellement nuageux');
+
+    const bascule = screen.getByRole('button', { name: 'Unités impériales' });
+    expect(bascule).toHaveProperty('textContent', '°C');
+    expect(bascule.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('bascule vers l’impérial et convertit l’affichage', async () => {
+    const user = userEvent.setup();
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    await user.click(screen.getByRole('button', { name: 'Unités impériales' }));
+
+    const bascule = screen.getByRole('button', { name: 'Unités impériales' });
+    expect(bascule).toHaveProperty('textContent', '°F');
+    expect(bascule.getAttribute('aria-pressed')).toBe('true');
+    // 21.4 °C → 71 °F, 14.2 km/h → 9 mph.
+    expect(screen.getByText('71')).toBeTruthy();
+    expect(screen.getByText('9 mph')).toBeTruthy();
+    expect(localStorage.getItem('unite')).toBe('imperial');
+  });
+
+  it('mémorise l’unité choisie entre deux montages', async () => {
+    localStorage.setItem('unite', 'imperial');
+
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    expect(
+      screen.getByRole('button', { name: 'Unités impériales' })
+    ).toHaveProperty('textContent', '°F');
+    expect(screen.getByText('71')).toBeTruthy();
+  });
+});
+
 describe('App — prévisions périmées servies par le backend', () => {
   it('signale que les prévisions ne sont plus actualisées', async () => {
     // Le backend sert une entrée périmée quand l'amont est en panne : sans le

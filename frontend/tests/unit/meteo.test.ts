@@ -3,6 +3,10 @@ import {
   descriptionMeteo,
   iconeMeteo,
   degres,
+  temperatureArrondie,
+  vitesseVent,
+  libelleUniteTemp,
+  libelleUniteVent,
   familleMeteo,
   jourCourt,
   jourLong,
@@ -66,6 +70,59 @@ describe('degres', () => {
     // température parfaitement plausible en hiver québécois.
     expect(degres(null)).toBe(VALEUR_ABSENTE);
     expect(degres(null)).not.toContain('0');
+  });
+
+  it('rend le métrique par défaut, sans conversion', () => {
+    expect(degres(21.4)).toBe(degres(21.4, 'metrique'));
+  });
+
+  it('convertit en Fahrenheit quand l’unité est impériale', () => {
+    expect(degres(0, 'imperial')).toBe('32°');
+    expect(degres(100, 'imperial')).toBe('212°');
+    expect(degres(21.4, 'imperial')).toBe('71°');
+  });
+
+  it('rend une valeur absente en impérial sans tenter de la convertir', () => {
+    expect(degres(null, 'imperial')).toBe(VALEUR_ABSENTE);
+  });
+});
+
+describe('temperatureArrondie', () => {
+  it('arrondit sans signe degré, en métrique par défaut', () => {
+    expect(temperatureArrondie(21.6)).toBe(22);
+  });
+
+  it('convertit et arrondit en Fahrenheit', () => {
+    expect(temperatureArrondie(0, 'imperial')).toBe(32);
+  });
+});
+
+describe('vitesseVent', () => {
+  it('rend le km/h fourni sans conversion par défaut', () => {
+    expect(vitesseVent(20)).toBe(20);
+    expect(vitesseVent(20)).toBe(vitesseVent(20, 'metrique'));
+  });
+
+  it('convertit en mph quand l’unité est impériale', () => {
+    expect(vitesseVent(100, 'imperial')).toBe(62);
+  });
+
+  it('arrondit au km/h ou au mph près', () => {
+    expect(vitesseVent(14.6)).toBe(15);
+  });
+});
+
+describe('libelleUniteTemp', () => {
+  it('rend C en métrique et F en impérial', () => {
+    expect(libelleUniteTemp('metrique')).toBe('C');
+    expect(libelleUniteTemp('imperial')).toBe('F');
+  });
+});
+
+describe('libelleUniteVent', () => {
+  it('rend km/h en métrique et mph en impérial', () => {
+    expect(libelleUniteVent('metrique')).toBe('km/h');
+    expect(libelleUniteVent('imperial')).toBe('mph');
   });
 });
 

@@ -1,12 +1,14 @@
 <script lang="ts">
   import { iconeMeteo, descriptionMeteo, degres, heureCourte, jourCourt } from './meteo.ts';
+  import type { Unite } from './meteo.ts';
   import type { PrevisionsHoraires } from './types.ts';
 
   interface Props {
     heures?: PrevisionsHoraires[];
+    unite?: Unite;
   }
 
-  const { heures = [] }: Props = $props();
+  const { heures = [], unite = 'metrique' }: Props = $props();
 
   function etiquette(h: PrevisionsHoraires, i: number): string {
     if (i === 0) return 'Maint.';
@@ -46,7 +48,7 @@
           <span class="icone" role="img" aria-label={descriptionMeteo(h.code)}
             >{iconeMeteo(h.code)}</span
           >
-          <span class="temp">{degres(h.temperature)}</span>
+          <span class="temp">{degres(h.temperature, unite)}</span>
           {#if h.precipitation !== null && h.precipitation >= 20}
             <span class="pluie">{h.precipitation} %</span>
           {/if}

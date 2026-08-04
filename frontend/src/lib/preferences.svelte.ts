@@ -1,7 +1,14 @@
 import { lireTexte, lireJSON, ecrire, ecrireJSON, supprimer } from './stockage.ts';
 import type { LieuCP } from './types.ts';
+import type { Unite } from './meteo.ts';
 
 const VILLE_DEFAUT = 'montreal';
+const UNITE_DEFAUT: Unite = 'metrique';
+
+/** Repli sur le défaut plutôt que de propager une valeur étrangère au backend. */
+function estUniteValide(valeur: string): valeur is Unite {
+  return valeur === 'metrique' || valeur === 'imperial';
+}
 
 /**
  * Un `lieuCP` relu du stockage n'est pas digne de confiance.
@@ -52,6 +59,9 @@ export function creerPreferences() {
   if (selectionCoherente !== selectionBrute) ecrire('selection', selectionCoherente);
   let selection = $state(selectionCoherente);
 
+  const uniteBrute = lireTexte('unite', UNITE_DEFAUT);
+  let unite = $state<Unite>(estUniteValide(uniteBrute) ? uniteBrute : UNITE_DEFAUT);
+
   return {
     get selection() {
       return selection;
@@ -65,6 +75,15 @@ export function creerPreferences() {
     },
     get lieuCP() {
       return lieuCP;
+    },
+    get unite() {
+      return unite;
+    },
+
+    /** Bascule °C/km-h ↔ °F/mph. Un seul réglage : les deux voyagent ensemble. */
+    basculerUnite() {
+      unite = unite === 'metrique' ? 'imperial' : 'metrique';
+      ecrire('unite', unite);
     },
 
     choisirVille(id: string) {
