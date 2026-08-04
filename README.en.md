@@ -73,15 +73,20 @@ The app is published on the **Google Play Store** as a TWA (Trusted Web Activity
 
 | Workflow | Trigger | Role |
 |---|---|---|
+| `android.yml` | PR or push touching `twa-qcweather/**` | **Unsigned** `bundleRelease` — pre-merge safety net |
 | `build-twa.yml` | Push to `twa-qcweather/**` **from `main`**, or manual **from `main`** | Build + sign the `.aab` |
 | `deploy-twa.yml` | After `build-twa.yml` succeeds, or manual from `main` | Publish to Play Store (Internal Testing) |
 
-> The production keystore is only decrypted from `main` — both workflows carry the
-> `github.ref == 'refs/heads/main'` guard, which also covers manual dispatch.
+> The production keystore is only decrypted from `main` — `build-twa.yml` and `deploy-twa.yml`
+> carry the `github.ref == 'refs/heads/main'` guard, which also covers manual dispatch.
 >
-> **A TWA change therefore cannot be built before it's merged.** To validate it beforehand:
-> `cd twa-qcweather && ./gradlew bundleRelease` locally, with a development keystore.
-> The production signature only exists on `main`.
+> **The production signature therefore only exists on `main`.** Compilation, however, is
+> verified from the pull request onwards: `android.yml` runs `bundleRelease` with no secrets at
+> all — the project declares no `signingConfig`, Bubblewrap injects the signature at build time,
+> and the bundle this safety net produces is unsigned and never published. A Gradle, AGP or
+> `androidbrowserhelper` bump therefore fails before the merge, not after.
+>
+> To reproduce locally: `cd twa-qcweather && ./gradlew bundleRelease`.
 
 > `deploy-twa.yml` requires a **first manual submission** in Play Console — Google requires a version to already exist on the track before accepting uploads via API.
 
@@ -389,7 +394,7 @@ Add an entry to `backend/src/data/cities.ts`.
 | Network access | Tailscale |
 | External APIs | Open-Meteo · Zippopotam.us · CARTO / OpenStreetMap |
 | Android | TWA · Bubblewrap · Google Play Store |
-| CI/CD | GitHub Actions (`ci.yml` · `build-twa.yml` · `deploy-twa.yml`) |
+| CI/CD | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml`) |
 
 ## Contributing
 
