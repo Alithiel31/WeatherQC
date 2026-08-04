@@ -23,6 +23,16 @@ updates:
       # ensemble et n'atteignent pas la production.
       outils-dev:
         dependency-type: development
+    ignore:
+      # TypeScript 7 est le portage natif du compilateur, pas une montée
+      # d'outillage : `typescript-eslint` 8.66 déclare `>=4.8.4 <6.1.0` en pair,
+      # et `svelte-check` 4.x est dans le même cas. Les propositions #28 puis #35
+      # échouaient toutes les deux en CI, sur ce dossier même.
+      #
+      # La montée devra se faire back et front ensemble, une fois l'écosystème
+      # aligné — à ce moment cette entrée saute, ici et côté frontend.
+      - dependency-name: 'typescript'
+        versions: ['7.x']
 
   - package-ecosystem: npm
     directory: /frontend
@@ -34,6 +44,12 @@ updates:
     groups:
       outils-dev:
         dependency-type: development
+    ignore:
+      # Même règle que côté backend, cf. le commentaire là-haut. Les deux doivent
+      # sauter ensemble : monter TypeScript d'un seul côté ferait diverger les
+      # deux moitiés d'un dépôt qui partage sa configuration de types.
+      - dependency-name: 'typescript'
+        versions: ['7.x']
 
   # Les actions manipulant le keystore et la clé Play Store sont épinglées par
   # SHA : sans Dependabot, ces épingles ne bougeraient plus jamais.
