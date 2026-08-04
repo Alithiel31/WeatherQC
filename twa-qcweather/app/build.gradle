@@ -63,7 +63,11 @@ android {
     namespace "dev.alithiel31.qcweather"
     defaultConfig {
         applicationId "dev.alithiel31.qcweather"
-        minSdkVersion 21
+        // 23 et non 21 : androidbrowserhelper 2.7.x déclare `minSdk 23`, et la
+        // fusion de manifeste échoue durement en dessous — la bibliothèque
+        // annonce utiliser des API absentes en 21. Tenu en phase avec
+        // `twa-manifest.json`, dont Bubblewrap régénère ce fichier.
+        minSdkVersion 23
         targetSdkVersion 36
         versionCode appVersionCode
         versionName "3"
