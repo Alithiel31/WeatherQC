@@ -11,6 +11,10 @@
   déclarations sont alignées — `app/build.gradle` et `twa-manifest.json`, dont Bubblewrap
   régénère le premier. C'est le job `android.yml` qui a attrapé l'échec, sur la PR, avant que
   la chaîne de signature ne le découvre sur `main`
+- Dependabot ignore le wrapper Gradle en **9.x** : AGP 8.9.1 exige Gradle 8.11.1 et Gradle 9.x
+  n'est testé qu'avec AGP 9.0+. Sans cette règle la montée serait reproposée à chaque release
+  9.x, alors qu'elle ne peut pas aboutir avant une migration d'AGP. La règle vise la 9.x seule,
+  et devra sauter en même temps que le passage à AGP 9
 
 ### Added
 
