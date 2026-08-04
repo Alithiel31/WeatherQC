@@ -3,3 +3,5 @@ dist/
 .svelte-kit/
 coverage/
 rapport-tests.json
+playwright-report/
+test-results/

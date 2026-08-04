@@ -53,6 +53,12 @@ export interface ReponseMeteo {
   horaire: PrevisionsHoraires[];
   quotidien: PrevisionsQuotidiennes[];
   depuisCache: boolean;
+  /**
+   * Vrai quand le backend a servi une entrée périmée parce que l'amont était en
+   * panne. Les prévisions restent utiles, mais elles ne sont plus à jour — et le
+   * dire vaut mieux que d'afficher une heure de mise à jour trompeuse.
+   */
+  obsolete?: boolean;
 }
 
 export interface LieuCP {

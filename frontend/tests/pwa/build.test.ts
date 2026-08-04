@@ -133,4 +133,17 @@ describe('Service worker — stratégies de cache hors ligne', () => {
   it('garde l’index RainViewer en cache court', () => {
     expect(sw).toContain('rainviewer-index');
   });
+
+  it('traite une erreur serveur comme une panne réseau sur les prévisions', () => {
+    // `NetworkFirst` ne consulte le cache que si le `fetch` rejette : sans ce
+    // greffon, un 502 traversait et l'application affichait une erreur alors
+    // que des prévisions valides étaient en cache. C'est exactement la promesse
+    // « dernières prévisions en cache » du README qui en dépend.
+    expect(sw).toContain('fetchDidSucceed');
+    expect(sw).toContain('repli sur le cache');
+    // Les 4xx doivent continuer à remonter leur message.
+    expect(sw).toMatch(/status\s*<\s*500/);
+    // Et aucune réponse d'erreur ne doit entrer en cache.
+    expect(sw).toContain('cacheWillUpdate');
+  });
 });

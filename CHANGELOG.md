@@ -35,8 +35,64 @@
   d'intégration — routes, durcissement, CORS, cache — n'était jamais jouée avant un push,
   alors que le frontend passait déjà par sa suite complète. Le README annonçait `test:run`,
   décrivant un filet qui n'existait pas
+- Journal d'accès : une ligne par requête terminée (méthode, chemin, statut, durée, origine de
+  la réponse) et une par appel amont, avec sa latence. Le journal n'existait qu'aux erreurs —
+  une requête réussie ne laissait aucune trace, si bien qu'on ne pouvait ni dire si la lenteur
+  venait d'Open-Meteo ou du Raspberry Pi, ni calculer un taux de cache, ni voir un seul 429,
+  les rejets du limiteur n'atteignant jamais le gestionnaire d'erreurs. Le README demandait
+  pourtant de chercher son `X-Request-Id` dans les logs : la recherche ne trouvait rien tant
+  que la requête n'avait pas échoué
+- `GET /api/sante` rend version de Node, temps depuis le démarrage, mémoire résidente,
+  statistiques de cache et état des disjoncteurs, au lieu du seul `{ statut: 'ok' }`
+- Mutualisation des appels amont concurrents : N requêtes simultanées sur une clé froide n'en
+  déclenchent plus qu'un. Le TTL étant fixe, toutes les clés chaudes expirent ensemble et la
+  rafale suivante partait en entier chez le fournisseur
+- Service dégradé : une entrée périmée reste servable `CACHE_FACTEUR_OBSOLETE × TTL` si l'amont
+  échoue, et la réponse porte `obsolete: true`, que l'application affiche
+- Disjoncteur par amont (`BREAKER_SEUIL_ECHECS`, `BREAKER_REPOS_MS`) : au-delà de N échecs
+  consécutifs les appels sont suspendus et répondent **503**. Un amont mort immobilisait ~10 s
+  de connexion par requête, multipliées par le nombre de clients — sur un Pi borné à 256 Mo,
+  une panne tierce devenait un épuisement local
 
 ### Fixed
+- Le cache du service worker était inopérant en cas de panne amont : `NetworkFirst` ne retombe
+  sur le cache que si le `fetch` *rejette*, or un 502 est une réponse *résolue*. Elle traversait
+  jusqu'à l'application, qui affichait une erreur alors que des prévisions valides dormaient
+  sur l'appareil — la promesse « dernières prévisions en cache » ne tenait donc pas dès que le
+  backend répondait en erreur. Un greffon Workbox traite désormais un 5xx comme une panne
+  réseau ; les 4xx continuent de remonter leur message
+- Tests de bout en bout Playwright (`frontend/e2e/`) : l'application construite est ouverte dans
+  Chromium et parcourue pour de vrai. Deux chemins n'étaient couverts nulle part — le bouton
+  « Réessayer », qu'aucun test ne cliquait, et le bandeau hors ligne, qu'aucun test ne faisait
+  apparaître faute d'émettre `online`/`offline`. L'API y est doublée par Playwright : une suite
+  de bout en bout qui dépend d'Open-Meteo redevient ce que `tests/setup.ts` interdit partout
+  ailleurs
+
+### Fixed
+- Une erreur n'efface plus les prévisions affichées : `{:else if erreur}` était évalué avant
+  `{:else if donnees}`, et `charger()` ne vide jamais `donnees`. Un échec de rafraîchissement
+  faisait donc disparaître de l'écran des prévisions parfaitement lisibles, toujours en
+  mémoire — l'inverse de ce que promet une application hors ligne d'abord. L'erreur devient
+  un bandeau au-dessus du contenu conservé
+- Le libellé du lieu est figé avec les données qu'il annonce. Dérivé de la sélection, il
+  affichait « Québec » au-dessus des relevés de Montréal dès qu'un chargement échouait
+- Le rafraîchissement automatique de la carte ne réinitialise plus le mode : le choix
+  « Radar » était écrasé toutes les 10 minutes, en pleine session, sans action de
+  l'utilisateur. La bascule ne subsiste que si la série choisie revient vide
+- `selection` et `lieuCP` ne peuvent plus se contredire : un lieu illisible laissait
+  `selection` à `'cp'`, l'application démarrait sur un 404 et l'onglet correspondant n'était
+  même pas rendu — sans moyen d'en sortir hors vidage manuel du stockage. La forme du lieu
+  est validée à la lecture, et le stockage réparé plutôt que revalidé à chaque démarrage
+- La recherche par code postal ne peut plus partir en double : le bouton se désactive et
+  affiche son état pendant l'appel, qui pouvait durer 10 s sans le moindre retour visuel.
+  `geocoder` accepte enfin un signal — seule fonction de `api.ts` à en être privée — et la
+  requête est annulée au démontage
+- L'erreur de code postal ne survit plus à un changement de ville : elle restait affichée à
+  côté d'une ville chargée sans rapport
+- `CACHE_TTL_RAINVIEWER` manquait dans `backend/.env.example` : la variable existait dans le
+  schéma et dans le README, mais pas dans le seul fichier qu'un exploitant copie avant de
+  déployer. Un test de parité entre le schéma et `.env.example` empêche désormais l'oubli de
+  se reproduire
 - Une échéance sans donnée ne s'affiche plus « 0° » : le frontend déclarait non-nullables des
   champs qu'Open-Meteo laisse à `null` au-delà de la portée du modèle, et `Math.round(null)`
   vaut `0` — une température plausible en hiver, indiscernable d'une vraie mesure. Pire, ce
@@ -120,8 +176,14 @@
   local avait été fait (la CI ne le voyait pas, elle vérifie le format avant de builder)
 
 ### Security
-- CI/CD Android : `build-twa.yml` n'est plus déclenché que depuis `main` — le keystore
-  de production n'est plus déchiffré sur une branche de travail quelconque
+- CI/CD Android : le keystore de production n'est plus déchiffrable depuis une branche de
+  travail. La restriction précédente ne portait que sur le déclencheur `push` ; le
+  `workflow_dispatch` de `build-twa.yml` restait ouvert à n'importe quelle ref, alors que le
+  README annonçait la garantie inverse — et recommandait justement ce déclenchement manuel
+  pour tester avant merge. Le job porte désormais la même garde que `deploy-twa.yml`
+- CI/CD Android : `@bubblewrap/cli` est épinglé. Installé sans version, il s'exécutait dans le
+  job où le keystore est déchiffré et les mots de passe présents en environnement — seule
+  dépendance non épinglée du dépôt, quand toutes les actions tierces le sont par SHA
 - CI/CD Android : `deploy-twa.yml` ne récupère plus que les artefacts construits sur
   `main`, et son déclenchement manuel est restreint à `main`
 - Actions tierces manipulant les secrets épinglées par SHA (`setup-android`,

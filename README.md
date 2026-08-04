@@ -71,12 +71,15 @@ L'application est publiée sur le **Google Play Store** sous forme de TWA (Trust
 
 | Workflow | Déclencheur | Rôle |
 |---|---|---|
-| `build-twa.yml` | Push sur `twa-qcweather/**` **depuis `main`** ou manuel | Build + signature du `.aab` |
+| `build-twa.yml` | Push sur `twa-qcweather/**` **depuis `main`**, ou manuel **depuis `main`** | Build + signature du `.aab` |
 | `deploy-twa.yml` | Après `build-twa.yml` réussi, ou manuel depuis `main` | Publication sur Play Store (Internal Testing) |
 
-> Le build n'est déclenché que depuis `main` : le keystore de production n'est jamais
-> déchiffré sur une branche de travail. Pour tester un changement TWA avant merge,
-> utiliser le déclenchement manuel (`workflow_dispatch`).
+> Le keystore de production n'est déchiffré que depuis `main` — les deux workflows portent la
+> garde `github.ref == 'refs/heads/main'`, qui couvre aussi le déclenchement manuel.
+>
+> **Un changement TWA ne peut donc pas être construit avant son merge.** Pour le valider en
+> amont : `cd twa-qcweather && ./gradlew bundleRelease` en local, avec un keystore de
+> développement. La signature de production, elle, n'existe que sur `main`.
 
 > `deploy-twa.yml` nécessite une **première soumission manuelle** dans Play Console — Google exige qu'une version existe déjà sur la piste avant d'accepter les uploads via API.
 
@@ -114,6 +117,9 @@ L'application est publiée sur le **Google Play Store** sous forme de TWA (Trust
 | `CACHE_TTL_GEOCODE` | ❌ | `2592000000` | Durée du cache géocodage en ms (défaut : 30 jours) |
 | `CACHE_TTL_RAINVIEWER` | ❌ | `300000` | Durée du cache de l'index RainViewer en ms (défaut : 5 min) |
 | `CACHE_MAX_ENTRIES` | ❌ | `500` | Plafond du nombre d'entrées en cache (éviction LRU) |
+| `CACHE_FACTEUR_OBSOLETE` | ❌ | `6` | Une entrée reste servable `facteur × TTL` après péremption si l'amont échoue |
+| `BREAKER_SEUIL_ECHECS` | ❌ | `5` | Échecs consécutifs avant suspension des appels à un amont |
+| `BREAKER_REPOS_MS` | ❌ | `30000` | Durée de la suspension avant la requête de test |
 | `DEFAULT_TIMEZONE` | ❌ | `America/Toronto` | Timezone pour les prévisions Open-Meteo |
 
 ---
@@ -172,6 +178,33 @@ retrouve dans les logs. Un utilisateur qui signale une panne peut citer cet iden
 docker compose logs backend | grep <identifiant>
 ```
 
+Chaque requête terminée produit une ligne — méthode, chemin, statut, durée, et l'origine de la
+réponse (`frais`, `obsolete`, `amont`) — et chaque appel amont la sienne, avec sa latence.
+C'est ce qui permet de trancher « c'est Open-Meteo » de « c'est le Pi » sans instrumenter quoi
+que ce soit. Les rejets du limiteur, qui n'atteignent jamais le gestionnaire d'erreurs,
+apparaissent en `warn` avec leur 429.
+
+`GET /api/sante` complète le tableau : version de Node, temps depuis le démarrage, mémoire
+résidente, statistiques de cache (entrées, hits, misses, taux) et état des disjoncteurs amont.
+
+### Résilience des amonts
+
+Trois mécanismes, tous visibles dans `/api/sante` :
+
+- **Mutualisation** — N requêtes simultanées sur une clé froide ne déclenchent qu'un seul appel
+  amont. Le TTL étant fixe, toutes les clés chaudes expirent ensemble : sans cela, la rafale
+  suivant une expiration partait en entier chez le fournisseur.
+- **Service dégradé** — une entrée périmée reste servable `CACHE_FACTEUR_OBSOLETE × TTL`, mais
+  uniquement si l'amont vient d'échouer. La réponse porte alors `obsolete: true` et
+  l'application l'affiche : des prévisions d'il y a vingt minutes valent mieux qu'un écran
+  d'erreur. Côté service worker, un greffon Workbox traite un 5xx comme une panne réseau —
+  sans quoi `NetworkFirst` ne consultait jamais le cache, un 502 étant une réponse *résolue*.
+- **Disjoncteur** — au-delà de `BREAKER_SEUIL_ECHECS` échecs consécutifs, les appels à cet
+  amont sont suspendus pendant `BREAKER_REPOS_MS` et répondent **503** immédiatement, puis une
+  seule requête teste le retour du service. Sans lui, un amont mort immobilisait ~10 s de
+  connexion par requête, multipliées par le nombre de clients — sur un Pi borné à 256 Mo, une
+  panne tierce devenait un épuisement local.
+
 Une variable d'environnement invalide (`PORT=abc`, quota vide) fait échouer le démarrage en la
 nommant, au lieu de laisser tourner le serveur avec un `NaN`.
 
@@ -188,7 +221,7 @@ nommant, au lieu de laisser tourner le serveur avec un `NaN`.
 | `npm run test:run` | Unitaires + intégration — lancé par le hook `pre-push` | ❌ aucun appel réseau |
 | `npm run test:unit` | Unitaires seuls | ❌ aucun appel réseau |
 | `npm run test:coverage` | Idem + rapport de couverture — **c'est ce que lance la CI** | ❌ aucun appel réseau |
-| `npm run test:contract` | Vérifie le contrat réel d'Open-Meteo et de Zippopotam | ✅ appels réels |
+| `npm run test:contract` | Vérifie le contrat réel d'Open-Meteo, de Zippopotam et de RainViewer | ✅ appels réels |
 
 Les tests d'intégration s'appuient sur les fixtures de `backend/tests/fixtures/` : une panne
 d'API externe ne peut plus faire échouer une PR. `tests/setup.ts` fait échouer explicitement
@@ -237,6 +270,7 @@ est appelé côté frontend, ce qui permet de le stubber d'un bloc dans les test
 | `npm run test:coverage` | Idem + rapport de couverture |
 | `npm run test:ci` | Idem + `rapport-tests.json` — **c'est ce que lance la CI** |
 | `npm run test:pwa` | Uniquement les vérifications PWA (manifeste + service worker) |
+| `npm run test:e2e` | Parcours de bout en bout dans Chromium (Playwright) |
 
 La CI publie `frontend/coverage/` et `frontend/rapport-tests.json` en artefact
 (`frontend-rapports`, conservé 14 jours), y compris quand le job échoue — c'est là que le
@@ -249,6 +283,26 @@ du backend ou de RainViewer.
 Les seuils de couverture vivent dans `frontend/vitest.config.ts`, calés sous la mesure
 réelle. `src/main.ts` en est exclu : il ne fait que monter l'app et enregistrer le service
 worker.
+
+### Parcours de bout en bout
+
+`e2e/` ouvre l'application **construite** dans Chromium via Playwright : sélection de ville et
+persistance du choix, recherche par code postal, message d'erreur du backend, bouton
+« Réessayer », bascule hors ligne, démarrage avec un stockage corrompu.
+
+L'API y est doublée par Playwright plutôt que servie par le vrai backend. Une suite de bout en
+bout qui dépend d'Open-Meteo redevient exactement ce que `tests/setup.ts` interdit partout
+ailleurs : un test qui échoue pour une raison étrangère au code. Le service worker est
+neutralisé pour la même raison — il intercepterait les requêtes avant les doublures, et ses
+garanties sont déjà vérifiées sur la sortie de build par `tests/pwa/build.test.ts`.
+
+```bash
+cd frontend && npm run test:e2e
+```
+
+> Un environnement fournissant déjà Chromium peut le désigner par
+> `PLAYWRIGHT_CHROMIUM_PATH` au lieu d'en télécharger un second, souvent d'une version
+> incompatible avec celle qu'attend Playwright.
 
 ### Vérifications PWA
 
