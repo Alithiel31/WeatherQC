@@ -165,6 +165,15 @@
 
   {#if horsLigne}
     <p class="bandeau-hors-ligne">Hors ligne — dernières prévisions enregistrées</p>
+  {:else if donnees?.obsolete}
+    <!--
+      Le backend a servi une entrée périmée : l'amont est en panne, mais des
+      prévisions un peu datées valent mieux qu'un écran vide. Le dire évite que
+      l'heure de mise à jour affichée en pied de page passe pour l'heure réelle.
+    -->
+    <p class="bandeau-hors-ligne">
+      Service météo momentanément indisponible — prévisions non actualisées
+    </p>
   {/if}
 
   <!--

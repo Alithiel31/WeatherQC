@@ -57,6 +57,29 @@ export default defineConfig({
               cacheName: 'api-previsions',
               networkTimeoutSeconds: 5,
               expiration: { maxEntries: 8, maxAgeSeconds: 60 * 60 * 6 },
+              plugins: [
+                {
+                  /**
+                   * `NetworkFirst` ne retombe sur le cache que si le `fetch`
+                   * *rejette*. Un 502 est une réponse résolue : elle traversait
+                   * jusqu'à l'application, qui affichait une erreur alors que
+                   * des prévisions parfaitement valides dormaient dans le cache
+                   * — la promesse « dernières prévisions en cache » ne tenait
+                   * donc pas dès que le backend répondait en erreur.
+                   *
+                   * Lever ici rend un 5xx équivalent à une panne réseau, ce qui
+                   * déclenche le repli. Les 4xx passent : un 404 « ville
+                   * inconnue » ou un 429 portent un message utile qu'il ne faut
+                   * pas masquer derrière des données périmées.
+                   */
+                  fetchDidSucceed: async ({ response }) => {
+                    if (response.status < 500) return response;
+                    throw new Error(`Réponse ${response.status} — repli sur le cache`);
+                  },
+                  /** Ne jamais mettre une réponse d'erreur en cache. */
+                  cacheWillUpdate: async ({ response }) => (response.ok ? response : null),
+                },
+              ],
             },
           },
         ],

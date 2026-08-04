@@ -1,5 +1,7 @@
 import { config } from '../config.js';
 import { BadGatewayError, GatewayTimeoutError } from './errors.js';
+import { autoriserAppel, signalerEchec, signalerSucces, CircuitOuvertError } from './breaker.js';
+import { log } from './log.js';
 
 interface OptionsFetch {
   /** Nom du service amont, utilisé dans les messages d'erreur. */
@@ -32,6 +34,15 @@ export async function fetchAvecTimeout(
   url: string,
   { service, timeoutMs = config.fetchTimeoutMs, tentatives = 2 }: OptionsFetch
 ): Promise<Response> {
+  // Amont déjà reconnu en panne : échouer tout de suite plutôt que d'immobiliser
+  // une connexion dix secondes de plus. Le cache périmé prend le relais.
+  if (!autoriserAppel(service)) {
+    throw new CircuitOuvertError(service);
+  }
+
+  const debut = process.hrtime.bigint();
+  const dureeMs = () => Number(Number(process.hrtime.bigint() - debut) / 1e6).toFixed(1);
+
   let derniereErreur: unknown;
 
   for (let essai = 1; essai <= tentatives; essai++) {
@@ -43,6 +54,19 @@ export async function fetchAvecTimeout(
         continue;
       }
 
+      // Un 5xx reste un échec pour le disjoncteur : l'amont répond, mal.
+      if (reponse.status >= 500) signalerEchec(service);
+      else signalerSucces(service);
+
+      // La latence amont était la donnée manquante pour trancher « c'est
+      // Open-Meteo » de « c'est le Pi ».
+      log.info('Appel amont terminé', {
+        service,
+        statut: reponse.status,
+        dureeMs: Number(dureeMs()),
+        essais: essai,
+      });
+
       return reponse;
     } catch (erreur) {
       derniereErreur = erreur;
@@ -50,7 +74,17 @@ export async function fetchAvecTimeout(
     }
   }
 
-  if (estTimeout(derniereErreur)) {
+  signalerEchec(service);
+
+  const expire = estTimeout(derniereErreur);
+  log.warn('Appel amont en échec', {
+    service,
+    dureeMs: Number(dureeMs()),
+    essais: tentatives,
+    cause: expire ? 'timeout' : 'reseau',
+  });
+
+  if (expire) {
     throw new GatewayTimeoutError(`${service} n'a pas répondu en moins de ${timeoutMs} ms.`);
   }
 
