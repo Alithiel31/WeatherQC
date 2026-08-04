@@ -10,6 +10,10 @@
   ailleurs
 
 ### Fixed
+- `CACHE_TTL_RAINVIEWER` manquait dans `backend/.env.example` : la variable existait dans le
+  schéma et dans le README, mais pas dans le seul fichier qu'un exploitant copie avant de
+  déployer. Un test de parité entre le schéma et `.env.example` empêche désormais l'oubli de
+  se reproduire
 - Une échéance sans donnée ne s'affiche plus « 0° » : le frontend déclarait non-nullables des
   champs qu'Open-Meteo laisse à `null` au-delà de la portée du modèle, et `Math.round(null)`
   vaut `0` — une température plausible en hiver, indiscernable d'une vraie mesure. Pire, ce

@@ -41,7 +41,7 @@ const origines = z.preprocess(
   z.array(z.url({ message: 'doit être une origine absolue, ex. https://exemple.com' }))
 );
 
-const environnementSchema = z.object({
+export const environnementSchema = z.object({
   PORT: entier(3005),
   NODE_ENV: z.string().optional(),
   TAILSCALE_IP: z.string().optional(),
