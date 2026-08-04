@@ -15,6 +15,11 @@
   change que le runtime de l'action, porté à Node 24 : les runners signalaient la dépréciation
   de Node 20 et forçaient déjà l'exécution en 24. C'était la dernière action du dépôt encore
   sur l'ancien runtime
+- Dependabot ignore **TypeScript 7.x** sur `/backend` et `/frontend`. Ce n'est pas une montée
+  d'outillage mais le portage natif du compilateur : `typescript-eslint` 8.66 déclare
+  `>=4.8.4 <6.1.0` en dépendance de pair, `svelte-check` 4.x de même. Les propositions
+  échouaient en CI, et revenaient dans la demi-journée une fois fermées. La règle saute des
+  deux côtés à la fois le jour où l'écosystème s'aligne
 - Dependabot ignore le wrapper Gradle en **9.x** : AGP 8.9.1 exige Gradle 8.11.1 et Gradle 9.x
   n'est testé qu'avec AGP 9.0+. Sans cette règle la montée serait reproposée à chaque release
   9.x, alors qu'elle ne peut pas aboutir avant une migration d'AGP. La règle vise la 9.x seule,
