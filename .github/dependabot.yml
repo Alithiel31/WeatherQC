@@ -70,3 +70,15 @@ updates:
     open-pull-requests-limit: 3
     commit-message:
       prefix: chore
+    ignore:
+      # Gradle 9.x est incompatible avec l'AGP du projet. `build.gradle` épingle
+      # AGP 8.9.1, dont les notes officielles donnent Gradle 8.11.1 en minimum
+      # *et* en défaut, et Gradle 9.x n'est testé qu'avec AGP 9.0 et plus récent.
+      # Dependabot proposait la 9.6.1 (#26, fermée) : verte en CI, parce que rien
+      # ne construisait le module Android avant son merge à l'époque.
+      #
+      # La règle porte sur la 9.x seule, pas sur toutes les majeures : quand AGP
+      # passera en 9.x, cette entrée devra sauter en même temps. Les montées d'AGP
+      # et d'`androidbrowserhelper` restent proposées.
+      - dependency-name: 'gradle-wrapper'
+        versions: ['9.x']
