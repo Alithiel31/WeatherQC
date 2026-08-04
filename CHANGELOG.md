@@ -2,6 +2,16 @@
 
 ## [Non publié]
 
+### Changed
+
+- TWA Android : `androidbrowserhelper` 2.6.2 → **2.7.2**, et `minSdkVersion` 21 → **23** dans
+  la foulée. La montée n'est pas transparente : 2.7.x relève son propre plancher à 23 et la
+  fusion de manifeste échoue durement en dessous, la bibliothèque annonçant utiliser des API
+  absentes en 21. Le plancher applicatif passe donc d'Android 5.0/5.1 à Android 6.0. Les deux
+  déclarations sont alignées — `app/build.gradle` et `twa-manifest.json`, dont Bubblewrap
+  régénère le premier. C'est le job `android.yml` qui a attrapé l'échec, sur la PR, avant que
+  la chaîne de signature ne le découvre sur `main`
+
 ### Added
 
 - Workflow `android.yml` — le module Android est enfin construit **avant** son merge. `ci.yml`
