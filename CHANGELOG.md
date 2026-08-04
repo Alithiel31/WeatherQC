@@ -2,6 +2,17 @@
 
 ## [Non publié]
 
+### Added
+
+- Workflow `android.yml` — le module Android est enfin construit **avant** son merge. `ci.yml`
+  ne touche pas `twa-qcweather/` et `build-twa.yml` est borné à `push` sur `main` : une PR
+  Dependabot sur le wrapper Gradle ou `androidbrowserhelper` affichait quatre checks verts
+  qui n'avaient pas compilé une ligne de Java, et l'échec ne serait apparu que sur `main`,
+  dans le workflow qui signe et publie. Le nouveau job exécute `bundleRelease` — la tâche
+  réelle de la chaîne de release, seule à faire passer R8 — sans aucun secret : le projet ne
+  déclare pas de `signingConfig`, le bundle produit est non signé et n'est jamais publié. La
+  garde `github.ref == 'refs/heads/main'` de `build-twa.yml` reste intacte
+
 ### Accessibility
 
 - **Le texte était illisible sur cinq des sept ciels.** `.pluie` tombait à 1.15:1 sur ciel de

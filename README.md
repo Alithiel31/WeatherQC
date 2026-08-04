@@ -73,15 +73,21 @@ L'application est publiée sur le **Google Play Store** sous forme de TWA (Trust
 
 | Workflow | Déclencheur | Rôle |
 |---|---|---|
+| `android.yml` | PR ou push touchant `twa-qcweather/**` | `bundleRelease` **non signé** — filet avant merge |
 | `build-twa.yml` | Push sur `twa-qcweather/**` **depuis `main`**, ou manuel **depuis `main`** | Build + signature du `.aab` |
 | `deploy-twa.yml` | Après `build-twa.yml` réussi, ou manuel depuis `main` | Publication sur Play Store (Internal Testing) |
 
-> Le keystore de production n'est déchiffré que depuis `main` — les deux workflows portent la
-> garde `github.ref == 'refs/heads/main'`, qui couvre aussi le déclenchement manuel.
+> Le keystore de production n'est déchiffré que depuis `main` — `build-twa.yml` et
+> `deploy-twa.yml` portent la garde `github.ref == 'refs/heads/main'`, qui couvre aussi le
+> déclenchement manuel.
 >
-> **Un changement TWA ne peut donc pas être construit avant son merge.** Pour le valider en
-> amont : `cd twa-qcweather && ./gradlew bundleRelease` en local, avec un keystore de
-> développement. La signature de production, elle, n'existe que sur `main`.
+> **La signature de production n'existe donc que sur `main`.** La compilation, elle, est
+> vérifiée dès la PR : `android.yml` exécute `bundleRelease` sans aucun secret — le projet ne
+> déclare pas de `signingConfig`, Bubblewrap injecte la signature au moment du build, et le
+> bundle produit par ce filet est non signé et jamais publié. Une montée de Gradle, d'AGP ou
+> d'`androidbrowserhelper` échoue donc avant merge, pas après.
+>
+> Pour reproduire en local : `cd twa-qcweather && ./gradlew bundleRelease`.
 
 > `deploy-twa.yml` nécessite une **première soumission manuelle** dans Play Console — Google exige qu'une version existe déjà sur la piste avant d'accepter les uploads via API.
 
@@ -397,7 +403,7 @@ Ajouter une entrée dans `backend/src/data/cities.ts`.
 | Accès réseau | Tailscale |
 | APIs externes | Open-Meteo · Zippopotam.us · CARTO / OpenStreetMap |
 | Android | TWA · Bubblewrap · Google Play Store |
-| CI/CD | GitHub Actions (`ci.yml` · `build-twa.yml` · `deploy-twa.yml`) |
+| CI/CD | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml`) |
 
 ## Contribuer
 

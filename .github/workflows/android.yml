@@ -1,0 +1,60 @@
+name: Android — build de vérification
+
+# Le module Android n'était construit nulle part avant son merge : `ci.yml` ne
+# touche pas `twa-qcweather/`, et `build-twa.yml` est borné à `push` sur `main`.
+# Une PR Dependabot sur Gradle ou `androidbrowserhelper` affichait donc quatre
+# checks verts qui n'avaient pas compilé une ligne de Java — l'échec ne serait
+# apparu que sur `main`, dans le workflow qui signe et publie.
+#
+# Ce workflow est séparé de `ci.yml` parce que GitHub Actions ne sait pas filtrer
+# par chemin au niveau d'un job : le filtre `paths` n'existe qu'au niveau du
+# déclencheur. `ci.yml` doit rester sans filtre — c'est délibéré et commenté là-bas.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'twa-qcweather/**'
+      - '.github/workflows/android.yml'
+  pull_request:
+    paths:
+      - 'twa-qcweather/**'
+      - '.github/workflows/android.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Gradle — bundleRelease non signé
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Même JDK que `build-twa.yml` : AGP 8.9.1 exige 17. Tester sur un autre
+      # reviendrait à ne pas tester la chaîne de release.
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      # Version épinglée par SHA, comme dans `build-twa.yml`.
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+
+      # `bundleRelease` et non `assembleDebug` : c'est la tâche que la chaîne de
+      # release exécute réellement, et la seule qui fasse passer R8 — `release`
+      # porte `minifyEnabled true`. Aucun secret n'est nécessaire : le projet ne
+      # déclare pas de `signingConfig`, Bubblewrap injecte la signature au build.
+      # Le bundle produit ici est donc non signé, et n'est pas publié.
+      - name: Build AAB non signé
+        working-directory: twa-qcweather
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon --stacktrace

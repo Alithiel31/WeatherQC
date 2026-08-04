@@ -76,6 +76,17 @@ curl -fsSI localhost/ | grep -i content-security-policy
 docker compose down -v
 ```
 
+### Android (`build` job in `android.yml`)
+
+Only triggers on a PR touching `twa-qcweather/**` — reproduce it before any Gradle wrapper, AGP or `androidbrowserhelper` bump:
+
+```bash
+cd twa-qcweather
+./gradlew bundleRelease   # unsigned bundle: no keystore required
+```
+
+`bundleRelease` rather than `assembleDebug`: it is the task the release chain actually runs, and the only one that puts the code through R8 (`minifyEnabled true` on `release`). The production signature only exists on `main`.
+
 ### External API contracts
 
 `npm run test:contract` (backend) makes real calls to Open-Meteo, Zippopotam and RainViewer — outside the PR path, it runs nightly via `contract.yml`. Only run it when you doubt an upstream schema (see [TROUBLESHOOTING.en.md](./TROUBLESHOOTING.en.md)).
@@ -89,7 +100,7 @@ A Husky hook (`.husky/pre-push`) replays format, lint and `test:run` on the back
 1. Create a branch from `main` (`git checkout -b fix/my-change`).
 2. Commit with a clear message, ideally in the `type: description` format (`fix:`, `docs:`, `chore:`...).
 3. Update [`CHANGELOG.md`](./CHANGELOG.md) in the `[Non publié]` (Unreleased) section, with the right category (`Added`, `Changed`, `Fixed`, `Security`, `Accessibility`) if the change is notable for a user or an operator.
-4. Check that the `backend`, `frontend`, `e2e` and `docker` jobs pass.
+4. Check that the `backend`, `frontend`, `e2e` and `docker` jobs pass — plus `android` if the PR touches `twa-qcweather/**`.
 5. Open the PR against `main`.
 
 ## Adding a city
