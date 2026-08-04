@@ -191,8 +191,9 @@ describe('App — changement de ville', () => {
   // dernier, l'écran affichait une ville et le bouton actif en désignait une autre.
   it('ignore la réponse d’une requête supplantée', async () => {
     const user = userEvent.setup();
-    // La température vient de la réponse — contrairement au nom du lieu, qui est
-    // dérivé de la sélection et basculerait même sans requête.
+    // C'est la température qui distingue les deux réponses : le nom du lieu ne
+    // change qu'avec les données qui l'accompagnent, il ne peut plus servir de
+    // témoin d'une bascule sans requête aboutie.
     const quebec: ReponseMeteo = { ...montreal, actuel: { ...montreal.actuel, temperature: 5.2 } };
 
     // Montréal (le chargement initial) répond après Québec : sans annulation,
@@ -244,7 +245,9 @@ describe('App — recherche par code postal', () => {
     await waitFor(() =>
       expect(previsionsCoordonnees).toHaveBeenCalledWith(lieu, expect.any(AbortSignal))
     );
-    expect(geocoder).toHaveBeenCalledWith('H2X 1Y4');
+    // Le signal accompagne désormais la requête : une recherche supplantée est
+    // annulée, comme l'est déjà un chargement de ville supplanté.
+    expect(geocoder).toHaveBeenCalledWith('H2X 1Y4', expect.any(AbortSignal));
     expect(JSON.parse(localStorage.getItem('lieuCP')!)).toEqual(lieu);
   });
 
@@ -280,5 +283,108 @@ describe('App — recherche par code postal', () => {
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
 
     expect(await screen.findByText('Recherche impossible. Vérifiez la connexion.')).toBeTruthy();
+  });
+
+  it('annule la recherche encore en vol au démontage', async () => {
+    const user = userEvent.setup();
+    let signal: AbortSignal | undefined;
+    geocoder.mockImplementation((_cp: string, s: AbortSignal) => {
+      signal = s;
+      return new Promise(() => {}); // jamais résolue
+    });
+
+    const { unmount } = render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    await user.type(screen.getByLabelText('Code postal canadien'), 'H2X');
+    await user.click(screen.getByRole('button', { name: 'Rechercher' }));
+    await screen.findByRole('button', { name: 'Recherche…' });
+
+    unmount();
+
+    // `geocoder` était la seule fonction de `api.ts` à ne pas prendre de signal :
+    // sa requête survivait au composant, jusqu'à 10 s durant.
+    expect(signal?.aborted).toBe(true);
+  });
+
+  it('désactive le bouton pendant la recherche', async () => {
+    const user = userEvent.setup();
+    geocoder.mockImplementation(() => new Promise(() => {}));
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    await user.type(screen.getByLabelText('Code postal canadien'), 'H2X');
+    await user.click(screen.getByRole('button', { name: 'Rechercher' }));
+
+    // Jusqu'à 10 s peuvent s'écouler avant la réponse : sans retour visuel,
+    // rien ne distingue une recherche en cours d'un clic non pris en compte.
+    const bouton = await screen.findByRole('button', { name: 'Recherche…' });
+    expect((bouton as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('efface l’erreur de code postal quand on change de ville', async () => {
+    const user = userEvent.setup();
+    geocoder.mockRejectedValue(new ErreurApi('Code postal introuvable : ZZZ'));
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    await user.type(screen.getByLabelText('Code postal canadien'), 'ZZZ');
+    await user.click(screen.getByRole('button', { name: 'Rechercher' }));
+    await screen.findByText('Code postal introuvable : ZZZ');
+
+    await user.click(screen.getByRole('button', { name: 'Québec' }));
+
+    await waitFor(() => expect(screen.queryByText('Code postal introuvable : ZZZ')).toBeNull());
+  });
+});
+
+/**
+ * Régression : `{:else if erreur}` était évalué avant `{:else if donnees}`, et
+ * `charger()` ne vide jamais `donnees`. Un échec de rafraîchissement effaçait
+ * donc de l'écran des prévisions parfaitement lisibles, toujours en mémoire —
+ * l'inverse de ce que promet une application hors ligne d'abord.
+ */
+describe('App — une erreur ne doit pas effacer les données affichées', () => {
+  it('garde les prévisions à l’écran et ajoute un bandeau', async () => {
+    const user = userEvent.setup();
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    previsionsVille.mockRejectedValue(new ErreurApi('Open-Meteo injoignable : timeout'));
+    await user.click(screen.getByRole('button', { name: 'Québec' }));
+
+    expect(await screen.findByText('Open-Meteo injoignable : timeout')).toBeTruthy();
+    // Les données précédentes sont toujours là.
+    expect(screen.getByText('Partiellement nuageux')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Réessayer' })).toBeTruthy();
+  });
+
+  it('n’annonce pas une ville dont il affiche les prévisions d’une autre', async () => {
+    const user = userEvent.setup();
+    render(App);
+    // `.lieu` est le libellé au-dessus des relevés, à distinguer du bouton de
+    // même nom dans le sélecteur de villes.
+    const libelle = () => document.querySelector('.lieu')?.textContent;
+    await waitFor(() => expect(libelle()).toBe('Montréal'));
+
+    previsionsVille.mockRejectedValue(new ErreurApi('Open-Meteo injoignable'));
+    await user.click(screen.getByRole('button', { name: 'Québec' }));
+    await screen.findByText('Open-Meteo injoignable');
+
+    // Le libellé est figé avec les données, pas dérivé de la sélection : sinon
+    // il annoncerait « Québec » au-dessus des relevés de Montréal.
+    expect(libelle()).toBe('Montréal');
+  });
+
+  it('occupe tout l’écran quand il n’y a rien à préserver', async () => {
+    previsionsVille.mockRejectedValue(new ErreurApi('Open-Meteo injoignable'));
+
+    render(App);
+
+    expect(await screen.findByRole('alert')).toHaveProperty(
+      'textContent',
+      expect.stringContaining('Open-Meteo injoignable')
+    );
+    expect(screen.queryByText('Partiellement nuageux')).toBeNull();
   });
 });

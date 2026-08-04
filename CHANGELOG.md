@@ -10,6 +10,26 @@
   ailleurs
 
 ### Fixed
+- Une erreur n'efface plus les prévisions affichées : `{:else if erreur}` était évalué avant
+  `{:else if donnees}`, et `charger()` ne vide jamais `donnees`. Un échec de rafraîchissement
+  faisait donc disparaître de l'écran des prévisions parfaitement lisibles, toujours en
+  mémoire — l'inverse de ce que promet une application hors ligne d'abord. L'erreur devient
+  un bandeau au-dessus du contenu conservé
+- Le libellé du lieu est figé avec les données qu'il annonce. Dérivé de la sélection, il
+  affichait « Québec » au-dessus des relevés de Montréal dès qu'un chargement échouait
+- Le rafraîchissement automatique de la carte ne réinitialise plus le mode : le choix
+  « Radar » était écrasé toutes les 10 minutes, en pleine session, sans action de
+  l'utilisateur. La bascule ne subsiste que si la série choisie revient vide
+- `selection` et `lieuCP` ne peuvent plus se contredire : un lieu illisible laissait
+  `selection` à `'cp'`, l'application démarrait sur un 404 et l'onglet correspondant n'était
+  même pas rendu — sans moyen d'en sortir hors vidage manuel du stockage. La forme du lieu
+  est validée à la lecture, et le stockage réparé plutôt que revalidé à chaque démarrage
+- La recherche par code postal ne peut plus partir en double : le bouton se désactive et
+  affiche son état pendant l'appel, qui pouvait durer 10 s sans le moindre retour visuel.
+  `geocoder` accepte enfin un signal — seule fonction de `api.ts` à en être privée — et la
+  requête est annulée au démontage
+- L'erreur de code postal ne survit plus à un changement de ville : elle restait affichée à
+  côté d'une ville chargée sans rapport
 - `CACHE_TTL_RAINVIEWER` manquait dans `backend/.env.example` : la variable existait dans le
   schéma et dans le README, mais pas dans le seul fichier qu'un exploitant copie avant de
   déployer. Un test de parité entre le schéma et `.env.example` empêche désormais l'oubli de
