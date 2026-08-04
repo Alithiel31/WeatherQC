@@ -38,7 +38,10 @@ jobs:
       # Même JDK que `build-twa.yml` : AGP 8.9.1 exige 17. Tester sur un autre
       # reviendrait à ne pas tester la chaîne de release.
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        # v5 et non v4 : le seul changement cassant du majeur est le passage du
+        # runtime de l'action à Node 24. Les runners signalaient la dépréciation
+        # de Node 20 et le forçaient déjà en 24. Entrées inchangées.
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
