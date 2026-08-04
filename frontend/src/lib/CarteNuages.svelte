@@ -75,12 +75,27 @@
     }
   }
 
-  async function chargerFrames(): Promise<void> {
+  /**
+   * `premierChargement` distingue l'initialisation du rafraîchissement.
+   *
+   * Le mode était réaffecté sans condition, et `rafraichirFrames` appelle cette
+   * fonction toutes les 10 minutes : un utilisateur en train de regarder le
+   * radar était ramené sur « Nuages » en pleine session, sans avoir rien fait.
+   * Un rafraîchissement conserve donc le choix, et ne bascule que si la série
+   * retenue est revenue vide.
+   */
+  async function chargerFrames(premierChargement = false): Promise<void> {
     donneesFrames = await framesRainViewer(hote);
     hote = donneesFrames.hote;
-    const satelliteVide = donneesFrames.satellite.length === 0;
-    mode = satelliteVide ? 'radar' : 'satellite';
-    animation.remplacer(satelliteVide ? donneesFrames.radar : donneesFrames.satellite);
+
+    const serie = (m: 'satellite' | 'radar') =>
+      m === 'satellite' ? donneesFrames!.satellite : donneesFrames!.radar;
+
+    if (premierChargement || serie(mode).length === 0) {
+      mode = donneesFrames.satellite.length === 0 ? 'radar' : 'satellite';
+    }
+
+    animation.remplacer(serie(mode));
   }
 
   // Recentrer la carte quand le lieu change
@@ -116,7 +131,7 @@
     }).addTo(carte);
 
     try {
-      await chargerFrames();
+      await chargerFrames(true);
       construireCouches();
       if (!reduireMouvement) animation.basculerLecture();
       minuterieRafraichissement = setInterval(rafraichirFrames, 10 * 60 * 1000);

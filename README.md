@@ -62,12 +62,15 @@ L'application est publiée sur le **Google Play Store** sous forme de TWA (Trust
 
 | Workflow | Déclencheur | Rôle |
 |---|---|---|
-| `build-twa.yml` | Push sur `twa-qcweather/**` **depuis `main`** ou manuel | Build + signature du `.aab` |
+| `build-twa.yml` | Push sur `twa-qcweather/**` **depuis `main`**, ou manuel **depuis `main`** | Build + signature du `.aab` |
 | `deploy-twa.yml` | Après `build-twa.yml` réussi, ou manuel depuis `main` | Publication sur Play Store (Internal Testing) |
 
-> Le build n'est déclenché que depuis `main` : le keystore de production n'est jamais
-> déchiffré sur une branche de travail. Pour tester un changement TWA avant merge,
-> utiliser le déclenchement manuel (`workflow_dispatch`).
+> Le keystore de production n'est déchiffré que depuis `main` — les deux workflows portent la
+> garde `github.ref == 'refs/heads/main'`, qui couvre aussi le déclenchement manuel.
+>
+> **Un changement TWA ne peut donc pas être construit avant son merge.** Pour le valider en
+> amont : `cd twa-qcweather && ./gradlew bundleRelease` en local, avec un keystore de
+> développement. La signature de production, elle, n'existe que sur `main`.
 
 > `deploy-twa.yml` nécessite une **première soumission manuelle** dans Play Console — Google exige qu'une version existe déjà sur la piste avant d'accepter les uploads via API.
 
@@ -179,7 +182,7 @@ nommant, au lieu de laisser tourner le serveur avec un `NaN`.
 | `npm run test:run` | Unitaires + intégration — lancé par le hook `pre-push` | ❌ aucun appel réseau |
 | `npm run test:unit` | Unitaires seuls | ❌ aucun appel réseau |
 | `npm run test:coverage` | Idem + rapport de couverture — **c'est ce que lance la CI** | ❌ aucun appel réseau |
-| `npm run test:contract` | Vérifie le contrat réel d'Open-Meteo et de Zippopotam | ✅ appels réels |
+| `npm run test:contract` | Vérifie le contrat réel d'Open-Meteo, de Zippopotam et de RainViewer | ✅ appels réels |
 
 Les tests d'intégration s'appuient sur les fixtures de `backend/tests/fixtures/` : une panne
 d'API externe ne peut plus faire échouer une PR. `tests/setup.ts` fait échouer explicitement
@@ -228,6 +231,7 @@ est appelé côté frontend, ce qui permet de le stubber d'un bloc dans les test
 | `npm run test:coverage` | Idem + rapport de couverture |
 | `npm run test:ci` | Idem + `rapport-tests.json` — **c'est ce que lance la CI** |
 | `npm run test:pwa` | Uniquement les vérifications PWA (manifeste + service worker) |
+| `npm run test:e2e` | Parcours de bout en bout dans Chromium (Playwright) |
 
 La CI publie `frontend/coverage/` et `frontend/rapport-tests.json` en artefact
 (`frontend-rapports`, conservé 14 jours), y compris quand le job échoue — c'est là que le
@@ -240,6 +244,26 @@ du backend ou de RainViewer.
 Les seuils de couverture vivent dans `frontend/vitest.config.ts`, calés sous la mesure
 réelle. `src/main.ts` en est exclu : il ne fait que monter l'app et enregistrer le service
 worker.
+
+### Parcours de bout en bout
+
+`e2e/` ouvre l'application **construite** dans Chromium via Playwright : sélection de ville et
+persistance du choix, recherche par code postal, message d'erreur du backend, bouton
+« Réessayer », bascule hors ligne, démarrage avec un stockage corrompu.
+
+L'API y est doublée par Playwright plutôt que servie par le vrai backend. Une suite de bout en
+bout qui dépend d'Open-Meteo redevient exactement ce que `tests/setup.ts` interdit partout
+ailleurs : un test qui échoue pour une raison étrangère au code. Le service worker est
+neutralisé pour la même raison — il intercepterait les requêtes avant les doublures, et ses
+garanties sont déjà vérifiées sur la sortie de build par `tests/pwa/build.test.ts`.
+
+```bash
+cd frontend && npm run test:e2e
+```
+
+> Un environnement fournissant déjà Chromium peut le désigner par
+> `PLAYWRIGHT_CHROMIUM_PATH` au lieu d'en télécharger un second, souvent d'une version
+> incompatible avec celle qu'attend Playwright.
 
 ### Vérifications PWA
 
