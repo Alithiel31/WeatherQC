@@ -1,6 +1,17 @@
 # CHANGELOG
 
 ## [Non publié]
+### Security
+- En-têtes de sécurité sur le document servi : CSP, `X-Content-Type-Options`, `Referrer-Policy`,
+  `Permissions-Policy` et HSTS. `helmet` ne couvrait que les réponses JSON de `/api/`, où une
+  CSP est décorative — le HTML qui exécute réellement le JavaScript est servi par nginx, et il
+  n'en portait aucun
+- `assetlinks.json` et la politique de confidentialité renvoyaient un `Content-Type` **dupliqué** :
+  `mime.types` assigne déjà ces types, l'`add_header` s'y ajoutait. C'est exactement ce qui fait
+  échouer la vérification Digital Asset Links d'Android, donc la vérification d'URL du TWA. Le
+  retrait rétablit au passage l'héritage des en-têtes de sécurité, qu'`add_header` remplace au
+  lieu de fusionner
+
 ### Changed
 - Montées de dépendances de développement regroupées : `eslint` 10.8, `typescript-eslint` 8.66,
   `prettier` 3.9, `vite` 8.2, `svelte` 5.56.8, `svelte-check` 4.7, `lint-staged` 17.3, `tsx` 4.23
@@ -9,9 +20,14 @@
 - `actions/checkout`, `actions/setup-node` et `actions/upload-artifact` passent en v7. Les runners
   signalaient déjà la dépréciation de Node 20 sur `checkout@v4`
 ### Added
+- Compression gzip et politique de cache nginx : cache long sur les assets hachés, aucun sur
+  `index.html`, `sw.js` et le manifeste — sans quoi un déploiement resterait invisible jusqu'à
+  expiration du cache
 - Le job `docker` de la CI démarre réellement la pile : `docker compose up --wait` — donc
   healthcheck du backend, `depends_on: service_healthy` et configuration nginx exercés — puis
-  appels à `/api/sante`, `/api/villes` et la coquille applicative à travers nginx. Il se contentait de construire deux images : la syntaxe du compose, la commande de
+  appels à `/api/sante`, `/api/villes`, la coquille applicative, les en-têtes de sécurité et
+  la politique de cache, à travers nginx. Il se contentait de construire deux images : la
+  syntaxe du compose, la commande de
   healthcheck, la config nginx et une variable d'environnement invalide n'étaient découvertes
   qu'au déploiement sur le Pi
 - Un échec de `contract.yml` ouvre une issue étiquetée `derive-contrat`, réutilisée tant

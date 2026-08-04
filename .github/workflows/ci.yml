@@ -166,6 +166,34 @@ jobs:
           # La coquille applicative doit être servie, pas seulement l'API.
           curl -fsS localhost/ | grep -q 'manifest.webmanifest'
 
+      - name: Vérifier les en-têtes de sécurité
+        run: |
+          set -euo pipefail
+          entetes=$(curl -fsSI localhost/)
+          for attendu in content-security-policy x-content-type-options referrer-policy \
+                         strict-transport-security permissions-policy; do
+            echo "$entetes" | grep -qi "^$attendu:" || { echo "en-tête manquant : $attendu"; exit 1; }
+          done
+          # `add_header` en nginx remplace au lieu de fusionner : un bloc
+          # `location` qui en déclare un perd tous ceux du parent. assetlinks.json
+          # est le cas où ça s'était déjà produit.
+          curl -fsSI localhost/.well-known/assetlinks.json | grep -qi '^content-security-policy:'
+          # Et un seul Content-Type — le doublon fait échouer la vérification
+          # Digital Asset Links d'Android.
+          test "$(curl -fsSI localhost/.well-known/assetlinks.json | grep -ci '^content-type:')" -eq 1
+
+      - name: Vérifier compression et politique de cache
+        run: |
+          set -euo pipefail
+          asset=$(curl -fsS localhost/ | grep -o '/assets/index-[^"]*\.js' | head -1)
+          # Assets hachés : cache long. Coquille : jamais mise en cache, sinon un
+          # déploiement resterait invisible.
+          curl -fsSI "localhost$asset" | grep -qi 'cache-control:.*max-age=31536000'
+          curl -fsSI localhost/index.html | grep -qi 'cache-control:.*no-cache'
+          # GET et non HEAD : la négociation gzip se lit sur une vraie réponse.
+          curl -fsS -H 'Accept-Encoding: gzip' -o /dev/null -D - "localhost$asset" \
+            | grep -qi '^content-encoding: gzip'
+
       - name: Publier les logs en cas d’échec
         if: failure()
         run: docker compose logs --no-color
