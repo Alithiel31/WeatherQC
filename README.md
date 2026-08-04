@@ -214,6 +214,7 @@ est appelé côté frontend, ce qui permet de le stubber d'un bloc dans les test
 | `npm run test:coverage` | Idem + rapport de couverture |
 | `npm run test:ci` | Idem + `rapport-tests.json` — **c'est ce que lance la CI** |
 | `npm run test:pwa` | Uniquement les vérifications PWA (manifeste + service worker) |
+| `npm run test:e2e` | Parcours de bout en bout dans Chromium (Playwright) |
 
 La CI publie `frontend/coverage/` et `frontend/rapport-tests.json` en artefact
 (`frontend-rapports`, conservé 14 jours), y compris quand le job échoue — c'est là que le
@@ -226,6 +227,26 @@ du backend ou de RainViewer.
 Les seuils de couverture vivent dans `frontend/vitest.config.ts`, calés sous la mesure
 réelle. `src/main.ts` en est exclu : il ne fait que monter l'app et enregistrer le service
 worker.
+
+### Parcours de bout en bout
+
+`e2e/` ouvre l'application **construite** dans Chromium via Playwright : sélection de ville et
+persistance du choix, recherche par code postal, message d'erreur du backend, bouton
+« Réessayer », bascule hors ligne, démarrage avec un stockage corrompu.
+
+L'API y est doublée par Playwright plutôt que servie par le vrai backend. Une suite de bout en
+bout qui dépend d'Open-Meteo redevient exactement ce que `tests/setup.ts` interdit partout
+ailleurs : un test qui échoue pour une raison étrangère au code. Le service worker est
+neutralisé pour la même raison — il intercepterait les requêtes avant les doublures, et ses
+garanties sont déjà vérifiées sur la sortie de build par `tests/pwa/build.test.ts`.
+
+```bash
+cd frontend && npm run test:e2e
+```
+
+> Un environnement fournissant déjà Chromium peut le désigner par
+> `PLAYWRIGHT_CHROMIUM_PATH` au lieu d'en télécharger un second, souvent d'une version
+> incompatible avec celle qu'attend Playwright.
 
 ### Vérifications PWA
 

@@ -1,6 +1,14 @@
 # CHANGELOG
 
 ## [Non publié]
+### Added
+- Tests de bout en bout Playwright (`frontend/e2e/`) : l'application construite est ouverte dans
+  Chromium et parcourue pour de vrai. Deux chemins n'étaient couverts nulle part — le bouton
+  « Réessayer », qu'aucun test ne cliquait, et le bandeau hors ligne, qu'aucun test ne faisait
+  apparaître faute d'émettre `online`/`offline`. L'API y est doublée par Playwright : une suite
+  de bout en bout qui dépend d'Open-Meteo redevient ce que `tests/setup.ts` interdit partout
+  ailleurs
+
 ### Fixed
 - Une échéance sans donnée ne s'affiche plus « 0° » : le frontend déclarait non-nullables des
   champs qu'Open-Meteo laisse à `null` au-delà de la portée du modèle, et `Math.round(null)`

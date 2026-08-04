@@ -35,3 +35,6 @@ twa-qcweather/android.keystore
 play-store-assets/
 
 app-release-bundle.aab
+# Rapports Playwright
+playwright-report/
+test-results/
