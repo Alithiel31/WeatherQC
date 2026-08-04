@@ -1,5 +1,5 @@
 # ── deps : dépendances complètes (dev + prod) ─────────────────────────────
-FROM node:22-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -16,7 +16,7 @@ COPY . .
 RUN npx tsc
 
 # ── production : image minimale, cible de docker-compose ──────────────────
-FROM node:22-alpine AS production
+FROM node:26-alpine AS production
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
