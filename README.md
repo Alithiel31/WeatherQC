@@ -210,6 +210,7 @@ nommant, au lieu de laisser tourner le serveur avec un `NaN`.
 | Commande | Portée | Réseau |
 |---|---|---|
 | `npm run test:run` | Unitaires + intégration — lancé par le hook `pre-push` | ❌ aucun appel réseau |
+| `npm run test:unit` | Unitaires seuls | ❌ aucun appel réseau |
 | `npm run test:coverage` | Idem + rapport de couverture — **c'est ce que lance la CI** | ❌ aucun appel réseau |
 | `npm run test:contract` | Vérifie le contrat réel d'Open-Meteo, de Zippopotam et de RainViewer | ✅ appels réels |
 
@@ -218,7 +219,20 @@ d'API externe ne peut plus faire échouer une PR. `tests/setup.ts` fait échouer
 tout appel réseau non mocké.
 
 Les tests de contrat tournent séparément via le workflow `contract.yml` (nocturne + manuel) :
-c'est lui qui détecte une dérive de schéma chez les APIs externes.
+c'est lui qui détecte une dérive de schéma chez les APIs externes. En cas d'échec il **ouvre
+une issue** étiquetée `derive-contrat`, et la réutilise tant qu'elle est ouverte — une
+détection que personne ne lit n'est pas une détection.
+
+Le job `docker` de la CI ne se contente plus de construire les images : il démarre la pile avec
+`docker compose up --wait` — ce qui exerce le healthcheck du backend, le
+`depends_on: service_healthy` du frontend et la configuration nginx dans son vrai réseau —
+puis interroge `/api/sante`, `/api/villes` et la coquille applicative à travers nginx. Une
+variable d'environnement invalide, un healthcheck cassé ou une config nginx fautive échouent
+désormais en CI plutôt qu'au déploiement.
+
+> `nginx -t` dans un conteneur isolé ne convient pas ici : `proxy_pass http://backend:3005`
+> exige de résoudre l'hôte `backend`, qui n'existe que dans le réseau du compose. C'est le
+> démarrage réel qui fait office de test.
 
 `test:coverage` échoue sous les seuils déclarés dans `backend/vitest.config.ts`. Ils sont
 calés **sous la mesure réelle**, pas sur un chiffre rond : ils bloquent une régression

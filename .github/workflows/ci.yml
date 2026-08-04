@@ -3,8 +3,10 @@ name: CI
 on:
   push:
     branches: [main]
+  # Sans filtre de base : une PR qui vise autre chose que `main` — cas d'une
+  # série de PR empilées — n'obtenait aucun check du tout. Une PR sans CI est
+  # exactement le filet qu'on cherche à rétablir ici.
   pull_request:
-    branches: [main]
 
 permissions:
   contents: read
@@ -122,7 +124,7 @@ jobs:
           if-no-files-found: ignore
 
   docker:
-    name: Docker — validate builds
+    name: Docker — build & démarrage réel
     runs-on: ubuntu-latest
     needs: [backend, frontend]
 
@@ -134,3 +136,40 @@ jobs:
 
       - name: Build frontend image
         run: docker build --target production -t qcweather-frontend ./frontend
+
+      # Le job s'arrêtait après les deux `docker build`. Ne sont donc validés par
+      # rien avant le déploiement sur le Pi : la syntaxe de `docker-compose.yml`,
+      # le `depends_on: service_healthy`, la commande de healthcheck, la config
+      # nginx, et une variable d'environnement invalide qui ferait échouer
+      # `config.ts` au démarrage.
+      - name: Préparer la configuration
+        run: cp backend/.env.example backend/.env
+
+      # Pas de `nginx -t` isolé : `proxy_pass http://backend:3005` exige de
+      # résoudre l'hôte `backend`, qui n'existe que dans le réseau du compose.
+      # Un conteneur seul échoue donc sur une configuration pourtant valide.
+      # C'est le démarrage réel ci-dessous qui fait office de test : nginx y
+      # relit sa configuration dans le bon réseau, et refuse de démarrer si elle
+      # est fautive — ce que `--wait` puis les `curl` détectent.
+      #
+      # `--wait` rend la main quand le healthcheck du backend est passé et que
+      # le frontend a démarré derrière son `service_healthy`. Un healthcheck
+      # cassé ou un boot qui échoue fait échouer cette étape, pas le déploiement.
+      - name: Démarrer la pile
+        run: docker compose up -d --wait --wait-timeout 120
+
+      - name: Vérifier l’API à travers nginx
+        run: |
+          set -euo pipefail
+          curl -fsS localhost/api/sante | grep -q '"statut":"ok"'
+          curl -fsS localhost/api/villes | grep -q 'montreal'
+          # La coquille applicative doit être servie, pas seulement l'API.
+          curl -fsS localhost/ | grep -q 'manifest.webmanifest'
+
+      - name: Publier les logs en cas d’échec
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Arrêter la pile
+        if: always()
+        run: docker compose down -v

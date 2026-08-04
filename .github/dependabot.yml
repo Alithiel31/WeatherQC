@@ -43,3 +43,30 @@ updates:
       interval: weekly
     commit-message:
       prefix: ci
+
+  # Les images de base ne bougeaient pas : `node:22-alpine` et `nginx:alpine`
+  # sont pourtant là où atterrissent les CVE d'Alpine et de nginx, et c'est ce
+  # qui tourne réellement en production sur le Pi.
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+
+  - package-ecosystem: docker
+    directory: /frontend
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+
+  # Le module signé et envoyé au Play Store était le seul sans automatisation de
+  # dépendances : AGP, `androidbrowserhelper` et le wrapper Gradle.
+  - package-ecosystem: gradle
+    directory: /twa-qcweather
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: chore

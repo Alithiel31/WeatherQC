@@ -2,6 +2,23 @@
 
 ## [Non publié]
 ### Added
+- Le job `docker` de la CI démarre réellement la pile : `docker compose up --wait` — donc
+  healthcheck du backend, `depends_on: service_healthy` et configuration nginx exercés — puis
+  appels à `/api/sante`, `/api/villes` et la coquille applicative à travers nginx. Il se contentait de construire deux images : la syntaxe du compose, la commande de
+  healthcheck, la config nginx et une variable d'environnement invalide n'étaient découvertes
+  qu'au déploiement sur le Pi
+- Un échec de `contract.yml` ouvre une issue étiquetée `derive-contrat`, réutilisée tant
+  qu'elle reste ouverte. Ce workflow est le seul détecteur de dérive de schéma des trois
+  amonts, et son échec ne produisait qu'une coche rouge dans un onglet que personne n'ouvre
+- Dependabot suit désormais les images Docker (`node:22-alpine`, `nginx:alpine`) et Gradle —
+  ce dernier étant le module signé et envoyé au Play Store, jusqu'ici le seul sans
+  automatisation de dépendances
+
+### Changed
+- Le hook `pre-push` lance `test:run` et non `test:unit` côté backend : la suite
+  d'intégration — routes, durcissement, CORS, cache — n'était jamais jouée avant un push,
+  alors que le frontend passait déjà par sa suite complète. Le README annonçait `test:run`,
+  décrivant un filet qui n'existait pas
 - Journal d'accès : une ligne par requête terminée (méthode, chemin, statut, durée, origine de
   la réponse) et une par appel amont, avec sa latence. Le journal n'existait qu'aux erreurs —
   une requête réussie ne laissait aucune trace, si bien qu'on ne pouvait ni dire si la lenteur
