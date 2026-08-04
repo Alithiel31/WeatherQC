@@ -71,6 +71,15 @@ export const environnementSchema = z.object({
   // Plafond du nombre d'entrées : la clé des prévisions par coordonnées est
   // pilotée depuis Internet, le cache ne doit pas pouvoir croître sans fin.
   CACHE_MAX_ENTRIES: entier(500),
+  // Une entrée reste servable `facteur × TTL` après sa péremption, mais
+  // uniquement si l'amont vient d'échouer. Des prévisions d'il y a vingt
+  // minutes valent mieux qu'un écran d'erreur ; six fois le TTL laisse le temps
+  // à une panne Open-Meteo de passer sans que l'application se vide.
+  CACHE_FACTEUR_OBSOLETE: entier(6),
+  // Disjoncteur : nombre d'échecs consécutifs avant de cesser d'appeler un
+  // amont, et durée de la suspension.
+  BREAKER_SEUIL_ECHECS: entier(5),
+  BREAKER_REPOS_MS: entier(30_000),
 });
 
 export function chargerConfig(env: NodeJS.ProcessEnv = process.env) {
@@ -103,6 +112,11 @@ export function chargerConfig(env: NodeJS.ProcessEnv = process.env) {
       ttlGeocode: valide.CACHE_TTL_GEOCODE,
       ttlRainviewer: valide.CACHE_TTL_RAINVIEWER,
       maxEntries: valide.CACHE_MAX_ENTRIES,
+      facteurObsolete: valide.CACHE_FACTEUR_OBSOLETE,
+    },
+    breaker: {
+      seuilEchecs: valide.BREAKER_SEUIL_ECHECS,
+      reposMs: valide.BREAKER_REPOS_MS,
     },
   };
 }
