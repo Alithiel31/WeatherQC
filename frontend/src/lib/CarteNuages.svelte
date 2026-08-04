@@ -33,6 +33,13 @@
     couches.forEach((c, j) => c.setOpacity(j === i ? 0.75 : 0))
   );
 
+  // Sert deux fois : à l'affichage, et comme `aria-valuetext` du curseur.
+  let heureAnimation = $derived(
+    animation.frames[animation.index]
+      ? heureMinute(animation.frames[animation.index].time * 1000)
+      : ''
+  );
+
   const reduireMouvement =
     typeof matchMedia !== 'undefined' &&
     matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -173,6 +180,11 @@
         onclick={() => animation.basculerLecture()}
         aria-label={animation.lecture ? 'Mettre en pause' : "Lancer l'animation"}
       >{animation.lecture ? '⏸' : '▶'}</button>
+      <!--
+        Sans `aria-valuetext`, le curseur s'annonce « 5 sur 13 » — un index brut,
+        sans signification. L'horodatage est déjà calculé pour l'affichage juste
+        à côté : c'est lui qu'il faut dire.
+      -->
       <input
         type="range"
         min="0"
@@ -180,19 +192,17 @@
         value={animation.index}
         oninput={(e) => animation.deplacerVers(Number(e.currentTarget.value))}
         aria-label="Position dans l'animation"
+        aria-valuetext={heureAnimation}
       />
-      <span class="heure">
-        {animation.frames[animation.index]
-          ? heureMinute(animation.frames[animation.index].time * 1000)
-          : ''}
-      </span>
+      <span class="heure">{heureAnimation}</span>
     </div>
   {/if}
 </section>
 
 <style>
+  /* Même voile que `Horaire` et `Quotidien` : cf. le commentaire qui s'y trouve. */
   section {
-    background: rgba(255,255,255,0.12); border-radius: 1rem;
+    background: rgba(0,0,0,0.2); border-radius: 1rem;
     padding: 1rem; margin-top: 0.9rem; backdrop-filter: blur(6px);
   }
   header {
