@@ -1,0 +1,174 @@
+/*
+  Feuille commune aux six pages légales (confidentialité, conditions, mentions
+  légales, en français et en anglais).
+
+  Pourquoi une feuille externe plutôt qu'un `<style>` par page : le contenu est
+  dupliqué six fois par nature — deux langues × trois documents — et le style
+  n'a aucune raison de l'être. La CSP de nginx autorise `style-src 'self'`, donc
+  un fichier même-origine passe sans exception à créer. `script-src 'self'`
+  interdit en revanche tout JavaScript inline : ces pages n'en contiennent
+  aucun, et n'ont pas à en contenir.
+
+  Le fond reprend #10243b — la couleur de `body` dans App.svelte et le
+  `theme_color` du manifeste. La version précédente de la politique était en
+  fond blanc sur texte noir : arriver dessus depuis l'application produisait un
+  flash blanc et donnait l'impression d'avoir quitté le site.
+
+  Tous les couples couleur/fond ci-dessous tiennent le seuil WCAG AA de 4.5:1,
+  la même barre que celle vérifiée numériquement pour les ciels dans
+  tests/unit/contraste.test.ts.
+*/
+
+:root {
+  /* 14.47:1 sur #10243b */
+  --texte: #f2f6fb;
+  /* 8.16:1 — assez pâle pour se lire comme secondaire, loin du seuil d'échec */
+  --texte-doux: #a9bdd4;
+  /* 8.37:1 */
+  --lien: #7cc4ff;
+  --fond: #10243b;
+  --trait: rgba(255, 255, 255, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 40px 24px 72px;
+  background: var(--fond);
+  color: var(--texte);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  line-height: 1.7;
+  /* Empêche iOS de grossir le corps de texte en orientation paysage. */
+  -webkit-text-size-adjust: 100%;
+}
+
+main {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 1.5rem;
+  line-height: 1.3;
+  margin: 0 0 4px;
+}
+
+h2 {
+  font-size: 1.05rem;
+  margin: 2.25rem 0 0.35rem;
+}
+
+p,
+ul,
+ol {
+  margin: 0.5rem 0;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+}
+
+li {
+  margin: 0.25rem 0;
+}
+
+a {
+  color: var(--lien);
+}
+
+strong {
+  color: #fff;
+}
+
+.date {
+  color: var(--texte-doux);
+  font-size: 0.9rem;
+  margin-top: 0;
+}
+
+/*
+  Bandeau de bascule de langue, en tête de page. Le dépôt fait déjà ce choix
+  pour sa documentation (README.md ↔ README.en.md) : deux fichiers qui se
+  pointent, pas un système de traduction.
+*/
+.langue {
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+/*
+  Mention de traduction de courtoisie, présente uniquement sur les pages
+  anglaises. Le service est offert au public au Québec : le français est la
+  version qui fait foi, et le dire est une obligation, pas une politesse.
+*/
+.avis-langue {
+  border-left: 3px solid var(--lien);
+  padding: 0.35rem 0 0.35rem 0.9rem;
+  margin: 1.5rem 0;
+  color: var(--texte-doux);
+  font-size: 0.9rem;
+}
+
+/*
+  Encadré de l'avis de non-responsabilité météo. Il porte le seul message de
+  ces pages qu'un utilisateur doit voir même s'il ne lit rien d'autre : les
+  prévisions ne sont pas une source officielle.
+*/
+.avertissement {
+  border: 1px solid var(--trait);
+  border-left: 3px solid #ffb454;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 1.5rem 0;
+  background: rgba(255, 180, 84, 0.07);
+}
+
+.pied {
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--trait);
+  font-size: 0.9rem;
+  color: var(--texte-doux);
+}
+
+.pied a {
+  white-space: nowrap;
+}
+
+.retour {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.92rem;
+  /* Les tableaux de tiers débordent sur mobile : ils défilent au lieu de
+     pousser la page entière en défilement horizontal. */
+  display: block;
+  overflow-x: auto;
+}
+
+th,
+td {
+  border: 1px solid var(--trait);
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: #fff;
+  font-weight: 600;
+}

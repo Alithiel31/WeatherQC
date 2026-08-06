@@ -184,6 +184,37 @@ jobs:
           # Digital Asset Links d'Android.
           test "$(curl -fsSI localhost/.well-known/assetlinks.json | grep -ci '^content-type:')" -eq 1
 
+      - name: Vérifier les pages légales
+        run: |
+          set -euo pipefail
+          # `privacy-policy.html` est l'URL déclarée dans la console Google Play :
+          # la casser ne se voit qu'à la prochaine revue de l'application.
+          for page in privacy-policy.html privacy-policy.en.html \
+                      terms.html terms.en.html \
+                      legal.html legal.en.html; do
+            corps=$(curl -fsS "localhost/$page")
+            # `location /` retombe sur `/index.html` : un fichier absent
+            # renverrait la coquille applicative en 200 plutôt qu'un 404. Le
+            # test porte donc sur le contenu, pas sur le code de statut.
+            echo "$corps" | grep -q 'href="/legal.css"' \
+              || { echo "$page ne sert pas la page légale attendue"; exit 1; }
+            echo "$corps" | grep -q 'href="/"' \
+              || { echo "$page n'a pas de lien de retour vers l'application"; exit 1; }
+          done
+          curl -fsS localhost/legal.css | grep -q 'max-width'
+          # Les liens du pied doivent exister dès la coquille : ils ne dépendent
+          # pas de l'arrivée des prévisions. La page était restée orpheline —
+          # servie, mais liée depuis nulle part.
+          bundle=$(curl -fsS localhost/ | grep -o '/assets/index-[^"]*\.js' | head -1)
+          corps_bundle=$(curl -fsS "localhost$bundle")
+          for page in privacy-policy.html terms.html legal.html; do
+            echo "$corps_bundle" | grep -q "/$page" \
+              || { echo "l'application ne lie pas $page"; exit 1; }
+          done
+          # Même piège `add_header` que pour assetlinks.json : ces pages passent
+          # par le bloc `location /`, elles doivent hériter des en-têtes.
+          curl -fsSI localhost/terms.html | grep -qi '^content-security-policy:'
+
       - name: Vérifier compression et politique de cache
         run: |
           set -euo pipefail

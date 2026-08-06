@@ -2,6 +2,49 @@
 
 ## [Non publié]
 
+### Added
+
+- Trois documents légaux, en français et en anglais : politique de confidentialité, conditions
+  d'utilisation et mentions légales, servis depuis `frontend/public/` et précachés par Workbox.
+  Seule la politique existait, et elle était **orpheline** — aucun lien n'y menait depuis
+  l'application, elle n'était atteignable qu'en devinant son URL. Elle ne satisfaisait en pratique
+  que le champ « Privacy policy URL » de la Play Console. Le français est la version qui fait foi :
+  le service est offert au public au Québec, et chaque traduction anglaise porte la mention de
+  primauté correspondante
+- Un pied de page enfin permanent. Il vivait à l'intérieur de `{:else if donnees}` parce qu'il ne
+  portait que l'heure de mise à jour : il disparaissait donc pendant le chargement et sur un écran
+  d'erreur. Acceptable pour une horodate, pas pour l'avertissement météo ni pour l'accès aux pages
+  légales — qui doivent rester atteignables précisément quand l'application ne fonctionne pas. Seule
+  la ligne de mise à jour reste conditionnée aux données
+- Un avertissement court et visible dans l'application : les prévisions sont indicatives et ne
+  remplacent pas les avis d'Environnement et Changement climatique Canada. Le service diffusait des
+  prévisions sans jamais dire qu'elles n'engagent personne
+- Couverture de ces pages à trois niveaux, là où `privacy-policy.html` n'était vérifiée nulle part :
+  `tests/pwa/build.test.ts` contrôle leur présence dans `dist/`, leur entrée dans le précache et
+  leurs liens croisés ; `e2e/parcours.spec.ts` vérifie dans Chromium que le pied survit à un écran
+  d'erreur et que la navigation aller-retour fonctionne ; `e2e/accessibilite.spec.ts` passe axe sur
+  les six pages — sans dégradé, il y mesure aussi le contraste, ce qu'il ne sait pas faire sur
+  l'application. Le job `docker` de la CI les demande enfin à travers nginx
+
+### Fixed
+
+- La politique de confidentialité affirmait que les échanges passaient par nos serveurs, ce qui
+  était faux par omission : les tuiles de la carte sont chargées **directement par le navigateur**
+  depuis `tilecache.rainviewer.com` et `*.basemaps.cartocdn.com`, qui voient donc l'adresse IP de
+  l'utilisateur et la zone qu'il consulte. Le texte déclare désormais ces flux, ainsi que les
+  journaux serveur — dont le chemin peut contenir une RTA ou des coordonnées, sans l'IP —, la
+  limitation de débit par IP en mémoire, le cache Workbox de 200 tuiles et la permission de
+  notification Android déclarée mais inutilisée. Il liste aussi les quatre clés réelles de
+  `localStorage` au lieu de deux : `lieuCP` contient des coordonnées géographiques, ce que la
+  version précédente passait sous silence
+
+### Changed
+
+- Les pages légales suivent le thème sombre de l'application au lieu d'un fond blanc. Arriver sur la
+  politique depuis l'application produisait un flash blanc et donnait l'impression d'avoir quitté le
+  site. Le style est sorti dans `public/legal.css`, une feuille commune plutôt que six copies d'un
+  bloc inline — la CSP autorise `style-src 'self'`, aucune exception n'était nécessaire
+
 ## [3.0.0] - 2026-08-04
 
 > **Changement cassant** : `minSdkVersion` passe de 21 à 23. L'application Android n'est plus
