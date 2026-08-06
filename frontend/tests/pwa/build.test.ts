@@ -147,3 +147,90 @@ describe('Service worker — stratégies de cache hors ligne', () => {
     expect(sw).toContain('cacheWillUpdate');
   });
 });
+
+/**
+ * Pages légales.
+ *
+ * `privacy-policy.html` est l'URL déclarée dans la console Google Play. Elle
+ * n'était couverte par aucun test : un renommage ou un déplacement l'aurait
+ * cassée en silence, et l'échec ne serait apparu qu'à la prochaine revue de
+ * l'application par Google.
+ *
+ * Le précache n'est pas non plus un détail cosmétique. `vite-plugin-pwa` pose
+ * un `navigateFallback` vers `index.html` : une page absente du précache serait
+ * interceptée par ce repli et rendrait la coquille de l'application à la place
+ * du document légal.
+ */
+describe('Pages légales', () => {
+  const PAGES = [
+    'privacy-policy.html',
+    'privacy-policy.en.html',
+    'terms.html',
+    'terms.en.html',
+    'legal.html',
+    'legal.en.html',
+  ] as const;
+
+  /** Chaque page française et sa traduction, dans cet ordre. */
+  const PAIRES = [
+    ['privacy-policy.html', 'privacy-policy.en.html'],
+    ['terms.html', 'terms.en.html'],
+    ['legal.html', 'legal.en.html'],
+  ] as const;
+
+  it.each(PAGES)('%s est présente dans le build', (page) => {
+    expect(existsSync(fichier(page)), `page manquante : ${page}`).toBe(true);
+  });
+
+  it('la feuille de style commune est présente', () => {
+    expect(existsSync(fichier('legal.css'))).toBe(true);
+  });
+
+  it.each(PAGES)('%s entre dans le précache du service worker', (page) => {
+    expect(sw).toContain(`"${page}"`);
+  });
+
+  it('la feuille de style commune entre dans le précache', () => {
+    expect(sw).toContain('"legal.css"');
+  });
+
+  it.each(PAGES)('%s référence legal.css plutôt qu’un style inline', (page) => {
+    const html = lire(page);
+    expect(html).toContain('href="/legal.css"');
+    // La CSP de nginx interdit `script-src` inline ; aucune de ces pages n'a
+    // besoin de JavaScript, et aucune ne doit en acquérir par inadvertance.
+    expect(html).not.toMatch(/<script/i);
+  });
+
+  it.each(PAGES)('%s ramène à l’application', (page) => {
+    // Dans la TWA Android, ces pages s'ouvrent sans barre d'adresse : sans ce
+    // lien, l'utilisateur est prisonnier du document.
+    expect(lire(page)).toContain('href="/"');
+  });
+
+  it.each(PAIRES)('%s et %s se pointent mutuellement', (fr, en) => {
+    expect(lire(fr)).toContain(`href="/${en}"`);
+    expect(lire(en)).toContain(`href="/${fr}"`);
+  });
+
+  it.each(PAIRES)('%s est déclarée en français', (fr) => {
+    expect(lire(fr)).toContain('lang="fr-CA"');
+  });
+
+  it.each(PAIRES)('la traduction de %s cède le pas au français', (fr, en) => {
+    const html = lire(en);
+    expect(html).toContain('lang="en-CA"');
+    // Le service est offert au public au Québec : la version française est
+    // celle qui fait foi, et chaque traduction doit le dire.
+    expect(html).toContain('prevails');
+    expect(html).toContain(`href="/${fr}"`);
+  });
+
+  it('l’application relie ses trois pages légales françaises', () => {
+    // Le pied de page a longtemps été le point aveugle : la politique existait
+    // sans qu'aucun lien n'y mène.
+    for (const page of ['privacy-policy.html', 'terms.html', 'legal.html']) {
+      expect(bundle, `lien manquant vers ${page}`).toContain(`/${page}`);
+    }
+  });
+});

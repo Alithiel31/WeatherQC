@@ -1,64 +1,319 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr-CA">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="index, follow" />
     <title>Politique de confidentialité — Météo Québec</title>
-    <style>
-      body {
-        font-family:
-          system-ui,
-          -apple-system,
-          sans-serif;
-        max-width: 680px;
-        margin: 48px auto;
-        padding: 0 24px;
-        color: #1a1a1a;
-        line-height: 1.7;
-      }
-      h1 {
-        font-size: 1.5rem;
-        margin-bottom: 4px;
-      }
-      h2 {
-        font-size: 1rem;
-        margin-top: 2rem;
-      }
-      p,
-      ul {
-        margin: 0.5rem 0;
-      }
-      .date {
-        color: #666;
-        font-size: 0.9rem;
-      }
-      a {
-        color: #0066cc;
-      }
-    </style>
+    <link rel="stylesheet" href="/legal.css" />
   </head>
   <body>
-    <h1>Politique de confidentialité — Météo Québec</h1>
-    <p class="date">Dernière mise à jour : 18 juin 2026</p>
+    <main>
+      <p class="langue"><a href="/privacy-policy.en.html">🇬🇧 English version</a></p>
 
-    <p>Cette application ne collecte aucune donnée personnelle. Aucun compte n'est requis.</p>
+      <h1>Politique de confidentialité</h1>
+      <p class="date">Météo Québec — dernière mise à jour : 6 août 2026</p>
 
-    <h2>Données stockées localement</h2>
-    <p>
-      L'application enregistre vos préférences (ville sélectionnée, code postal) uniquement sur
-      votre appareil, via le stockage local du navigateur. Ces données ne quittent jamais votre
-      appareil.
-    </p>
+      <p>
+        Météo Québec est un projet personnel, gratuit et sans publicité, hébergé au Québec et
+        destiné au public québécois.
+        <strong
+          >Il ne demande aucun compte, ne conserve aucun profil d'utilisateur et n'utilise ni témoin
+          (« cookie ») ni traceur publicitaire.</strong
+        >
+      </p>
+      <p>
+        Cette politique explique en termes simples ce que l'application fait réellement de vos
+        renseignements. Elle décrit le fonctionnement du code, qui est
+        <a href="https://github.com/Alithiel31/WeatherQC" target="_blank" rel="noreferrer"
+          >public et vérifiable</a
+        >.
+      </p>
 
-    <h2>Données météo</h2>
-    <p>
-      Les prévisions sont fournies par
-      <a href="https://open-meteo.com" target="_blank">Open-Meteo</a>, un service open source. Lors
-      d'une requête météo, votre appareil contacte nos serveurs, qui transmettent la demande à
-      Open-Meteo. Aucune donnée personnelle n'est incluse dans ces échanges.
-    </p>
+      <h2>Ce que nous ne faisons pas</h2>
+      <ul>
+        <li>Aucun compte, aucune inscription, aucun mot de passe.</li>
+        <li>Aucune base de données : rien vous concernant n'est enregistré sur nos serveurs.</li>
+        <li>
+          Aucun outil de mesure d'audience (pas de Google Analytics, Matomo, Plausible ou autre).
+        </li>
+        <li>Aucun témoin de connexion, aucun pixel, aucun traceur publicitaire.</li>
+        <li>
+          Aucun accès à la géolocalisation de votre appareil. L'application ne la demande jamais, et
+          le serveur la bloque explicitement au moyen de l'en-tête
+          <code>Permissions-Policy</code>.
+        </li>
+        <li>Aucune revente, aucun partage à des fins commerciales ou publicitaires.</li>
+      </ul>
 
-    <h2>Contact</h2>
-    <p>Pour toute question : <a href="mailto:contact@alithiel31.dev">contact@alithiel31.dev</a></p>
+      <h2>Ce qui reste sur votre appareil</h2>
+      <p>
+        Vos préférences sont enregistrées dans le stockage local de votre navigateur.
+        <strong>Elles ne sont jamais transmises à nos serveurs</strong> et ne quittent pas votre
+        appareil.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Clé</th>
+            <th>Contenu</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>selection</code></td>
+            <td>La ville choisie, ou l'indication que vous utilisez un code postal.</td>
+          </tr>
+          <tr>
+            <td><code>codePostal</code></td>
+            <td>Le code postal que vous avez saisi.</td>
+          </tr>
+          <tr>
+            <td><code>lieuCP</code></td>
+            <td>
+              Le lieu correspondant à ce code postal : les trois premiers caractères du code postal,
+              le nom de la municipalité, la province et
+              <strong>les coordonnées géographiques (latitude et longitude) de ce lieu</strong>.
+            </td>
+          </tr>
+          <tr>
+            <td><code>unite</code></td>
+            <td>Votre choix d'unités, métriques ou impériales.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Vous pouvez les effacer à tout moment en vidant les données de site de votre navigateur, ou
+        en désinstallant l'application sur Android. Aucune trace ne subsiste de notre côté.
+      </p>
+
+      <h2>Ce que votre appareil envoie à nos serveurs</h2>
+      <p>
+        Lorsque vous consultez des prévisions, votre appareil demande à notre serveur les données
+        d'un lieu : soit l'identifiant d'une des villes proposées, soit des coordonnées
+        géographiques, soit les trois premiers caractères d'un code postal. Ces requêtes ne
+        contiennent aucun identifiant personnel.
+      </p>
+
+      <h3>Journaux du serveur</h3>
+      <p>Notre serveur inscrit une ligne par requête, contenant :</p>
+      <ul>
+        <li>un identifiant technique de requête, aléatoire et sans lien avec vous ;</li>
+        <li>la méthode et le chemin demandé, tronqué à 200 caractères ;</li>
+        <li>le code de statut de la réponse et sa durée.</li>
+      </ul>
+      <p>
+        <strong>Votre adresse IP ne figure pas dans ces journaux.</strong> En revanche, le chemin
+        demandé peut contenir les trois premiers caractères d'un code postal ou des coordonnées
+        géographiques, puisque ce sont des paramètres d'adresse. Ces journaux servent uniquement au
+        diagnostic technique. Ils tournent automatiquement et sont limités à un volume plafonné :
+        les plus anciens sont supprimés au fur et à mesure.
+      </p>
+
+      <h3>Adresse IP</h3>
+      <p>
+        Votre adresse IP est traitée <strong>en mémoire seulement</strong>, le temps de vérifier que
+        le nombre de requêtes reste raisonnable et de protéger le service contre les abus. Elle
+        n'est ni journalisée, ni enregistrée, ni conservée après le redémarrage du serveur.
+      </p>
+
+      <h3>Cache du serveur</h3>
+      <p>
+        Les réponses météo sont mises en cache en mémoire pour limiter les appels aux fournisseurs
+        de données. Ce cache contient des prévisions par lieu — jamais de renseignements sur les
+        personnes — il est plafonné en taille et disparaît à chaque redémarrage.
+      </p>
+
+      <h2>Services tiers</h2>
+
+      <h3>Contactés par notre serveur</h3>
+      <p>
+        Dans ces cas, c'est notre serveur qui appelle le fournisseur.
+        <strong>Votre adresse IP ne lui est pas transmise</strong> : le fournisseur ne voit que la
+        nôtre.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Ce qui est transmis</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <a href="https://open-meteo.com" target="_blank" rel="noreferrer">Open-Meteo</a>
+              (Allemagne)
+            </td>
+            <td>Latitude, longitude et fuseau horaire du lieu demandé.</td>
+          </tr>
+          <tr>
+            <td>
+              <a href="https://zippopotam.us" target="_blank" rel="noreferrer">Zippopotam.us</a>
+            </td>
+            <td>Les trois premiers caractères du code postal recherché, jamais le code complet.</td>
+          </tr>
+          <tr>
+            <td>
+              <a href="https://www.rainviewer.com" target="_blank" rel="noreferrer">RainViewer</a>
+            </td>
+            <td>La liste des images radar disponibles. Aucune donnée vous concernant.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Contactés directement par votre navigateur</h3>
+      <p>
+        La carte animée fait exception, et c'est le point le plus important de cette section.
+        <strong
+          >Les tuiles de la carte sont chargées directement par votre appareil, sans passer par nos
+          serveurs.</strong
+        >
+        Ces fournisseurs voient donc votre adresse IP ainsi que la zone géographique que vous
+        consultez, et leurs propres politiques s'appliquent.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Rôle</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <a href="https://carto.com/privacy/" target="_blank" rel="noreferrer">CARTO</a>
+              (fond de carte, données
+              <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer"
+                >OpenStreetMap</a
+              >)
+            </td>
+            <td>Le fond de carte sombre sous les précipitations.</td>
+          </tr>
+          <tr>
+            <td>
+              <a href="https://www.rainviewer.com/privacy.html" target="_blank" rel="noreferrer"
+                >RainViewer</a
+              >
+            </td>
+            <td>Les tuiles d'images satellite et radar.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Si vous préférez éviter ces échanges, il suffit de ne pas faire défiler la page jusqu'à la
+        carte : les tuiles ne sont demandées que lorsque celle-ci s'affiche. Le reste de
+        l'application fonctionne normalement.
+      </p>
+
+      <h3>Infrastructure et distribution</h3>
+      <ul>
+        <li>
+          <strong>Cloudflare</strong> (États-Unis) assure le tunnel et le chiffrement HTTPS par
+          lesquels le site est accessible. À ce titre, toutes les requêtes transitent par son
+          réseau.
+        </li>
+        <li>
+          <strong>Google Play</strong> distribue la version Android. Son installation et ses mises à
+          jour relèvent de la politique de confidentialité de Google, pas de la nôtre.
+        </li>
+      </ul>
+
+      <h2>Fonctionnement hors ligne</h2>
+      <p>
+        L'application est installable et conserve sur votre appareil, au moyen d'un
+        <i>service worker</i>, les dernières prévisions consultées ainsi qu'un nombre limité de
+        tuiles de carte (jusqu'à 200, pendant au plus sept jours). Ce cache vit exclusivement sur
+        votre appareil et se vide avec les données de site.
+      </p>
+
+      <h2>Notifications sur Android</h2>
+      <p>
+        La version Android déclare la permission de notification. À ce jour,
+        <strong>l'application n'envoie aucune notification</strong> : la permission est prévue pour
+        d'éventuelles alertes météo à venir. Si cette fonction est ajoutée, cette politique sera
+        mise à jour avant sa mise en service, et les notifications resteront refusables depuis les
+        réglages Android.
+      </p>
+
+      <h2>Vos droits</h2>
+      <p>
+        Ce service est soumis à la
+        <strong>Loi sur la protection des renseignements personnels dans le secteur privé</strong>
+        du Québec, telle que modifiée par la Loi 25, ainsi qu'à la
+        <i>Loi sur la protection des renseignements personnels et les documents électroniques</i>
+        (LPRPDE) au fédéral.
+      </p>
+      <p>
+        Comme aucun renseignement personnel n'est conservé sur nos serveurs, il n'y a en pratique
+        aucun dossier à consulter, corriger ou supprimer. Vos droits s'exercent ainsi :
+      </p>
+      <ul>
+        <li>
+          <strong>Accès et suppression</strong> — l'intégralité de ce qui vous concerne se trouve
+          dans le stockage local de votre navigateur. Vider les données de site l'efface
+          définitivement.
+        </li>
+        <li>
+          <strong>Questions et plaintes</strong> — écrivez à
+          <a href="mailto:contact@alithiel31.dev">contact@alithiel31.dev</a>.
+        </li>
+      </ul>
+      <p>
+        La <strong>personne responsable de la protection des renseignements personnels</strong> est
+        l'éditeur du service, joignable à cette même adresse.
+      </p>
+      <p>
+        Si une réponse ne vous satisfait pas, vous pouvez vous adresser à la
+        <a href="https://www.cai.gouv.qc.ca" target="_blank" rel="noreferrer"
+          >Commission d'accès à l'information du Québec</a
+        >. Les personnes résidant dans l'Espace économique européen conservent par ailleurs les
+        droits que leur reconnaît le RGPD ; le service ne les vise toutefois pas et ne leur est pas
+        spécifiquement destiné.
+      </p>
+
+      <h2>Hébergement et transferts hors Québec</h2>
+      <p>
+        Le service est <strong>hébergé au Québec</strong>, sur un serveur personnel. Certains
+        fournisseurs mentionnés plus haut sont établis à l'extérieur de la province — notamment
+        Open-Meteo en Allemagne et Cloudflare aux États-Unis — et peuvent y traiter les requêtes
+        techniques décrites dans cette politique.
+      </p>
+
+      <h2>Enfants</h2>
+      <p>
+        L'application s'adresse au grand public. Elle ne recueille sciemment aucun renseignement
+        auprès des enfants, et ne recueille d'ailleurs de renseignement personnel auprès de
+        personne.
+      </p>
+
+      <h2>Sécurité</h2>
+      <p>
+        Les échanges sont chiffrés en HTTPS. Le site applique une politique de sécurité du contenu
+        stricte, qui restreint les domaines autorisés à charger des ressources. La meilleure
+        protection reste toutefois structurelle : les renseignements qui ne sont pas collectés ne
+        peuvent pas fuiter.
+      </p>
+
+      <h2>Modifications</h2>
+      <p>
+        Cette politique peut évoluer avec l'application. La date en tête de page fait foi, et
+        l'historique complet des changements est public dans le
+        <a href="https://github.com/Alithiel31/WeatherQC" target="_blank" rel="noreferrer"
+          >dépôt du projet</a
+        >.
+      </p>
+
+      <h2>Contact</h2>
+      <p><a href="mailto:contact@alithiel31.dev">contact@alithiel31.dev</a></p>
+
+      <div class="pied">
+        <p class="retour"><a href="/">← Retour à l'application</a></p>
+        <p>
+          <a href="/terms.html">Conditions d'utilisation</a> ·
+          <a href="/legal.html">Mentions légales</a>
+        </p>
+      </div>
+    </main>
   </body>
 </html>

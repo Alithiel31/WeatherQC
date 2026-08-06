@@ -391,6 +391,32 @@ Ajouter une entrée dans `backend/src/data/cities.ts`.
 
 ---
 
+## Vie privée et conditions
+
+Trois pages statiques, servies depuis `frontend/public/` et liées depuis le pied de l'application. Le français est la version officielle — le service est offert au public au Québec — et les versions anglaises sont des traductions de courtoisie.
+
+| Document | Français | English |
+|---|---|---|
+| Politique de confidentialité | [`/privacy-policy.html`](https://qcweather.alithiel31.dev/privacy-policy.html) | [`/privacy-policy.en.html`](https://qcweather.alithiel31.dev/privacy-policy.en.html) |
+| Conditions d'utilisation | [`/terms.html`](https://qcweather.alithiel31.dev/terms.html) | [`/terms.en.html`](https://qcweather.alithiel31.dev/terms.en.html) |
+| Mentions légales | [`/legal.html`](https://qcweather.alithiel31.dev/legal.html) | [`/legal.en.html`](https://qcweather.alithiel31.dev/legal.en.html) |
+
+> ⚠️ **`privacy-policy.html` ne doit pas être renommée.** Cette URL exacte est déclarée dans la Play
+> Console ; la déplacer casse la fiche de l'application, et l'échec n'apparaît qu'à la prochaine
+> revue par Google. `tests/pwa/build.test.ts` et le job `docker` de la CI la vérifient.
+
+Ces pages ne dépendent d'aucun routeur : ce sont des fichiers HTML autonomes que Vite copie dans
+`dist/`, que nginx sert par son repli `location /`, et que Workbox précache — d'où leur
+consultation possible hors ligne. **Le précache n'est pas décoratif** : sans lui, le
+`navigateFallback` du service worker rendrait la coquille de l'application à leur place.
+
+Le contenu décrit ce que le code fait réellement — clés de `localStorage`, tiers appelés par le
+navigateur *et* par le backend, journaux, limitation par IP. Toute modification du traitement des
+données doit s'y répercuter, ainsi que dans le formulaire **Data Safety** de la Play Console, qui
+se tient à jour dans la console et non dans ce dépôt.
+
+---
+
 ## Stack
 
 | Couche | Technologie |

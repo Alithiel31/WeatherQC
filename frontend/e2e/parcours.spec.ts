@@ -94,6 +94,73 @@ test.describe('Chemins de récupération', () => {
   });
 });
 
+/**
+ * Le pied de page vivait à l'intérieur de `{:else if donnees}` : il ne portait
+ * que l'heure de mise à jour, et disparaissait donc pendant le chargement comme
+ * sur un écran d'erreur. Il porte maintenant l'avertissement météo et l'accès
+ * aux pages légales — deux choses qui doivent rester atteignables surtout quand
+ * l'application ne fonctionne pas.
+ */
+test.describe('Pied de page légal', () => {
+  const LIENS = [
+    { nom: 'Confidentialité', href: '/privacy-policy.html' },
+    { nom: 'Conditions', href: '/terms.html' },
+    { nom: 'Mentions légales', href: '/legal.html' },
+  ];
+
+  test('expose les trois pages légales en fonctionnement nominal', async ({ page }) => {
+    await interceptApi(page);
+    await page.goto('/');
+    await expect(page.getByText('Partiellement nuageux')).toBeVisible();
+
+    for (const { nom, href } of LIENS) {
+      await expect(page.getByRole('link', { name: nom })).toHaveAttribute('href', href);
+    }
+  });
+
+  test('reste visible sur un écran d’erreur', async ({ page }) => {
+    await interceptApi(page, { statutPrevisions: 502 });
+    await page.goto('/');
+    await expect(page.getByRole('alert')).toBeVisible();
+
+    // Aucune prévision n'est affichée, mais l'avertissement et les liens le sont.
+    await expect(page.getByText(/à titre indicatif/)).toBeVisible();
+    for (const { nom } of LIENS) {
+      await expect(page.getByRole('link', { name: nom })).toBeVisible();
+    }
+  });
+
+  test('la ligne de mise à jour, elle, dépend des données', async ({ page }) => {
+    await interceptApi(page, { statutPrevisions: 502 });
+    await page.goto('/');
+    await expect(page.getByRole('alert')).toBeVisible();
+    await expect(page.getByText(/Mis à jour à/)).toBeHidden();
+
+    await interceptApi(page);
+    await page.getByRole('button', { name: 'Réessayer' }).click();
+    await expect(page.getByText(/Mis à jour à/)).toBeVisible();
+  });
+
+  test('mène réellement à la politique de confidentialité', async ({ page }) => {
+    await interceptApi(page);
+    await page.goto('/');
+    await expect(page.getByText('Partiellement nuageux')).toBeVisible();
+
+    // Navigation dans le même onglet : dans la TWA Android, un `target="_blank"`
+    // ferait surgir un onglet de navigateur par-dessus l'application.
+    await page.getByRole('link', { name: 'Confidentialité' }).click();
+
+    await expect(page).toHaveURL(/\/privacy-policy\.html$/);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+      'Politique de confidentialité'
+    );
+
+    // Et le chemin du retour existe.
+    await page.getByRole('link', { name: /Retour à l’application|Retour à l'application/ }).click();
+    await expect(page).toHaveURL(/\/$/);
+  });
+});
+
 test.describe('Préférences persistées', () => {
   test('démarre malgré un lieu mémorisé illisible', async ({ page }) => {
     // Régression connue : la lecture jetait avant le premier rendu et laissait

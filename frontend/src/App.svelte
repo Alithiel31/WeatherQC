@@ -234,14 +234,43 @@
     {/if}
 
     <Quotidien jours={donnees.quotidien} unite={prefs.unite} />
+  {/if}
 
-    <footer>
+  <!--
+    Le pied est hors du bloc conditionnel : il portait uniquement l'heure de
+    mise à jour et vivait donc à l'intérieur de `{:else if donnees}`, ce qui le
+    faisait disparaître pendant le chargement et sur un écran d'erreur.
+    Acceptable pour une horodate, pas pour l'avertissement météo ni pour l'accès
+    aux pages légales — qui doivent rester atteignables précisément quand
+    l'application ne fonctionne pas.
+
+    Seule la ligne de mise à jour reste conditionnée aux données : elle n'a
+    aucun sens sans elles.
+
+    Les liens n'ouvrent pas de nouvel onglet. Ces pages sont servies par la même
+    origine, à l'intérieur du périmètre déclaré de la TWA Android : une
+    navigation ordinaire reste dans la coquille, et chaque page porte un lien de
+    retour vers `/`. Un `target="_blank"` ferait surgir un onglet de navigateur
+    par-dessus l'application.
+  -->
+  <footer>
+    {#if donnees}
       <p>
         Mis à jour à {heureMinute(donnees.misAJour)} · Données
         <a href="https://open-meteo.com" target="_blank" rel="noreferrer">Open-Meteo</a>
       </p>
-    </footer>
-  {/if}
+    {/if}
+    <p class="avertissement">
+      Prévisions fournies à titre indicatif — ne pas les utiliser pour des décisions critiques.
+    </p>
+    <nav class="legal" aria-label="Informations légales">
+      <a href="/privacy-policy.html">Confidentialité</a>
+      <span aria-hidden="true">·</span>
+      <a href="/terms.html">Conditions</a>
+      <span aria-hidden="true">·</span>
+      <a href="/legal.html">Mentions légales</a>
+    </nav>
+  </footer>
 </main>
 
 <style>
@@ -358,4 +387,24 @@
 
   footer { margin-top: 1.75rem; text-align: center; font-size: 0.8rem; }
   footer a { color: inherit; }
+  footer p { margin: 0.35rem 0; }
+
+  /*
+    Ni `opacity` ni gris pâle sur ces deux blocs : ils sont posés à nu sur le
+    ciel, où la règle est la même que pour `.eyebrow` — sous le voile, il
+    faudrait au moins 0.93 pour tenir 4.5:1, ce qui ne se distingue plus de 1.
+    La hiérarchie passe donc par la taille et l'interlettrage.
+  */
+  .avertissement { font-size: 0.75rem; }
+
+  .legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+  }
+  /* Cible tactile : les liens sont petits et voisins. */
+  .legal a { padding: 0.15rem 0; }
 </style>

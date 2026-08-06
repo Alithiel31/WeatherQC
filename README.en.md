@@ -382,6 +382,34 @@ Add an entry to `backend/src/data/cities.ts`.
 
 ---
 
+## Privacy and terms
+
+Three static pages, served from `frontend/public/` and linked from the application footer. French is
+the official version — the service is offered to the public in Québec — and the English versions are
+courtesy translations.
+
+| Document | Français | English |
+|---|---|---|
+| Privacy policy | [`/privacy-policy.html`](https://qcweather.alithiel31.dev/privacy-policy.html) | [`/privacy-policy.en.html`](https://qcweather.alithiel31.dev/privacy-policy.en.html) |
+| Terms of use | [`/terms.html`](https://qcweather.alithiel31.dev/terms.html) | [`/terms.en.html`](https://qcweather.alithiel31.dev/terms.en.html) |
+| Legal notice | [`/legal.html`](https://qcweather.alithiel31.dev/legal.html) | [`/legal.en.html`](https://qcweather.alithiel31.dev/legal.en.html) |
+
+> ⚠️ **`privacy-policy.html` must not be renamed.** That exact URL is declared in the Play Console;
+> moving it breaks the app listing, and the failure only surfaces at Google's next review.
+> `tests/pwa/build.test.ts` and the CI `docker` job both check for it.
+
+These pages depend on no router: they are standalone HTML files that Vite copies into `dist/`, that
+nginx serves through its `location /` fallback, and that Workbox precaches — which is what makes
+them readable offline. **The precache is not cosmetic**: without it, the service worker's
+`navigateFallback` would serve the application shell in their place.
+
+The content describes what the code actually does — `localStorage` keys, third parties called by the
+browser *and* by the backend, logs, per-IP rate limiting. Any change to data handling must be
+reflected there, and in the Play Console **Data Safety** form, which is maintained in the console
+rather than in this repository.
+
+---
+
 ## Stack
 
 | Layer | Technology |

@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en-CA">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="index, follow" />
+    <title>Privacy Policy — Météo Québec</title>
+    <link rel="stylesheet" href="/legal.css" />
+  </head>
+  <body>
+    <main>
+      <p class="langue"><a href="/privacy-policy.html">🇫🇷 Version française</a></p>
+
+      <h1>Privacy Policy</h1>
+      <p class="date">Météo Québec — last updated: August 6, 2026</p>
+
+      <p class="avis-langue">
+        This English text is provided for convenience only. The service is offered to the public in
+        Québec, where the French version is the official one.
+        <strong
+          >In case of any discrepancy, the
+          <a href="/privacy-policy.html">French version</a> prevails.</strong
+        >
+      </p>
+
+      <p>
+        Météo Québec is a personal, free, ad-free project hosted in Québec and intended for a Québec
+        audience.
+        <strong
+          >It requires no account, keeps no user profile, and uses neither cookies nor advertising
+          trackers.</strong
+        >
+      </p>
+      <p>
+        This policy explains in plain language what the application actually does with your
+        information. It describes how the code behaves, and that code is
+        <a href="https://github.com/Alithiel31/WeatherQC" target="_blank" rel="noreferrer"
+          >public and verifiable</a
+        >.
+      </p>
+
+      <h2>What we do not do</h2>
+      <ul>
+        <li>No accounts, no sign-up, no passwords.</li>
+        <li>No database: nothing about you is stored on our servers.</li>
+        <li>No analytics tools (no Google Analytics, Matomo, Plausible or similar).</li>
+        <li>No cookies, no tracking pixels, no advertising trackers.</li>
+        <li>
+          No access to your device's location. The application never requests it, and the server
+          explicitly blocks it through the <code>Permissions-Policy</code> header.
+        </li>
+        <li>No selling, no sharing for commercial or advertising purposes.</li>
+      </ul>
+
+      <h2>What stays on your device</h2>
+      <p>
+        Your preferences are saved in your browser's local storage.
+        <strong>They are never sent to our servers</strong> and never leave your device.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Contents</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>selection</code></td>
+            <td>The city you selected, or an indication that you are using a postal code.</td>
+          </tr>
+          <tr>
+            <td><code>codePostal</code></td>
+            <td>The postal code you entered.</td>
+          </tr>
+          <tr>
+            <td><code>lieuCP</code></td>
+            <td>
+              The place matching that postal code: the first three characters of the postal code,
+              the municipality name, the province, and
+              <strong>the geographic coordinates (latitude and longitude) of that place</strong>.
+            </td>
+          </tr>
+          <tr>
+            <td><code>unite</code></td>
+            <td>Your unit preference, metric or imperial.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        You can erase all of it at any time by clearing your browser's site data, or by uninstalling
+        the Android application. Nothing remains on our side.
+      </p>
+
+      <h2>What your device sends to our servers</h2>
+      <p>
+        When you view a forecast, your device asks our server for data about a place: either the
+        identifier of one of the offered cities, or geographic coordinates, or the first three
+        characters of a postal code. These requests contain no personal identifier.
+      </p>
+
+      <h3>Server logs</h3>
+      <p>Our server writes one line per request, containing:</p>
+      <ul>
+        <li>a random technical request identifier, unconnected to you;</li>
+        <li>the method and requested path, truncated to 200 characters;</li>
+        <li>the response status code and its duration.</li>
+      </ul>
+      <p>
+        <strong>Your IP address does not appear in these logs.</strong> The requested path, however,
+        may contain the first three characters of a postal code or geographic coordinates, since
+        those are address parameters. These logs are used solely for technical diagnostics. They
+        rotate automatically and are capped by volume: the oldest entries are discarded as new ones
+        arrive.
+      </p>
+
+      <h3>IP address</h3>
+      <p>
+        Your IP address is processed <strong>in memory only</strong>, long enough to check that the
+        number of requests stays reasonable and to protect the service from abuse. It is not logged,
+        not stored, and does not survive a server restart.
+      </p>
+
+      <h3>Server cache</h3>
+      <p>
+        Weather responses are cached in memory to limit calls to data providers. That cache holds
+        forecasts per location — never information about people — is capped in size, and is lost on
+        every restart.
+      </p>
+
+      <h2>Third-party services</h2>
+
+      <h3>Contacted by our server</h3>
+      <p>
+        In these cases our server calls the provider.
+        <strong>Your IP address is not passed along</strong>: the provider only sees ours.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>What is sent</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <a href="https://open-meteo.com" target="_blank" rel="noreferrer">Open-Meteo</a>
+              (Germany)
+            </td>
+            <td>Latitude, longitude and time zone of the requested place.</td>
+          </tr>
+          <tr>
+            <td>
+              <a href="https://zippopotam.us" target="_blank" rel="noreferrer">Zippopotam.us</a>
+            </td>
+            <td>The first three characters of the postal code, never the full code.</td>
+          </tr>
+          <tr>
+            <td>
+              <a href="https://www.rainviewer.com" target="_blank" rel="noreferrer">RainViewer</a>
+            </td>
+            <td>The list of available radar frames. No data about you.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Contacted directly by your browser</h3>
+      <p>
+        The animated map is the exception, and it is the most important point in this section.
+        <strong
+          >Map tiles are loaded directly by your device, without passing through our
+          servers.</strong
+        >
+        These providers therefore see your IP address and the geographic area you are viewing, and
+        their own policies apply.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <a href="https://carto.com/privacy/" target="_blank" rel="noreferrer">CARTO</a>
+              (base map, data from
+              <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer"
+                >OpenStreetMap</a
+              >)
+            </td>
+            <td>The dark base map beneath the precipitation layer.</td>
+          </tr>
+          <tr>
+            <td>
+              <a href="https://www.rainviewer.com/privacy.html" target="_blank" rel="noreferrer"
+                >RainViewer</a
+              >
+            </td>
+            <td>Satellite and radar image tiles.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        If you would rather avoid these exchanges, simply do not scroll down to the map: tiles are
+        only requested once it is displayed. The rest of the application works normally.
+      </p>
+
+      <h3>Infrastructure and distribution</h3>
+      <ul>
+        <li>
+          <strong>Cloudflare</strong> (United States) provides the tunnel and HTTPS encryption
+          through which the site is reachable. As such, all requests transit its network.
+        </li>
+        <li>
+          <strong>Google Play</strong> distributes the Android version. Its installation and updates
+          fall under Google's privacy policy, not ours.
+        </li>
+      </ul>
+
+      <h2>Offline behaviour</h2>
+      <p>
+        The application is installable and keeps on your device, through a <i>service worker</i>,
+        the most recent forecasts you viewed along with a limited number of map tiles (up to 200,
+        for at most seven days). This cache lives solely on your device and is cleared along with
+        site data.
+      </p>
+
+      <h2>Android notifications</h2>
+      <p>
+        The Android version declares the notification permission. As of today,
+        <strong>the application sends no notifications</strong>: the permission is reserved for
+        possible future weather alerts. Should that feature be added, this policy will be updated
+        before it goes live, and notifications will remain refusable from Android settings.
+      </p>
+
+      <h2>Your rights</h2>
+      <p>
+        This service is subject to Québec's
+        <strong>Act respecting the protection of personal information in the private sector</strong
+        >, as amended by Law 25, and to the federal
+        <i>Personal Information Protection and Electronic Documents Act</i> (PIPEDA).
+      </p>
+      <p>
+        Since no personal information is kept on our servers, there is in practice no record to
+        access, correct or delete. Your rights work as follows:
+      </p>
+      <ul>
+        <li>
+          <strong>Access and deletion</strong> — everything concerning you sits in your browser's
+          local storage. Clearing site data erases it permanently.
+        </li>
+        <li>
+          <strong>Questions and complaints</strong> — write to
+          <a href="mailto:contact@alithiel31.dev">contact@alithiel31.dev</a>.
+        </li>
+      </ul>
+      <p>
+        The <strong>person responsible for the protection of personal information</strong> is the
+        service's publisher, reachable at that same address.
+      </p>
+      <p>
+        If a response does not satisfy you, you may contact the
+        <a href="https://www.cai.gouv.qc.ca" target="_blank" rel="noreferrer"
+          >Commission d'accès à l'information du Québec</a
+        >. Residents of the European Economic Area retain the rights granted to them by the GDPR;
+        the service, however, does not target them and is not specifically intended for them.
+      </p>
+
+      <h2>Hosting and transfers outside Québec</h2>
+      <p>
+        The service is <strong>hosted in Québec</strong>, on a personal server. Some providers named
+        above are established outside the province — notably Open-Meteo in Germany and Cloudflare in
+        the United States — and may process there the technical requests described in this policy.
+      </p>
+
+      <h2>Children</h2>
+      <p>
+        The application is intended for the general public. It knowingly collects no information
+        from children, and in fact collects no personal information from anyone.
+      </p>
+
+      <h2>Security</h2>
+      <p>
+        Traffic is encrypted with HTTPS. The site applies a strict Content Security Policy
+        restricting which domains may load resources. The strongest protection, however, is
+        structural: information that is never collected cannot leak.
+      </p>
+
+      <h2>Changes</h2>
+      <p>
+        This policy may evolve alongside the application. The date at the top of this page is
+        authoritative, and the full history of changes is public in the
+        <a href="https://github.com/Alithiel31/WeatherQC" target="_blank" rel="noreferrer"
+          >project repository</a
+        >.
+      </p>
+
+      <h2>Contact</h2>
+      <p><a href="mailto:contact@alithiel31.dev">contact@alithiel31.dev</a></p>
+
+      <div class="pied">
+        <p class="retour"><a href="/">← Back to the application</a></p>
+        <p>
+          <a href="/terms.en.html">Terms of Use</a> ·
+          <a href="/legal.en.html">Legal Notice</a>
+        </p>
+      </div>
+    </main>
+  </body>
+</html>

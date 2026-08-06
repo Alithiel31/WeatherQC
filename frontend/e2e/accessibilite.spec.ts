@@ -72,3 +72,33 @@ test.describe('Accessibilité', () => {
     await expect(annonce).toContainText('Montréal');
   });
 });
+
+/**
+ * Les pages légales sont du HTML statique servi hors de l'application : elles
+ * échappent entièrement à la passe ci-dessus. Elles n'ont pas de dégradé, donc
+ * axe y mesure aussi le contraste — la réserve qui vaut pour l'application ne
+ * s'applique pas ici.
+ */
+test.describe('Accessibilité des pages légales', () => {
+  const PAGES = [
+    'privacy-policy.html',
+    'privacy-policy.en.html',
+    'terms.html',
+    'terms.en.html',
+    'legal.html',
+    'legal.en.html',
+  ];
+
+  for (const page_ of PAGES) {
+    test(`aucune violation sur ${page_}`, async ({ page }) => {
+      await page.goto(`/${page_}`);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+      const resultat = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+        .analyze();
+
+      expect(resultat.violations).toEqual([]);
+    });
+  }
+});
