@@ -28,6 +28,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # `versionCode` dérive désormais du nombre de commits (cf.
+          # `app/build.gradle`) : le clone superficiel par défaut n'en ramène
+          # qu'un seul.
+          fetch-depth: 0
 
       - name: Set up JDK 17
         # v5 : passage du runtime de l'action à Node 24, cf. `android.yml`.
@@ -57,6 +62,19 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
 
+      # `GITHUB_RUN_NUMBER` est un compteur propre au workflow : renommer ce
+      # fichier ou le recréer le remet à 1, le versionCode recule, et le Play
+      # Store refuse l'upload — à la toute dernière étape de la chaîne, une fois
+      # le keystore déchiffré et l'AAB signé. Le nombre de commits est monotone
+      # par construction et ne dépend d'aucun état côté GitHub Actions.
+      - name: Calculer le compteur de version
+        id: version
+        run: |
+          set -euo pipefail
+          nb=$(git rev-list --count HEAD)
+          echo "commit_count=$nb" >> "$GITHUB_OUTPUT"
+          echo "Compteur de commits : $nb"
+
       - name: Configure Bubblewrap
         run: |
           mkdir -p ~/.bubblewrap
@@ -67,6 +85,8 @@ jobs:
         env:
           KSPASS: ${{ secrets.KEYSTORE_PASSWORD }}
           KPASS: ${{ secrets.KEY_PASSWORD }}
+          # Lu par `app/build.gradle` pour composer le versionCode.
+          QCW_COMMIT_COUNT: ${{ steps.version.outputs.commit_count }}
         run: |
           # Sans `update`, l'installation échoue dès que l'index de paquets de
           # l'image du runner a pris du retard sur les miroirs.
