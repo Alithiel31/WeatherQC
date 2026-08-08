@@ -11,10 +11,13 @@ on:
 permissions:
   contents: read
 
-# Un nouveau push sur une PR annule le run précédent.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Un nouveau push sur une PR annule le run précédent — seul le dernier état
+  # compte. Sur `main`, non : chaque commit de main est un candidat au
+  # déploiement sur le Pi, et un run annulé laisse un commit sans preuve qu'il
+  # passe la CI. Le gain de minutes ne vaut pas ce trou-là.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   backend:
