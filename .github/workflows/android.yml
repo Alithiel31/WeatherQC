@@ -64,3 +64,23 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew bundleRelease --no-daemon --stacktrace
+
+      # `bundleRelease` compile et minifie, mais ne dit rien des API dépréciées,
+      # des permissions superflues au manifeste ni d'un `targetSdk` en retard sur
+      # ce qu'exige le Play Store. Ces trois-là ne se découvrent aujourd'hui
+      # qu'au moment de la revue Google, une fois l'AAB déjà envoyé.
+      #
+      # `lintRelease` et non `lint` : c'est la variante release qui est publiée,
+      # et la seule qui passe par R8.
+      - name: Android Lint (variante release)
+        working-directory: twa-qcweather
+        run: ./gradlew lintRelease --no-daemon
+
+      - name: Publier le rapport Lint
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-lint
+          path: twa-qcweather/app/build/reports/lint-results-release.html
+          retention-days: 14
+          if-no-files-found: ignore

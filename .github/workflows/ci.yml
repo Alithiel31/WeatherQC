@@ -48,6 +48,21 @@ jobs:
       - run: npm run lint
       # Échoue si la couverture passe sous les seuils de vitest.config.ts.
       - run: npm run test:coverage
+
+      # Le frontend publie ses rapports, le backend calculait les siens puis les
+      # jetait : après un échec de couverture en CI, il n'y avait rien à lire
+      # sans rejouer la suite en local.
+      - name: Publier la couverture backend
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-couverture
+          path: backend/coverage/
+          retention-days: 14
+          # `ignore` et non `error` : si le job échoue avant `test:coverage`
+          # (format, lint), le dossier n'existe pas et ce n'est pas une anomalie.
+          if-no-files-found: ignore
+
       - run: npm run build
 
       # Les dépendances de production sont exposées publiquement : une faille
