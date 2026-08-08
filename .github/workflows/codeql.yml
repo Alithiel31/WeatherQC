@@ -1,0 +1,67 @@
+name: CodeQL
+
+# `npm audit` et `dependency-review` ne parlent que des dépendances : rien
+# n'analysait le code du dépôt lui-même. CodeQL couvre ce que la revue humaine
+# laisse passer — chemin non assaini vers le système de fichiers, injection dans
+# une route Express, expression régulière à complexité explosive sur une entrée
+# utilisateur, redirection ouverte.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Le run hebdomadaire n'est pas redondant : les requêtes CodeQL évoluent, et
+  # une faille invisible aujourd'hui peut être détectée dans un mois sans qu'une
+  # seule ligne du dépôt ait bougé.
+  schedule:
+    - cron: '41 4 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  analyze:
+    name: Analyse ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      # Publication des alertes dans l'onglet Security du dépôt.
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Java est volontairement absent. `twa-qcweather` ne contient aucune
+        # logique écrite ici : Bubblewrap génère l'intégralité de la coquille
+        # TWA, et `build.gradle` est le seul fichier qu'on édite. L'analyser
+        # imposerait un build Gradle complet à chaque PR — plusieurs minutes —
+        # pour ne signaler que du code qu'on ne maintient pas.
+        #
+        # Backend et frontend partagent le même langage : un seul run couvre les
+        # deux dossiers.
+        language: [javascript-typescript]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Initialiser CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          # `security-extended` plutôt que le jeu par défaut : il ajoute les
+          # requêtes à précision moyenne, celles qui remontent les cas
+          # plausibles plutôt que les seules certitudes. Sur un dépôt de cette
+          # taille, le surcoût est de quelques minutes et le bruit reste lisible.
+          queries: security-extended
+
+      # Pas d'étape de build : JavaScript et TypeScript s'analysent directement
+      # depuis les sources, `autobuild` ne sert qu'aux langages compilés.
+      - name: Analyser
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
