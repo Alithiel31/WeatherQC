@@ -133,9 +133,40 @@ jobs:
 
       - run: npm ci
 
+      # Le binaire Chromium — environ 150 Mo — était retéléchargé à chaque run.
+      # La clé porte sur la version de `@playwright/test` : c'est elle qui décide
+      # de la révision du navigateur, et un cache qui survivrait à sa montée
+      # ferait tourner les tests sur le mauvais binaire.
+      #
+      # La version est lue dans le lockfile, pas dans `node_modules` : c'est la
+      # version résolue, exacte, et elle reste lisible même si l'étape se
+      # déplaçait avant `npm ci`. `package.json` ne conviendrait pas — il porte
+      # une plage (`^1.62.1`), et la clé ne bougerait pas lors d'une montée
+      # mineure qui change pourtant de navigateur.
+      - name: Relever la version de Playwright
+        id: playwright
+        run: |
+          echo "version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache des navigateurs Playwright
+        id: cache-playwright
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
       # Chromium seul : la suite ne cible que lui, inutile de tirer Firefox et
       # WebKit à chaque run.
-      - run: npx playwright install --with-deps chromium
+      - name: Installer Chromium et ses dépendances système
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      # Les bibliothèques système (`--with-deps`) s'installent via apt, hors de
+      # `~/.cache` : le cache ne les contient pas, il faut les reposer même quand
+      # il est chaud. Sans ça, Chromium échoue au lancement sur un `.so` absent.
+      - name: Reposer les dépendances système
+        if: steps.cache-playwright.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       # `playwright.config.ts` construit puis sert `dist/` : le parcours passe
       # par le bundle réellement déployé, pas par le serveur de développement.
