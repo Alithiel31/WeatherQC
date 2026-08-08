@@ -22,6 +22,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # Un déclenchement manuel n'est autorisé que depuis main : on ne publie jamais
     # un artefact construit sur une branche de travail.
     if: >-

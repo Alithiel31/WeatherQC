@@ -31,6 +31,9 @@ jobs:
   build:
     name: Gradle — bundleRelease non signé
     runs-on: ubuntu-latest
+    # Un Gradle qui attend un verrou ou un dépôt Maven injoignable tourne sinon
+    # jusqu'au plafond GitHub de 6 h.
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v7

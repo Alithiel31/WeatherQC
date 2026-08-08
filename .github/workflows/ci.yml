@@ -20,6 +20,11 @@ jobs:
   backend:
     name: Backend — lint & typecheck
     runs-on: ubuntu-latest
+    # Sans plafond explicite, GitHub laisse un job tourner 6 h. Un `npm ci` qui
+    # bloque sur un registre injoignable consomme donc 6 h de runner avant que
+    # qui que ce soit ne s'en aperçoive. Ces valeurs sont larges — environ le
+    # triple du temps observé — mais bornées.
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: backend
@@ -50,6 +55,7 @@ jobs:
   frontend:
     name: Frontend — lint, typecheck & build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: frontend
@@ -93,6 +99,7 @@ jobs:
   e2e:
     name: Frontend — parcours de bout en bout
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: frontend
@@ -128,6 +135,9 @@ jobs:
   docker:
     name: Docker — build & démarrage réel
     runs-on: ubuntu-latest
+    # `docker compose up --wait --wait-timeout 120` a sa propre borne, mais les
+    # `docker build` et les `curl` n'en ont aucune.
+    timeout-minutes: 20
     needs: [backend, frontend]
 
     steps:
