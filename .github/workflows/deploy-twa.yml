@@ -7,9 +7,11 @@ on:
     types: [completed]
     branches: [main]
 
-# `actions: read` est nécessaire pour lister/télécharger l'artefact du workflow de build.
+# `actions: read` est nécessaire pour lister/télécharger l'artefact du workflow
+# de build. `contents: write` sert à poser le tag et la Release qui rattachent
+# l'AAB publié à un commit précis.
 permissions:
-  contents: read
+  contents: write
   actions: read
 
 # Une seule publication Play Store à la fois.
@@ -27,6 +29,16 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') }}
 
     steps:
+      # Le commit à taguer est celui qu'a construit `build-twa.yml`, pas la tête
+      # de main : entre le build et la publication, main a pu avancer.
+      # `fetch-depth: 0` — le versionCode se recalcule à partir du nombre de
+      # commits, cf. `twa-qcweather/app/build.gradle`.
+      - name: Checkout du commit publié
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+
       - name: Download AAB artifact
         uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151 # v21
         with:
@@ -45,3 +57,44 @@ jobs:
           # `track` (au singulier) est déprécié. `tracks` prend une liste séparée
           # par des virgules ; renseigner les deux est désormais une erreur dure.
           tracks: internal
+
+      # Passé les 30 jours de rétention de l'artefact, plus rien ne reliait une
+      # version en test interne au commit qui l'a produite : ni tag, ni Release,
+      # et un `versionCode` que seul le build savait calculer. Retrouver ce qui
+      # tournait chez un testeur imposait de relire les logs Actions.
+      #
+      # La base est relue dans `build.gradle` plutôt que recopiée ici : deux
+      # copies finiraient par diverger, et l'écart ne se verrait qu'au moment
+      # d'un refus Play.
+      - name: Taguer le commit publié
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          base=$(sed -n 's/^def versionCodeBase = \([0-9]\+\).*/\1/p' \
+                 twa-qcweather/app/build.gradle)
+          nom=$(sed -n 's/^ *versionName *"\([^"]*\)".*/\1/p' \
+                twa-qcweather/app/build.gradle)
+          code=$(( base + $(git rev-list --count "$SHA") ))
+          tag="twa-v${nom}+${code}"
+
+          # `workflow_dispatch` peut être relancé sur un artefact déjà publié :
+          # on ne recrée pas la Release, et on ne fait pas échouer le job pour
+          # autant.
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag déjà présente."
+            exit 0
+          fi
+
+          gh release create "$tag" \
+            --target "$SHA" \
+            --title "TWA $nom (versionCode $code)" \
+            --notes "$(printf '%s\n' \
+              "Publié sur le canal de test interne du Play Store." \
+              "" \
+              "- versionName : $nom" \
+              "- versionCode : $code" \
+              "- commit : $SHA" \
+              "- exécution : $RUN_URL")"
