@@ -51,12 +51,20 @@ def twaManifest = [
 ]
 
 // Le Play Store refuse tout upload dont le versionCode n'est pas strictement
-// supérieur au précédent. En CI, le numéro de run GitHub Actions s'ajoute à la
-// base pour garantir un code croissant sans intervention manuelle ; en local,
-// on retombe sur la base.
+// supérieur au précédent. En CI, un compteur s'ajoute à la base pour garantir un
+// code croissant sans intervention manuelle ; en local, on retombe sur la base.
+//
+// Ce compteur était `GITHUB_RUN_NUMBER`. Il est propre au workflow : renommer
+// `build-twa.yml`, le supprimer et le recréer, ou changer sa clé `name:` remet
+// le compteur à 1. Le versionCode recule alors, et Play refuse l'upload — à la
+// toute dernière étape de la chaîne, keystore déjà déchiffré et AAB déjà signé.
+//
+// Le nombre de commits de la branche est monotone par construction et ne dépend
+// d'aucun état conservé côté GitHub. `build-twa.yml` le calcule et l'exporte,
+// avec `fetch-depth: 0` — un clone superficiel ne compterait qu'un commit.
 def versionCodeBase = 3
-def ciRunNumber = System.getenv('GITHUB_RUN_NUMBER')
-def appVersionCode = ciRunNumber ? versionCodeBase + ciRunNumber.toInteger() : versionCodeBase
+def commitCount = System.getenv('QCW_COMMIT_COUNT')
+def appVersionCode = commitCount ? versionCodeBase + commitCount.toInteger() : versionCodeBase
 
 android {
     compileSdkVersion 36

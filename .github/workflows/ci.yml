@@ -11,15 +11,23 @@ on:
 permissions:
   contents: read
 
-# Un nouveau push sur une PR annule le run précédent.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Un nouveau push sur une PR annule le run précédent — seul le dernier état
+  # compte. Sur `main`, non : chaque commit de main est un candidat au
+  # déploiement sur le Pi, et un run annulé laisse un commit sans preuve qu'il
+  # passe la CI. Le gain de minutes ne vaut pas ce trou-là.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   backend:
     name: Backend — lint & typecheck
     runs-on: ubuntu-latest
+    # Sans plafond explicite, GitHub laisse un job tourner 6 h. Un `npm ci` qui
+    # bloque sur un registre injoignable consomme donc 6 h de runner avant que
+    # qui que ce soit ne s'en aperçoive. Ces valeurs sont larges — environ le
+    # triple du temps observé — mais bornées.
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: backend
@@ -40,6 +48,21 @@ jobs:
       - run: npm run lint
       # Échoue si la couverture passe sous les seuils de vitest.config.ts.
       - run: npm run test:coverage
+
+      # Le frontend publie ses rapports, le backend calculait les siens puis les
+      # jetait : après un échec de couverture en CI, il n'y avait rien à lire
+      # sans rejouer la suite en local.
+      - name: Publier la couverture backend
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-couverture
+          path: backend/coverage/
+          retention-days: 14
+          # `ignore` et non `error` : si le job échoue avant `test:coverage`
+          # (format, lint), le dossier n'existe pas et ce n'est pas une anomalie.
+          if-no-files-found: ignore
+
       - run: npm run build
 
       # Les dépendances de production sont exposées publiquement : une faille
@@ -50,6 +73,7 @@ jobs:
   frontend:
     name: Frontend — lint, typecheck & build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: frontend
@@ -93,6 +117,7 @@ jobs:
   e2e:
     name: Frontend — parcours de bout en bout
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: frontend
@@ -108,9 +133,40 @@ jobs:
 
       - run: npm ci
 
+      # Le binaire Chromium — environ 150 Mo — était retéléchargé à chaque run.
+      # La clé porte sur la version de `@playwright/test` : c'est elle qui décide
+      # de la révision du navigateur, et un cache qui survivrait à sa montée
+      # ferait tourner les tests sur le mauvais binaire.
+      #
+      # La version est lue dans le lockfile, pas dans `node_modules` : c'est la
+      # version résolue, exacte, et elle reste lisible même si l'étape se
+      # déplaçait avant `npm ci`. `package.json` ne conviendrait pas — il porte
+      # une plage (`^1.62.1`), et la clé ne bougerait pas lors d'une montée
+      # mineure qui change pourtant de navigateur.
+      - name: Relever la version de Playwright
+        id: playwright
+        run: |
+          echo "version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache des navigateurs Playwright
+        id: cache-playwright
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
       # Chromium seul : la suite ne cible que lui, inutile de tirer Firefox et
       # WebKit à chaque run.
-      - run: npx playwright install --with-deps chromium
+      - name: Installer Chromium et ses dépendances système
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      # Les bibliothèques système (`--with-deps`) s'installent via apt, hors de
+      # `~/.cache` : le cache ne les contient pas, il faut les reposer même quand
+      # il est chaud. Sans ça, Chromium échoue au lancement sur un `.so` absent.
+      - name: Reposer les dépendances système
+        if: steps.cache-playwright.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       # `playwright.config.ts` construit puis sert `dist/` : le parcours passe
       # par le bundle réellement déployé, pas par le serveur de développement.
@@ -128,6 +184,9 @@ jobs:
   docker:
     name: Docker — build & démarrage réel
     runs-on: ubuntu-latest
+    # `docker compose up --wait --wait-timeout 120` a sa propre borne, mais les
+    # `docker build` et les `curl` n'en ont aucune.
+    timeout-minutes: 20
     needs: [backend, frontend]
 
     steps:
@@ -138,6 +197,51 @@ jobs:
 
       - name: Build frontend image
         run: docker build --target production -t qcweather-frontend ./frontend
+
+      # `npm audit --omit=dev` ne juge que les paquets npm. Ce qui tourne sur le
+      # Pi est une image Alpine complète : openssl, busybox, les bibliothèques
+      # système de nginx. Dependabot suit bien les tags `node:24-alpine` et
+      # `nginx:alpine`, mais ne dit rien des CVE de l'image effectivement
+      # construite — c'est-à-dire de ce qui est réellement déployé.
+      #
+      # `--ignore-unfixed` : une CVE sans correctif publié en amont ne peut pas
+      # être corrigée ici. La signaler rendrait la CI rouge en permanence, ce qui
+      # revient à ne plus rien signaler du tout.
+      #
+      # `--skip-dirs` écarte npm et yarn, embarqués dans `node:24-alpine`. Le
+      # premier scan les a mesurés : 6 HIGH et 1 CRITICAL, toutes dans les
+      # dépendances internes de npm — `brace-expansion`, `ip-address`, `tar`,
+      # `undici` — pendant qu'Alpine et `app/node_modules/` ressortaient à zéro.
+      # Elles sont réelles mais hors d'atteinte : le correctif suppose un npm
+      # plus récent dans l'image amont, et rien ici ne peut l'y mettre. Elles
+      # sont aussi hors du chemin d'exécution, `CMD` étant `node dist/app.js` —
+      # npm ne tourne qu'au build.
+      #
+      # Le compromis est assumé : une CVE npm réellement exploitable passerait
+      # inaperçue. La contrepartie serait un scanner rouge en permanence, donc
+      # un scanner que plus personne ne lit.
+      #
+      # Image épinglée par version, et non `:latest` : Trivy a subi une
+      # compromission de chaîne d'approvisionnement en mars 2026. Comme
+      # Bubblewrap, ce numéro se relève à la main — Dependabot ne lit pas les
+      # étapes `run`.
+      - name: Scanner les images construites
+        run: |
+          set -euo pipefail
+          for image in qcweather-backend qcweather-frontend; do
+            echo "── $image"
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v "$HOME/.cache/trivy:/root/.cache/trivy" \
+              aquasec/trivy:0.73.0 image \
+                --exit-code 1 \
+                --severity HIGH,CRITICAL \
+                --ignore-unfixed \
+                --skip-dirs usr/local/lib/node_modules/npm \
+                --skip-dirs opt/yarn-v1.22.22 \
+                --no-progress \
+                "$image"
+          done
 
       # Le job s'arrêtait après les deux `docker build`. Ne sont donc validés par
       # rien avant le déploiement sur le Pi : la syntaxe de `docker-compose.yml`,
@@ -234,3 +338,28 @@ jobs:
       - name: Arrêter la pile
         if: always()
         run: docker compose down -v
+
+  dependances:
+    name: Revue des dépendances ajoutées
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # L'action compare la base et la tête d'une PR : hors PR, il n'y a rien à
+    # comparer.
+    if: github.event_name == 'pull_request'
+
+    permissions:
+      contents: read
+      # Le résumé est posté en commentaire sur la PR en cas d'échec.
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Complémentaire de `npm audit`, qui juge l'arbre une fois la dépendance
+      # déjà là : celui-ci bloque son *introduction*, et couvre les cinq
+      # manifestes d'un coup — npm racine, backend, frontend, et Gradle — là où
+      # `npm audit` ignore le module Android.
+      - uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure

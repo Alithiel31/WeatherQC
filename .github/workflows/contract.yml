@@ -25,6 +25,10 @@ jobs:
   contract:
     name: Backend — tests de contrat (réseau réel)
     runs-on: ubuntu-latest
+    # Ces tests sortent sur le réseau réel : une API amont qui accepte la
+    # connexion puis ne répond jamais ferait tourner le job jusqu'au plafond de
+    # 6 h, toutes les nuits.
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: backend

@@ -1,0 +1,6 @@
+# Toute PR demande automatiquement une revue au propriétaire du dépôt.
+#
+# Ce fichier ne fait que *demander* la revue. Il ne la rend obligatoire que si
+# « Require review from Code Owners » est coché dans la règle de protection de
+# `main` — sans quoi il reste décoratif.
+* @Alithiel31

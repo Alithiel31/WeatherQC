@@ -19,6 +19,11 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Le script `expect` ci-dessous tournait avec `set timeout -1`. Un libellé de
+    # prompt qui change côté Bubblewrap — montée que Dependabot ne voit pas,
+    # puisqu'elle est dans une étape `run` — faisait attendre le job jusqu'au
+    # plafond GitHub de 6 h, en tenant tout ce temps le verrou `twa-build`.
+    timeout-minutes: 30
     # `push` est déjà borné à main, mais `workflow_dispatch` ne l'était pas : le
     # keystore de production pouvait être déchiffré depuis n'importe quelle
     # branche, en contradiction avec ce que promettait le README. Même garde que
@@ -28,6 +33,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # `versionCode` dérive désormais du nombre de commits (cf.
+          # `app/build.gradle`) : le clone superficiel par défaut n'en ramène
+          # qu'un seul.
+          fetch-depth: 0
 
       - name: Set up JDK 17
         # v5 : passage du runtime de l'action à Node 24, cf. `android.yml`.
@@ -57,6 +67,19 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
 
+      # `GITHUB_RUN_NUMBER` est un compteur propre au workflow : renommer ce
+      # fichier ou le recréer le remet à 1, le versionCode recule, et le Play
+      # Store refuse l'upload — à la toute dernière étape de la chaîne, une fois
+      # le keystore déchiffré et l'AAB signé. Le nombre de commits est monotone
+      # par construction et ne dépend d'aucun état côté GitHub Actions.
+      - name: Calculer le compteur de version
+        id: version
+        run: |
+          set -euo pipefail
+          nb=$(git rev-list --count HEAD)
+          echo "commit_count=$nb" >> "$GITHUB_OUTPUT"
+          echo "Compteur de commits : $nb"
+
       - name: Configure Bubblewrap
         run: |
           mkdir -p ~/.bubblewrap
@@ -67,19 +90,46 @@ jobs:
         env:
           KSPASS: ${{ secrets.KEYSTORE_PASSWORD }}
           KPASS: ${{ secrets.KEY_PASSWORD }}
+          # Lu par `app/build.gradle` pour composer le versionCode.
+          QCW_COMMIT_COUNT: ${{ steps.version.outputs.commit_count }}
         run: |
           # Sans `update`, l'installation échoue dès que l'index de paquets de
           # l'image du runner a pris du retard sur les miroirs.
           sudo apt-get update > /dev/null
           sudo apt-get install -y expect > /dev/null
           chmod +x gradlew
+          # Deux bornes distinctes dans le script ci-dessous. Sur les prompts :
+          # 120 s, parce qu'un prompt attendu qui tarde signifie que Bubblewrap a
+          # changé de libellé ou a déjà échoué — patienter ne le fera pas
+          # apparaître. Sur `eof` : 1800 s, parce que le build Gradle déclenché
+          # ensuite est légitimement lent.
+          #
+          # Le `catch wait` final est le point important : sans lui, `expect`
+          # rend 0 quel qu'ait été le sort du processus lancé. Un build
+          # Bubblewrap en échec ressortait donc en succès, et l'étape suivante
+          # publiait un artefact périmé.
+          #
+          # Le script est entre apostrophes pour le shell : ne pas en introduire
+          # dans le corps, elles fermeraient la chaîne.
           expect -c '
-            set timeout -1
+            set timeout 120
             spawn bubblewrap build --skipPwaValidation
-            expect "Would you like to apply" { send "n\r" }
-            expect "Password for the Key Store" { send "$env(KSPASS)\r" }
-            expect -re {assword for the Key} { send "$env(KPASS)\r" }
+            expect {
+              "Would you like to apply" { send "n\r" }
+              timeout { puts stderr "prompt Bubblewrap absent"; exit 1 }
+            }
+            expect {
+              "Password for the Key Store" { send "$env(KSPASS)\r" }
+              timeout { puts stderr "prompt Bubblewrap absent"; exit 1 }
+            }
+            expect {
+              -re {assword for the Key} { send "$env(KPASS)\r" }
+              timeout { puts stderr "prompt Bubblewrap absent"; exit 1 }
+            }
+            set timeout 1800
             expect eof
+            catch wait resultat
+            exit [lindex $resultat 3]
           '
 
       - name: Upload AAB
@@ -88,6 +138,13 @@ jobs:
           name: qcweather-release
           path: twa-qcweather/app-release-bundle.aab
           retention-days: 30
+          # `warn` — le défaut — laissait ce workflow finir au vert sans avoir
+          # produit le moindre AAB. `deploy-twa.yml` téléchargeait alors le
+          # dernier artefact disponible, c'est-à-dire un build précédent, et le
+          # publiait en test interne. Combiné au `expect` qui masquait les
+          # échecs, c'était le chemin par lequel un build cassé pouvait quand
+          # même atteindre le Play Store.
+          if-no-files-found: error
 
       - name: Supprimer le keystore du workspace
         if: always()
