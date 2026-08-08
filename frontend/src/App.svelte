@@ -296,11 +296,51 @@
     padding: max(env(safe-area-inset-top), 1.25rem) 1.25rem 2rem;
     max-width: 32rem;
     margin: 0 auto;
-    transition: background-color 0.8s ease;
+    transition:
+      background-color 0.8s ease,
+      border-radius 0.2s ease,
+      box-shadow 0.2s ease;
     background-color: #10243b;
     background-image:
       linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)),
       linear-gradient(180deg, var(--ciel-haut, #10243b) 0%, var(--ciel-bas, #10243b) var(--ciel-fin, 130%));
+  }
+
+  /*
+    Base mobile-first inchangée en dessous de 640px : `main` occupe tout
+    l'écran comme avant. Au-delà, la carte se détache du fond au lieu de
+    s'étirer indéfiniment dans un bandeau vide — cf. discussion sur le rendu
+    desktop. `min-width` plutôt que `max-width` : on part du mobile et on
+    ajoute, on ne part pas du desktop pour retirer.
+  */
+  @media (min-width: 640px) {
+    main {
+      max-width: 42rem;
+      margin: 2rem auto;
+      min-height: auto;
+      border-radius: 1.5rem;
+      box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  /*
+    Au-delà du mobile, la colonne de 32rem flottait au milieu d'un fond uni
+    de la même teinte que le body — aucune démarcation, juste un grand vide de
+    part et d'autre. Le mobile reste inchangé sous ce seuil ; au-delà, la
+    colonne s'élargit et se détache visuellement du fond avec une ombre et un
+    liseré, plutôt que de s'étirer en pleine largeur.
+  */
+  @media (min-width: 640px) {
+    :global(body) { background: #0a1a2c; }
+
+    main {
+      min-height: auto;
+      max-width: 40rem;
+      margin: 2.5rem auto;
+      padding: 2rem 2rem 2.25rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    }
   }
 
   .ciel.degage       { --ciel-haut: #1f6fc4; --ciel-bas: #7fc2ee; }
