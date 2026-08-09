@@ -2,6 +2,8 @@
 
 ## [Non publié]
 
+## [3.1.0] - 2026-08-09
+
 ### Added
 
 - Trois documents légaux, en français et en anglais : politique de confidentialité, conditions
