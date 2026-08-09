@@ -492,3 +492,7 @@ Cas connus (config nginx, calibrage réseau, CI) : voir [TROUBLESHOOTING.md](./T
 ## License
 
 MIT — voir [LICENSE](./LICENSE)
+
+---
+
+Fait par **Jacques Duchamplecheval** ([alithiel31](https://github.com/Alithiel31)) — [alithiel31.dev](https://alithiel31.dev) · [LinkedIn](https://linkedin.com/in/jacques-duchamplecheval) · [contact@alithiel31.dev](mailto:contact@alithiel31.dev)

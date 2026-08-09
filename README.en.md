@@ -485,3 +485,7 @@ Known cases (nginx config, network calibration, CI): see [TROUBLESHOOTING.en.md]
 ## License
 
 MIT — see [LICENSE](./LICENSE)
+
+---
+
+Made by **Jacques Duchamplecheval** ([alithiel31](https://github.com/Alithiel31)) — [alithiel31.dev](https://alithiel31.dev) · [LinkedIn](https://linkedin.com/in/jacques-duchamplecheval) · [contact@alithiel31.dev](mailto:contact@alithiel31.dev)
