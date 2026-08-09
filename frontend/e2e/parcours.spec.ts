@@ -156,7 +156,10 @@ test.describe('Pied de page légal', () => {
     );
 
     // Et le chemin du retour existe.
-    await page.getByRole('link', { name: /Retour à l’application|Retour à l'application/ }).click();
+    await page
+      .getByRole('link', { name: /Retour à l’application|Retour à l'application/ })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/$/);
   });
 });
