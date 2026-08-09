@@ -146,7 +146,8 @@
         aria-label="Unités impériales"
       >°{libelleUniteTemp(prefs.unite)}</button>
     </div>
-    <nav class="villes" aria-label="Choix de la ville">
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+    <nav class="villes" aria-label="Choix de la ville" tabindex="0">
       {#each villes as v (v.id)}
         <button
           class:active={v.id === prefs.selection}
@@ -382,18 +383,25 @@
   }
 
   /* Voile sombre, comme les cartes : à blanc 14 % le libellé d'un onglet inactif
-     ne tenait que 3.80:1. L'onglet actif reste blanc plein, texte sombre. */
+     ne tenait que 3.80:1. L'onglet actif reste blanc plein, texte sombre.
+     `overflow-x: auto` + `white-space: nowrap` (même idiome que `.bande` dans
+     Horaire.svelte) : au-delà de 6 villes + le pill de code postal, la rangée
+     défile plutôt que de réenvelopper un nom de ville sur deux lignes. */
   .villes {
-    display: inline-flex; gap: 0.25rem;
+    display: flex; gap: 0.25rem;
     background: rgba(0,0,0,0.25); border-radius: 999px;
-    padding: 0.25rem; width: fit-content; backdrop-filter: blur(6px);
+    padding: 0.25rem; width: fit-content; max-width: 100%;
+    overflow-x: auto; scrollbar-width: thin;
+    backdrop-filter: blur(6px);
   }
   .villes button {
     border: 0; background: transparent; color: #fff; font: inherit;
     font-weight: 600; padding: 0.45rem 1.1rem; border-radius: 999px; cursor: pointer;
+    white-space: nowrap; flex-shrink: 0;
   }
   .villes button.active { background: #fff; color: #16314d; }
   .villes button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .villes:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
 
   .bandeau-hors-ligne {
     margin: 1rem 0 0; padding: 0.5rem 0.9rem;
