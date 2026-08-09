@@ -61,6 +61,16 @@ L'application tourne sur un **Raspberry Pi** et est exposée publiquement via un
 Nginx fait office de reverse proxy à l'intérieur du conteneur frontend : il sert les fichiers statiques et redirige les appels `/api/` vers le backend.
 Le tunnel Cloudflare gère le **HTTPS** et le nom de domaine `qcweather.alithiel31.dev` — aucun certificat à gérer manuellement.
 
+**Déploiement continu** : `deploy-web.yml` tourne sur un runner self-hosted installé sur le Pi
+lui-même et se déclenche automatiquement à chaque push sur `main` touchant `backend/`,
+`frontend/` ou `docker-compose.yml` (ou manuellement). Il rejoue `docker compose up -d --build
+--wait` sur place — le Pi va chercher le job en se connectant vers GitHub, aucun port entrant ni
+clé SSH à exposer. Pour le déclencher et suivre le déploiement en direct depuis un poste local :
+
+```bash
+npm run deploy:web       # ou deploy:android pour build-twa.yml
+```
+
 ---
 
 ## Android (TWA)
@@ -429,7 +439,7 @@ se tient à jour dans la console et non dans ce dépôt.
 | Accès réseau | Tailscale |
 | APIs externes | Open-Meteo · Zippopotam.us · CARTO / OpenStreetMap |
 | Android | TWA · Bubblewrap · Google Play Store |
-| CI/CD | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml`) |
+| CI/CD | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml` · `deploy-web.yml` · `codeql.yml` · `secrets.yml` · `contract.yml`) |
 
 ## Contribuer
 

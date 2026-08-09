@@ -14,7 +14,9 @@
   "author": "",
   "private": true,
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "deploy:android": "bash scripts/gh-deploy.sh build-twa.yml",
+    "deploy:web": "bash scripts/gh-deploy.sh deploy-web.yml"
   },
   "devDependencies": {
     "husky": "^9.1.7"

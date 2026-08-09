@@ -69,6 +69,21 @@ beforeEach(() => {
   villesDisponibles.mockResolvedValue(VILLES_REPLI);
 });
 
+/**
+ * Le sélecteur de ville n'affiche plus la liste en permanence (cf.
+ * `SelecteurVille.svelte`) : un clic sur le déclencheur l'ouvre d'abord. Le
+ * nom accessible du déclencheur porte la ville active, d'où le motif plutôt
+ * qu'un nom exact.
+ */
+async function ouvrirSelecteurVille(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+  await user.click(screen.getByRole('button', { name: /Choisir une ville/ }));
+}
+
+async function choisirVille(user: ReturnType<typeof userEvent.setup>, nom: string): Promise<void> {
+  await ouvrirSelecteurVille(user);
+  await user.click(screen.getByRole('menuitem', { name: nom }));
+}
+
 describe('App — chargement initial', () => {
   it('charge la ville mémorisée au montage', async () => {
     localStorage.setItem('selection', 'quebec');
@@ -203,6 +218,7 @@ describe('App — prévisions périmées servies par le backend', () => {
 
 describe('App — liste des villes', () => {
   it('remplit le sélecteur depuis /api/villes', async () => {
+    const user = userEvent.setup();
     villesDisponibles.mockResolvedValue([
       { id: 'montreal', nom: 'Montréal' },
       { id: 'quebec', nom: 'Québec' },
@@ -210,27 +226,35 @@ describe('App — liste des villes', () => {
     ]);
 
     render(App);
+    await screen.findByText('Partiellement nuageux');
+    await ouvrirSelecteurVille(user);
 
-    expect(await screen.findByRole('button', { name: 'Sherbrooke' })).toBeTruthy();
+    expect(await screen.findByRole('menuitem', { name: 'Sherbrooke' })).toBeTruthy();
   });
 
   // La PWA doit rester utilisable hors ligne : le sélecteur ne peut pas dépendre
   // d'une requête réussie.
   it('garde la liste de repli quand le backend ne répond pas', async () => {
+    const user = userEvent.setup();
     villesDisponibles.mockRejectedValue(new TypeError('Failed to fetch'));
 
     render(App);
+    await screen.findByText('Partiellement nuageux');
+    await ouvrirSelecteurVille(user);
 
-    expect(await screen.findByRole('button', { name: 'Montréal' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Québec' })).toBeTruthy();
+    expect(await screen.findByRole('menuitem', { name: 'Montréal' })).toBeTruthy();
+    expect(screen.getByRole('menuitem', { name: 'Québec' })).toBeTruthy();
   });
 
   it('ignore une liste vide plutôt que de vider le sélecteur', async () => {
+    const user = userEvent.setup();
     villesDisponibles.mockResolvedValue([]);
 
     render(App);
+    await screen.findByText('Partiellement nuageux');
+    await ouvrirSelecteurVille(user);
 
-    expect(await screen.findByRole('button', { name: 'Montréal' })).toBeTruthy();
+    expect(await screen.findByRole('menuitem', { name: 'Montréal' })).toBeTruthy();
   });
 });
 
@@ -240,7 +264,7 @@ describe('App — changement de ville', () => {
     render(App);
     await screen.findByText('Partiellement nuageux');
 
-    await user.click(screen.getByRole('button', { name: 'Québec' }));
+    await choisirVille(user, 'Québec');
 
     await waitFor(() =>
       expect(previsionsVille).toHaveBeenCalledWith('quebec', expect.any(AbortSignal))
@@ -271,7 +295,7 @@ describe('App — changement de ville', () => {
     });
 
     render(App);
-    await user.click(screen.getByRole('button', { name: 'Québec' }));
+    await choisirVille(user, 'Québec');
     expect(await screen.findByText('5')).toBeTruthy();
 
     rendreMontreal(montreal);
@@ -286,7 +310,7 @@ describe('App — changement de ville', () => {
     render(App);
     await screen.findByText('Partiellement nuageux');
 
-    await user.click(screen.getByRole('button', { name: 'Montréal' }));
+    await choisirVille(user, 'Montréal');
 
     expect(previsionsVille).toHaveBeenCalledTimes(1);
   });
@@ -393,7 +417,7 @@ describe('App — recherche par code postal', () => {
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
     await screen.findByText('Code postal introuvable : ZZZ');
 
-    await user.click(screen.getByRole('button', { name: 'Québec' }));
+    await choisirVille(user, 'Québec');
 
     await waitFor(() => expect(screen.queryByText('Code postal introuvable : ZZZ')).toBeNull());
   });
@@ -412,7 +436,7 @@ describe('App — une erreur ne doit pas effacer les données affichées', () =>
     await screen.findByText('Partiellement nuageux');
 
     previsionsVille.mockRejectedValue(new ErreurApi('Open-Meteo injoignable : timeout'));
-    await user.click(screen.getByRole('button', { name: 'Québec' }));
+    await choisirVille(user, 'Québec');
 
     expect(await screen.findByText('Open-Meteo injoignable : timeout')).toBeTruthy();
     // Les données précédentes sont toujours là.
@@ -429,7 +453,7 @@ describe('App — une erreur ne doit pas effacer les données affichées', () =>
     await waitFor(() => expect(libelle()).toBe('Montréal'));
 
     previsionsVille.mockRejectedValue(new ErreurApi('Open-Meteo injoignable'));
-    await user.click(screen.getByRole('button', { name: 'Québec' }));
+    await choisirVille(user, 'Québec');
     await screen.findByText('Open-Meteo injoignable');
 
     // Le libellé est figé avec les données, pas dérivé de la sélection : sinon

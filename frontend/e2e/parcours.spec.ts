@@ -25,21 +25,22 @@ test.describe('Parcours nominal', () => {
     await page.goto('/');
     await expect(page.getByText('Partiellement nuageux')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Québec' }).click();
-    await expect(page.getByRole('button', { name: 'Québec' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+    await page.getByRole('button', { name: /Choisir une ville/ }).click();
+    await page.getByRole('menuitem', { name: 'Québec' }).click();
+    await expect(
+      page.getByRole('button', { name: /Choisir une ville — actuellement Québec/ })
+    ).toBeVisible();
 
     // Le choix est persisté : c'est la promesse « mémorisé entre les sessions ».
     await page.reload();
-    await expect(page.getByRole('button', { name: 'Québec' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+    await expect(
+      page.getByRole('button', { name: /Choisir une ville — actuellement Québec/ })
+    ).toBeVisible();
   });
 
-  test('recherche par code postal et ajoute l’onglet correspondant', async ({ page }) => {
+  test('recherche par code postal et ajoute l’entrée correspondante au sélecteur', async ({
+    page,
+  }) => {
     await interceptApi(page);
     await page.goto('/');
     await expect(page.getByText('Partiellement nuageux')).toBeVisible();
@@ -47,7 +48,11 @@ test.describe('Parcours nominal', () => {
     await page.getByLabel('Code postal canadien').fill('H2X 1Y4');
     await page.getByRole('button', { name: 'Rechercher' }).click();
 
-    await expect(page.getByRole('button', { name: 'H2X' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Choisir une ville — actuellement H2X/ })
+    ).toBeVisible();
+    await page.getByRole('button', { name: /Choisir une ville/ }).click();
+    await expect(page.getByRole('menuitem', { name: 'H2X' })).toBeVisible();
   });
 });
 

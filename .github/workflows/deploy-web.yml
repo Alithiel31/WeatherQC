@@ -1,0 +1,50 @@
+name: Deploy Web to Raspberry Pi
+
+# Contrairement à `build-twa.yml` (runner GitHub, secrets éphémères), ce
+# workflow tourne sur le Pi lui-même : c'est le runner self-hosted qui va
+# chercher le job en se connectant vers GitHub — aucun port entrant à ouvrir
+# sur le Pi, aucune clé SSH à stocker en secret.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/deploy-web.yml'
+
+permissions:
+  contents: read
+
+# Une seule mise à jour à la fois : deux déploiements simultanés se
+# disputeraient les mêmes conteneurs sur le même hôte.
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Pi — build & redémarrage
+    # Label dédié plutôt que `self-hosted` seul : si un autre runner
+    # self-hosted rejoignait un jour ce dépôt, il ne faut pas qu'il hérite par
+    # erreur d'un job qui déchiffre ou touche à la prod du Pi.
+    runs-on: [self-hosted, raspberry-pi]
+    timeout-minutes: 20
+
+    steps:
+      # `clean: false` est le point critique ici. Le comportement par défaut de
+      # `actions/checkout` (`git clean -ffdx`) supprimerait `backend/.env` : il
+      # n'est pas versionné, et sur ce Pi il n'est pas régénéré à chaque run
+      # comme dans `ci.yml` (qui copie `.env.example`) — il est déposé une
+      # seule fois, à la main, avec les vraies valeurs de production.
+      - uses: actions/checkout@v7
+        with:
+          clean: false
+
+      # `--wait` fait échouer le job si le healthcheck du backend ne passe pas
+      # ou si le frontend ne démarre pas derrière son `service_healthy` : un
+      # démarrage cassé arrête le déploiement ici, avec un run rouge visible,
+      # pas en silence sur le Pi.
+      - name: Build & redémarrage
+        run: docker compose up -d --build --wait --wait-timeout 120

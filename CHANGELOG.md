@@ -25,6 +25,14 @@
   d'erreur et que la navigation aller-retour fonctionne ; `e2e/accessibilite.spec.ts` passe axe sur
   les six pages — sans dégradé, il y mesure aussi le contraste, ce qu'il ne sait pas faire sur
   l'application. Le job `docker` de la CI les demande enfin à travers nginx
+- Un workflow `deploy-web.yml`, qui construit et redémarre la pile Docker directement sur le
+  Raspberry Pi via un runner self-hosted : c'est le Pi qui va chercher le job en se connectant vers
+  GitHub, aucun port entrant à ouvrir ni clé SSH à stocker en secret. `actions/checkout` y tourne
+  avec `clean: false` — le comportement par défaut supprimerait `backend/.env`, qui n'est pas
+  versionné et n'est déposé qu'une fois, à la main, avec les vraies valeurs de production. Un script
+  `scripts/gh-deploy.sh`, exposé via `npm run deploy:web` et `npm run deploy:android`, déclenche le
+  `workflow_dispatch` correspondant et suit son exécution en direct plutôt que de deviner un délai
+  fixe
 
 ### Fixed
 
@@ -44,6 +52,13 @@
   politique depuis l'application produisait un flash blanc et donnait l'impression d'avoir quitté le
   site. Le style est sorti dans `public/legal.css`, une feuille commune plutôt que six copies d'un
   bloc inline — la CSP autorise `style-src 'self'`, aucune exception n'était nécessaire
+- Le sélecteur de ville abandonne le ruban à défilement horizontal (scrollbar visible, `overflow-x`
+  pour éviter le retour à la ligne au-delà de 6 villes) pour un bouton compact affichant la ville
+  active, qui ouvre un menu au clic (`SelecteurVille.svelte`). Le menu se ferme au clic extérieur,
+  à `Échap`, se parcourt aux flèches/`Home`/`End`, et la ville active y reste identifiable sans
+  dépendre uniquement de la couleur (`aria-current` en plus du fond blanc). Une étiquette « Ville
+  sélectionnée », purement visuelle, clarifie le rôle du bouton — le contexte complet reste porté
+  par son `aria-label` pour les lecteurs d'écran, qui ne l'entendent donc pas deux fois
 
 ## [3.0.0] - 2026-08-04
 
