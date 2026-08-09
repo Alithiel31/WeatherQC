@@ -31,6 +31,46 @@ Données fournies par [Open-Meteo](https://open-meteo.com) — gratuit, sans cl�
 
 ---
 
+## Architecture
+
+Vue d'ensemble du système, du navigateur jusqu'aux APIs externes :
+
+```mermaid
+flowchart LR
+    PWA[PWA Svelte]
+    TWA[TWA Android]
+
+    subgraph RPI["Raspberry Pi — Docker Compose"]
+        Nginx[Nginx<br/>reverse proxy + statique]
+        Backend[Backend Express<br/>cache · disjoncteur · rate-limit]
+    end
+
+    OM[Open-Meteo]
+    ZP[Zippopotam]
+    RV[RainViewer]
+
+    PWA -- HTTPS --> CF[Tunnel Cloudflare]
+    TWA -- HTTPS --> CF
+    CF --> Nginx
+    Nginx -- "/api/*" --> Backend
+    Nginx -- statique --> PWA
+    Backend --> OM
+    Backend --> ZP
+    Backend --> RV
+```
+
+Le navigateur et l'app Android passent tous deux par le même tunnel Cloudflare et la même
+instance nginx : la TWA n'est qu'une coquille qui charge le PWA depuis
+`qcweather.alithiel31.dev`, elle ne parle jamais directement au backend. Nginx sert les
+fichiers statiques et route `/api/*` vers le backend Express en same-origin (voir section
+Déploiement ci-dessous). Le backend Express est le seul composant qui appelle les APIs
+externes, derrière la couche de cache, de mutualisation des requêtes et de disjoncteur décrite
+dans « Résilience des amonts » plus bas — jamais directement depuis le navigateur.
+
+Détail des dossiers et fichiers du dépôt : voir la section Structure plus bas.
+
+---
+
 ## Déploiement (Docker)
 
 C'est la méthode recommandée. Le `docker-compose.yml` lance le backend (port **3005**) et le frontend Nginx (port **80**).
