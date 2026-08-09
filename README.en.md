@@ -2,6 +2,8 @@
 
 🇫🇷 [Version française](./README.md) — this is the canonical version of this document.
 
+[![CI](https://github.com/Alithiel31/WeatherQC/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Alithiel31/WeatherQC/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-22+-green?logo=node.js)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Svelte](https://img.shields.io/badge/Svelte-5-orange?logo=svelte)](https://svelte.dev/)
@@ -485,3 +487,7 @@ Known cases (nginx config, network calibration, CI): see [TROUBLESHOOTING.en.md]
 ## License
 
 MIT — see [LICENSE](./LICENSE)
+
+---
+
+Made by **Jacques Duchamplecheval** ([alithiel31](https://github.com/Alithiel31)) — [alithiel31.dev](https://alithiel31.dev) · [LinkedIn](https://linkedin.com/in/jacques-duchamplecheval) · [contact@alithiel31.dev](mailto:contact@alithiel31.dev)

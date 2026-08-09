@@ -11,7 +11,7 @@
     "url": "git+https://github.com/Alithiel31/WeatherQC.git"
   },
   "license": "MIT",
-  "author": "",
+  "author": "Jacques Duchamplecheval <contact@alithiel31.dev> (https://alithiel31.dev)",
   "private": true,
   "scripts": {
     "prepare": "husky",
