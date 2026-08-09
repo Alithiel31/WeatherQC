@@ -5,8 +5,7 @@
       "namespace": "android_app",
       "package_name": "dev.alithiel31.qcweather",
       "sha256_cert_fingerprints": [
-        "03:DE:DB:6F:0A:D3:AF:5F:5F:E2:6E:FA:12:5A:BF:B1:8A:CF:53:EA:B9:15:5F:0C:CF:08:24:33:63:E2:7B:F8",
-        "A7:59:9E:F8:ED:1C:A0:2D:40:17:09:32:8D:8D:8F:57:AF:EA:7E:E7:E0:82:8D:DB:DA:1D:8E:6B:0F:77:44:50"
+        "03:DE:DB:6F:0A:D3:AF:5F:5F:E2:6E:FA:12:5A:BF:B1:8A:CF:53:EA:B9:15:5F:0C:CF:08:24:33:63:E2:7B:F8"
       ]
     }
   }
