@@ -149,6 +149,23 @@ strong {
   margin-bottom: 0.5rem;
 }
 
+/*
+  Lien retour dupliqué en haut de page, fixé pendant le défilement. Le lien de
+  pied de page (.retour) reste la seule chose que voit un lecteur qui lit tout
+  le texte, mais pour tout le monde d'autre — sur des pages de 200 à 300
+  lignes — un lien uniquement en bas équivaut à l'absence de lien.
+*/
+.retour-haut {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 0 1.5rem;
+  padding: 0.6rem 24px;
+  background: var(--fond);
+  border-bottom: 1px solid var(--trait);
+  font-size: 0.9rem;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
