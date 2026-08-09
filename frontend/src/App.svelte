@@ -5,6 +5,7 @@
   import CarteNuages from './lib/CarteNuages.svelte';
   import ConditionsActuelles from './lib/ConditionsActuelles.svelte';
   import RechercheCodePostal from './lib/RechercheCodePostal.svelte';
+  import SelecteurVille from './lib/SelecteurVille.svelte';
   import { familleMeteo, heureMinute, libelleUniteTemp } from './lib/meteo.ts';
   import {
     previsionsVille,
@@ -146,23 +147,12 @@
         aria-label="Unités impériales"
       >°{libelleUniteTemp(prefs.unite)}</button>
     </div>
-    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-    <nav class="villes" aria-label="Choix de la ville" tabindex="0">
-      {#each villes as v (v.id)}
-        <button
-          class:active={v.id === prefs.selection}
-          onclick={() => choisirVille(v.id)}
-          aria-pressed={v.id === prefs.selection}
-        >{v.nom}</button>
-      {/each}
-      {#if prefs.lieuCP}
-        <button
-          class:active={prefs.selection === 'cp'}
-          onclick={() => choisirVille('cp')}
-          aria-pressed={prefs.selection === 'cp'}
-        >{prefs.lieuCP.rta}</button>
-      {/if}
-    </nav>
+    <SelecteurVille
+      {villes}
+      lieuCP={prefs.lieuCP}
+      selection={prefs.selection}
+      onchoisir={choisirVille}
+    />
 
     <RechercheCodePostal
       bind:valeur={prefs.codePostal}
@@ -364,7 +354,7 @@
 
   .ligne-titre { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
 
-  /* Même voile que `.villes` : cf. son commentaire de contraste. */
+  /* Même voile que le déclencheur de `SelecteurVille.svelte` : cf. son historique de contraste. */
   .bascule-unite {
     flex-shrink: 0;
     border: 0; background: rgba(0,0,0,0.25); color: #fff; font: inherit;
@@ -381,27 +371,6 @@
     padding: 0; overflow: hidden; white-space: nowrap;
     clip-path: inset(50%); border: 0;
   }
-
-  /* Voile sombre, comme les cartes : à blanc 14 % le libellé d'un onglet inactif
-     ne tenait que 3.80:1. L'onglet actif reste blanc plein, texte sombre.
-     `overflow-x: auto` + `white-space: nowrap` (même idiome que `.bande` dans
-     Horaire.svelte) : au-delà de 6 villes + le pill de code postal, la rangée
-     défile plutôt que de réenvelopper un nom de ville sur deux lignes. */
-  .villes {
-    display: flex; gap: 0.25rem;
-    background: rgba(0,0,0,0.25); border-radius: 999px;
-    padding: 0.25rem; width: fit-content; max-width: 100%;
-    overflow-x: auto; scrollbar-width: thin;
-    backdrop-filter: blur(6px);
-  }
-  .villes button {
-    border: 0; background: transparent; color: #fff; font: inherit;
-    font-weight: 600; padding: 0.45rem 1.1rem; border-radius: 999px; cursor: pointer;
-    white-space: nowrap; flex-shrink: 0;
-  }
-  .villes button.active { background: #fff; color: #16314d; }
-  .villes button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-  .villes:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
 
   .bandeau-hors-ligne {
     margin: 1rem 0 0; padding: 0.5rem 0.9rem;
