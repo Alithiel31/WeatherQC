@@ -10,7 +10,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Enabled-blue?logo=docker)](https://www.docker.com/)
 [![Déployé](https://img.shields.io/badge/Déployé-qcweather.alithiel31.dev-blue)](https://qcweather.alithiel31.dev)
 [![Cloudflare](https://img.shields.io/badge/Tunnel-Cloudflare-orange?logo=cloudflare)](https://www.cloudflare.com/)
-[![Android](https://img.shields.io/badge/Android-Play%20Store-green?logo=google-play)](https://play.google.com/store/apps/details?id=dev.alithiel31.qcweather)
+[![Android](https://img.shields.io/badge/Android-Test%20interne-yellow?logo=google-play)](https://play.google.com/store/apps/details?id=dev.alithiel31.qcweather)
 
 Application de prévisions météo pour le Québec : backend **Express / TypeScript** + frontend **Svelte 5 (PWA)**.
 Données fournies par [Open-Meteo](https://open-meteo.com) — gratuit, sans clé API.
@@ -117,7 +117,7 @@ npm run deploy:web       # ou deploy:android pour build-twa.yml
 
 ## Android (TWA)
 
-L'application est publiée sur le **Google Play Store** sous forme de TWA (Trusted Web Activity) : une coquille Android légère qui charge directement le PWA depuis `https://qcweather.alithiel31.dev`.
+L'application est en **test interne** (Internal Testing) sur le Google Play Store, sous forme de TWA (Trusted Web Activity) : une coquille Android légère qui charge directement le PWA depuis `https://qcweather.alithiel31.dev`. La publication en piste publique est prévue à court terme — voir la note de statut ci-dessous.
 
 **Package ID :** `dev.alithiel31.qcweather` — Sources : `twa-qcweather/`
 
@@ -142,6 +142,8 @@ L'application est publiée sur le **Google Play Store** sous forme de TWA (Trust
 > Pour reproduire en local : `cd twa-qcweather && ./gradlew bundleRelease`.
 
 > `deploy-twa.yml` nécessite une **première soumission manuelle** dans Play Console — Google exige qu'une version existe déjà sur la piste avant d'accepter les uploads via API.
+
+> **Statut actuel** : la version disponible via `deploy-twa.yml` est limitée aux testeurs déclarés dans Play Console (piste Internal Testing) — le lien du badge en haut de ce document n'est donc pas encore accessible au public. La bascule vers une piste de production est en cours ; cette section sera mise à jour dès la publication effective.
 
 ### Secrets GitHub requis
 

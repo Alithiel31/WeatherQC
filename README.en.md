@@ -10,7 +10,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Enabled-blue?logo=docker)](https://www.docker.com/)
 [![Deployed](https://img.shields.io/badge/Deployed-qcweather.alithiel31.dev-blue)](https://qcweather.alithiel31.dev)
 [![Cloudflare](https://img.shields.io/badge/Tunnel-Cloudflare-orange?logo=cloudflare)](https://www.cloudflare.com/)
-[![Android](https://img.shields.io/badge/Android-Play%20Store-green?logo=google-play)](https://play.google.com/store/apps/details?id=dev.alithiel31.qcweather)
+[![Android](https://img.shields.io/badge/Android-Internal%20Testing-yellow?logo=google-play)](https://play.google.com/store/apps/details?id=dev.alithiel31.qcweather)
 
 Weather forecast app for Quebec: **Express / TypeScript** backend + **Svelte 5 (PWA)** frontend.
 Data provided by [Open-Meteo](https://open-meteo.com) — free, no API key.
@@ -117,7 +117,7 @@ npm run deploy:web       # or deploy:android for build-twa.yml
 
 ## Android (TWA)
 
-The app is published on the **Google Play Store** as a TWA (Trusted Web Activity): a thin Android shell that loads the PWA directly from `https://qcweather.alithiel31.dev`.
+The app is in **internal testing** on the Google Play Store, as a TWA (Trusted Web Activity): a thin Android shell that loads the PWA directly from `https://qcweather.alithiel31.dev`. Public-track publication is expected soon — see the status note below.
 
 **Package ID:** `dev.alithiel31.qcweather` — Sources: `twa-qcweather/`
 
@@ -141,6 +141,8 @@ The app is published on the **Google Play Store** as a TWA (Trusted Web Activity
 > To reproduce locally: `cd twa-qcweather && ./gradlew bundleRelease`.
 
 > `deploy-twa.yml` requires a **first manual submission** in Play Console — Google requires a version to already exist on the track before accepting uploads via API.
+
+> **Current status**: the version available via `deploy-twa.yml` is limited to testers declared in Play Console (Internal Testing track) — the badge link at the top of this document isn't publicly reachable yet. The move to a production track is in progress; this section will be updated once publication is live.
 
 ### Required GitHub secrets
 
