@@ -131,6 +131,24 @@ describe('CarteNuages', () => {
 
     expect(tuiles).toHaveLength(avant);
   });
+
+  it('affiche un message plutôt qu’une carte vide au clic manuel sur « Nuages » sans image disponible', async () => {
+    framesRainViewer.mockResolvedValue(frames(0, 4));
+    const user = userEvent.setup();
+    render(CarteNuages, props);
+
+    // Le chargement initial bascule sur radar faute de satellite exploitable.
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Radar' }).getAttribute('aria-pressed')).toBe(
+        'true'
+      )
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Nuages' }));
+
+    expect(await screen.findByText(/ne sont pas disponibles/)).toBeTruthy();
+    expect(screen.queryByRole('slider')).toBeNull();
+  });
 });
 
 /**

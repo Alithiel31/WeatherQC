@@ -27,6 +27,25 @@
   let erreurCarte   = $state(false);
   let minuterieRafraichissement: ReturnType<typeof setInterval> | null = null;
 
+  /**
+   * RainViewer ne fournit pas toujours d'image satellite infrarouge (contrairement
+   * au radar, qui couvre le monde entier et n'est jamais vide). Sans repli, un
+   * satellite vide rendait l'onglet « Nuages » silencieusement blanc — voir
+   * `changerMode` plus bas. La couverture nuageuse OpenWeatherMap (modélisée, pas
+   * une vraie photo, mais toujours disponible) comble ce trou quand une clé est
+   * configurée ; la clé n'est pas un secret à protéger, elle circule dans l'URL des
+   * tuiles comme un jeton de carte public — les tuiles restent chargées en direct,
+   * jamais proxifiées par le Raspberry Pi (même logique que pour RainViewer).
+   */
+  const CLE_OWM = import.meta.env.VITE_OPENWEATHERMAP_KEY as string | undefined;
+
+  let repliOwmActif = $derived(
+    mode === 'satellite' && donneesFrames?.satellite.length === 0 && !!CLE_OWM
+  );
+  let satelliteIndisponible = $derived(
+    mode === 'satellite' && donneesFrames?.satellite.length === 0 && !CLE_OWM
+  );
+
   // Le défilement vit dans son propre module ; ici on ne garde que ce qui touche
   // à Leaflet — rendre visible la couche correspondant à l'image demandée.
   const animation = creerAnimation((i) =>
@@ -50,6 +69,10 @@
       : `${hote}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
   }
 
+  function urlTuileNuagesOwm(): string {
+    return `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${CLE_OWM}`;
+  }
+
   function viderCouches(): void {
     couches.forEach((c) => carte?.removeLayer(c));
     couches = [];
@@ -58,6 +81,14 @@
   function construireCouches(): void {
     if (!carte) return;
     viderCouches();
+
+    if (repliOwmActif) {
+      couches = [
+        L.tileLayer(urlTuileNuagesOwm(), { opacity: 0.75, tileSize: 256, zIndex: 400 }).addTo(carte),
+      ];
+      return;
+    }
+
     couches = animation.frames.map((f) =>
       L.tileLayer(urlTuile(f), { opacity: 0, tileSize: 256, zIndex: 400 }).addTo(carte!)
     );
@@ -97,9 +128,13 @@
 
     const serie = (m: 'satellite' | 'radar') =>
       m === 'satellite' ? donneesFrames!.satellite : donneesFrames!.radar;
+    // Le satellite RainViewer vide n'est plus un cul-de-sac quand une clé OWM est
+    // configurée : la couverture nuageuse modélisée prend le relais.
+    const satelliteUtilisable = donneesFrames.satellite.length > 0 || !!CLE_OWM;
+    const modeActuelUtilisable = mode === 'satellite' ? satelliteUtilisable : serie(mode).length > 0;
 
-    if (premierChargement || serie(mode).length === 0) {
-      mode = donneesFrames.satellite.length === 0 ? 'radar' : 'satellite';
+    if (premierChargement || !modeActuelUtilisable) {
+      mode = satelliteUtilisable ? 'satellite' : 'radar';
     }
 
     animation.remplacer(serie(mode));
@@ -171,8 +206,13 @@
 
   <div class="carte" bind:this={conteneur}></div>
 
-  {#if erreurCarte}
+  {#if erreurCarte || satelliteIndisponible}
     <p class="erreur">Les images satellites ne sont pas disponibles pour le moment.</p>
+  {:else if repliOwmActif}
+    <p class="erreur">
+      Couverture nuageuse estimée (OpenWeatherMap) — les images satellite RainViewer sont
+      indisponibles pour le moment.
+    </p>
   {:else if animation.frames.length}
     <div class="controles">
       <button
