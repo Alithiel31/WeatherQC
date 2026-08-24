@@ -40,6 +40,10 @@ services:
     build:
       context: ./frontend
       target: production
+      args:
+        # Embarquée au build par Vite — voir frontend/.env.example. Lue depuis le
+        # `.env` à la racine du dépôt, chargé automatiquement par docker compose.
+        VITE_OPENWEATHERMAP_KEY: ${VITE_OPENWEATHERMAP_KEY}
     ports:
       - '80:80'
     depends_on:

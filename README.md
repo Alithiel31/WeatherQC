@@ -24,7 +24,7 @@ Données fournies par [Open-Meteo](https://open-meteo.com) — gratuit, sans cl�
 | 🌡️ Conditions actuelles | Température, ressenti, vent, humidité |
 | 🕐 Prévisions horaires | Heure par heure sur 48 h |
 | 📅 Prévisions quotidiennes | 7 jours avec barres min–max et heures de lever/coucher |
-| 🛰️ Carte animée | Satellite nuages (infrarouge) + radar précipitations via RainViewer + Leaflet |
+| 🛰️ Carte animée | Satellite nuages (infrarouge) + radar précipitations via RainViewer + Leaflet, avec repli sur la couverture nuageuse OpenWeatherMap quand RainViewer n'a pas d'image satellite |
 | 📮 Recherche par code postal | Géocodage de la RTA québécoise (G, H, J) via Zippopotam |
 | 🏙️ Sélection de ville | 6 villes disponibles (Montréal, Québec, Gatineau, Sherbrooke, Trois-Rivières, Saguenay), choix mémorisé entre les sessions |
 | 🌅 Ciel dynamique | Dégradé d'arrière-plan selon les conditions et le jour/nuit |
@@ -82,6 +82,11 @@ C'est la méthode recommandée. Le `docker-compose.yml` lance le backend (port *
 ```bash
 cp backend/.env.example backend/.env
 # Éditer backend/.env avec ta propre IP Tailscale si nécessaire
+
+cp .env.example .env
+# Éditer .env avec une clé OpenWeatherMap (gratuite) pour activer le repli de
+# la carte satellite — laisser vide se contente d'afficher un message
+# d'indisponibilité quand RainViewer n'a pas d'image
 ```
 
 **2. Lancer**
@@ -183,6 +188,14 @@ L'application est en **test interne** (Internal Testing) sur le Google Play Stor
 | `BREAKER_SEUIL_ECHECS` | ❌ | `5` | Échecs consécutifs avant suspension des appels à un amont |
 | `BREAKER_REPOS_MS` | ❌ | `30000` | Durée de la suspension avant la requête de test |
 | `DEFAULT_TIMEZONE` | ❌ | `America/Toronto` | Timezone pour les prévisions Open-Meteo |
+
+Variable de **build** frontend (`.env` à la racine, lue par `docker compose` — voir
+`frontend/.env.example` pour le détail) : contrairement au tableau ci-dessus, elle n'est pas
+validée par Zod côté serveur, elle est embarquée dans le bundle JS par Vite au moment du build.
+
+| Variable | Obligatoire | Défaut | Description |
+|---|---|---|---|
+| `VITE_OPENWEATHERMAP_KEY` | ❌ | — | Clé API OpenWeatherMap (gratuite) pour le repli de la carte satellite ; vide = message d'indisponibilité au lieu du repli |
 
 ---
 
@@ -481,7 +494,7 @@ se tient à jour dans la console et non dans ce dépôt.
 | Carte | Leaflet · RainViewer |
 | Infra | Docker · Nginx |
 | Accès réseau | Tailscale |
-| APIs externes | Open-Meteo · Zippopotam.us · CARTO / OpenStreetMap |
+| APIs externes | Open-Meteo · Zippopotam.us · CARTO / OpenStreetMap · RainViewer · OpenWeatherMap |
 | Android | TWA · Bubblewrap · Google Play Store |
 | CI/CD | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml` · `deploy-web.yml` · `codeql.yml` · `secrets.yml` · `contract.yml`) |
 
