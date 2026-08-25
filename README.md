@@ -83,10 +83,12 @@ C'est la méthode recommandée. Le `docker-compose.yml` lance le backend (port *
 cp backend/.env.example backend/.env
 # Éditer backend/.env avec ta propre IP Tailscale si nécessaire
 
-cp .env.example .env
-# Éditer .env avec une clé OpenWeatherMap (gratuite) pour activer le repli de
-# la carte satellite — laisser vide se contente d'afficher un message
-# d'indisponibilité quand RainViewer n'a pas d'image
+cp frontend/.env.example frontend/.env
+# Éditer frontend/.env avec une clé OpenWeatherMap (gratuite) pour activer le repli
+# de la carte satellite — laisser vide se contente d'afficher un message
+# d'indisponibilité quand RainViewer n'a pas d'image. Ce même fichier sert aussi
+# de config Vite en développement local (`npm run dev` dans frontend/) : docker
+# compose le lit via `env_file` en tête de docker-compose.yml.
 ```
 
 **2. Lancer**
@@ -189,9 +191,10 @@ L'application est en **test interne** (Internal Testing) sur le Google Play Stor
 | `BREAKER_REPOS_MS` | ❌ | `30000` | Durée de la suspension avant la requête de test |
 | `DEFAULT_TIMEZONE` | ❌ | `America/Toronto` | Timezone pour les prévisions Open-Meteo |
 
-Variable de **build** frontend (`.env` à la racine, lue par `docker compose` — voir
-`frontend/.env.example` pour le détail) : contrairement au tableau ci-dessus, elle n'est pas
-validée par Zod côté serveur, elle est embarquée dans le bundle JS par Vite au moment du build.
+Variable de **build** frontend (`frontend/.env`, lue à la fois par Vite en développement local
+et par `docker compose` via `env_file` — voir `frontend/.env.example` pour le détail) :
+contrairement au tableau ci-dessus, elle n'est pas validée par Zod côté serveur, elle est
+embarquée dans le bundle JS par Vite au moment du build.
 
 | Variable | Obligatoire | Défaut | Description |
 |---|---|---|---|

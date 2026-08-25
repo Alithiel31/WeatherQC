@@ -1,5 +1,10 @@
 # La cible est un Raspberry Pi : sans bornes, une fuite mémoire emporte l'hôte
 # entier et les logs Docker finissent par remplir la carte SD.
+
+# Fichier lu par docker compose pour les substitutions ${...} du fichier — ex.
+# VITE_OPENWEATHERMAP_KEY plus bas. Un seul fichier pour le dev local (Vite) et
+# le build Docker : voir frontend/.env.example.
+env_file: ./frontend/.env
 x-logs: &logs
   driver: json-file
   options:
@@ -41,8 +46,8 @@ services:
       context: ./frontend
       target: production
       args:
-        # Embarquée au build par Vite — voir frontend/.env.example. Lue depuis le
-        # `.env` à la racine du dépôt, chargé automatiquement par docker compose.
+        # Embarquée au build par Vite — voir frontend/.env.example. Lue depuis
+        # frontend/.env (voir env_file en tête de fichier).
         VITE_OPENWEATHERMAP_KEY: ${VITE_OPENWEATHERMAP_KEY}
     ports:
       - '80:80'
