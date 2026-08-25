@@ -83,16 +83,18 @@ C'est la méthode recommandée. Le `docker-compose.yml` lance le backend (port *
 cp backend/.env.example backend/.env
 # Éditer backend/.env avec ta propre IP Tailscale si nécessaire
 
-cp .env.example .env
-# Éditer .env avec une clé OpenWeatherMap (gratuite) pour activer le repli de
-# la carte satellite — laisser vide se contente d'afficher un message
-# d'indisponibilité quand RainViewer n'a pas d'image
+cp frontend/.env.example frontend/.env
+# Éditer frontend/.env avec une clé OpenWeatherMap (gratuite) pour activer le repli
+# de la carte satellite — laisser vide se contente d'afficher un message
+# d'indisponibilité quand RainViewer n'a pas d'image. Ce même fichier sert aussi
+# de config Vite en développement local (`npm run dev` dans frontend/) : docker
+# compose le lit via `env_file` en tête de docker-compose.yml.
 ```
 
 **2. Lancer**
 
 ```bash
-docker compose up --build -d
+docker compose --env-file frontend/.env up --build -d
 ```
 
 Nginx pose les en-têtes de sécurité du document — CSP, `X-Content-Type-Options`,
@@ -110,7 +112,7 @@ Le tunnel Cloudflare gère le **HTTPS** et le nom de domaine `qcweather.alithiel
 
 **Déploiement continu** : `deploy-web.yml` tourne sur un runner self-hosted installé sur le Pi
 lui-même et se déclenche automatiquement à chaque push sur `main` touchant `backend/`,
-`frontend/` ou `docker-compose.yml` (ou manuellement). Il rejoue `docker compose up -d --build
+`frontend/` ou `docker-compose.yml` (ou manuellement). Il rejoue `docker compose --env-file frontend/.env up -d --build
 --wait` sur place — le Pi va chercher le job en se connectant vers GitHub, aucun port entrant ni
 clé SSH à exposer. Pour le déclencher et suivre le déploiement en direct depuis un poste local :
 
@@ -189,9 +191,12 @@ L'application est en **test interne** (Internal Testing) sur le Google Play Stor
 | `BREAKER_REPOS_MS` | ❌ | `30000` | Durée de la suspension avant la requête de test |
 | `DEFAULT_TIMEZONE` | ❌ | `America/Toronto` | Timezone pour les prévisions Open-Meteo |
 
-Variable de **build** frontend (`.env` à la racine, lue par `docker compose` — voir
-`frontend/.env.example` pour le détail) : contrairement au tableau ci-dessus, elle n'est pas
-validée par Zod côté serveur, elle est embarquée dans le bundle JS par Vite au moment du build.
+Variable de **build** frontend (`frontend/.env`, lue à la fois par Vite en développement local
+et par `docker compose` via le flag `--env-file frontend/.env` — voir `frontend/.env.example`
+pour le détail) : contrairement au tableau ci-dessus, elle n'est pas validée par Zod côté
+serveur, elle est embarquée dans le bundle JS par Vite au moment du build. Compose ne supporte
+pas de directive `env_file` au niveau racine du fichier : le flag doit accompagner chaque
+invocation touchant `docker-compose.yml` (voir CI et `deploy-web.yml`).
 
 | Variable | Obligatoire | Défaut | Description |
 |---|---|---|---|
@@ -250,7 +255,7 @@ Chaque réponse porte un en-tête `X-Request-Id` — repris de l'amont s'il est 
 retrouve dans les logs. Un utilisateur qui signale une panne peut citer cet identifiant :
 
 ```bash
-docker compose logs backend | grep <identifiant>
+docker compose --env-file frontend/.env logs backend | grep <identifiant>
 ```
 
 Chaque requête terminée produit une ligne — méthode, chemin, statut, durée, et l'origine de la
