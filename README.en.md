@@ -82,12 +82,19 @@ This is the recommended method. `docker-compose.yml` starts the backend (port **
 ```bash
 cp backend/.env.example backend/.env
 # Edit backend/.env with your own Tailscale IP if needed
+
+cp frontend/.env.example frontend/.env
+# Edit frontend/.env with an OpenWeatherMap API key (free) to enable the satellite
+# map fallback — leaving it empty just shows an unavailability message instead
+# of the cloud cover. This same file also serves as the Vite config for local
+# development (`npm run dev` in frontend/) : docker compose reads it via the
+# --env-file flag (see the command below).
 ```
 
 **2. Run**
 
 ```bash
-docker compose up --build -d
+docker compose --env-file frontend/.env up --build -d
 ```
 
 Nginx sets the security headers on the served document — CSP, `X-Content-Type-Options`,
@@ -105,7 +112,7 @@ The Cloudflare tunnel handles **HTTPS** and the `qcweather.alithiel31.dev` domai
 
 **Continuous deployment**: `deploy-web.yml` runs on a self-hosted runner installed on the Pi
 itself and triggers automatically on every push to `main` touching `backend/`, `frontend/`, or
-`docker-compose.yml` (or manually). It replays `docker compose up -d --build --wait` in place —
+`docker-compose.yml` (or manually). It replays `docker compose --env-file frontend/.env up -d --build --wait` in place —
 the Pi reaches out to GitHub for the job, no inbound port or SSH key to expose. To trigger it and
 follow the deployment live from a local machine:
 
@@ -183,6 +190,16 @@ The app is in **internal testing** on the Google Play Store, as a TWA (Trusted W
 | `BREAKER_REPOS_MS` | ❌ | `30000` | Suspension duration before the test request |
 | `DEFAULT_TIMEZONE` | ❌ | `America/Toronto` | Timezone for Open-Meteo forecasts |
 
+Frontend **build** variable (`frontend/.env`, read both by Vite in local development and by
+`docker compose` via the `--env-file frontend/.env` flag — see `frontend/.env.example` for
+details) : unlike the table above, it isn't validated by Zod server-side, it gets embedded into
+the JS bundle by Vite at build time. Compose has no root-level `env_file` directive : the flag
+must accompany every invocation touching `docker-compose.yml` (see CI and `deploy-web.yml`).
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `VITE_OPENWEATHERMAP_KEY` | ❌ | — | OpenWeatherMap API key (free) for the satellite map fallback ; empty = unavailability message instead of the fallback |
+
 ---
 
 ## Local development
@@ -233,7 +250,7 @@ Every response carries an `X-Request-Id` header — passed through from the upst
 provided — that shows up in the logs. A user reporting an outage can quote this ID:
 
 ```bash
-docker compose logs backend | grep <id>
+docker compose --env-file frontend/.env logs backend | grep <id>
 ```
 
 Every completed request produces a log line — method, path, status, duration, and response

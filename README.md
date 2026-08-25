@@ -88,7 +88,7 @@ cp frontend/.env.example frontend/.env
 # de la carte satellite — laisser vide se contente d'afficher un message
 # d'indisponibilité quand RainViewer n'a pas d'image. Ce même fichier sert aussi
 # de config Vite en développement local (`npm run dev` dans frontend/) : docker
-# compose le lit via `env_file` en tête de docker-compose.yml.
+# compose le lit via le flag --env-file (voir la commande ci-dessous).
 ```
 
 **2. Lancer**
