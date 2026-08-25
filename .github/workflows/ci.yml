@@ -249,7 +249,9 @@ jobs:
       # nginx, et une variable d'environnement invalide qui ferait échouer
       # `config.ts` au démarrage.
       - name: Préparer la configuration
-        run: cp backend/.env.example backend/.env
+        run: |
+          cp backend/.env.example backend/.env
+          cp frontend/.env.example frontend/.env
 
       # Pas de `nginx -t` isolé : `proxy_pass http://backend:3005` exige de
       # résoudre l'hôte `backend`, qui n'existe que dans le réseau du compose.
@@ -262,7 +264,7 @@ jobs:
       # le frontend a démarré derrière son `service_healthy`. Un healthcheck
       # cassé ou un boot qui échoue fait échouer cette étape, pas le déploiement.
       - name: Démarrer la pile
-        run: docker compose up -d --wait --wait-timeout 120
+        run: docker compose --env-file frontend/.env up -d --wait --wait-timeout 120
 
       - name: Vérifier l’API à travers nginx
         run: |
@@ -333,11 +335,11 @@ jobs:
 
       - name: Publier les logs en cas d’échec
         if: failure()
-        run: docker compose logs --no-color
+        run: docker compose --env-file frontend/.env logs --no-color
 
       - name: Arrêter la pile
         if: always()
-        run: docker compose down -v
+        run: docker compose --env-file frontend/.env down -v
 
   dependances:
     name: Revue des dépendances ajoutées

@@ -47,4 +47,4 @@ jobs:
       # démarrage cassé arrête le déploiement ici, avec un run rouge visible,
       # pas en silence sur le Pi.
       - name: Build & redémarrage
-        run: docker compose up -d --build --wait --wait-timeout 120
+        run: docker compose --env-file frontend/.env up -d --build --wait --wait-timeout 120
