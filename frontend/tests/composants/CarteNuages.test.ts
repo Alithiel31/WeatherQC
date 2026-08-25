@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/svelte';
 import { userEvent } from '@testing-library/user-event';
 import type { FramesRainViewer } from '../../src/lib/types.ts';
@@ -66,6 +66,10 @@ beforeEach(() => {
   framesRainViewer.mockResolvedValue(frames(3, 4));
 });
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 describe('CarteNuages', () => {
   it('affiche les contrôles d’animation une fois les images chargées', async () => {
     render(CarteNuages, props);
@@ -100,6 +104,10 @@ describe('CarteNuages', () => {
   });
 
   it('bascule automatiquement en radar quand aucune image satellite n’est disponible', async () => {
+    // Sans clé OWM, le satellite vide n'a pas de repli : c'est le cas que ce test
+    // vérifie. Neutraliser la clé plutôt que dépendre du contenu de frontend/.env,
+    // qui porte une vraie clé en développement local.
+    vi.stubEnv('VITE_OPENWEATHERMAP_KEY', '');
     framesRainViewer.mockResolvedValue(frames(0, 4));
 
     render(CarteNuages, props);
@@ -133,6 +141,9 @@ describe('CarteNuages', () => {
   });
 
   it('affiche un message plutôt qu’une carte vide au clic manuel sur « Nuages » sans image disponible', async () => {
+    // Même raison que le test précédent : ce scénario ne se produit qu'en
+    // l'absence de clé OWM.
+    vi.stubEnv('VITE_OPENWEATHERMAP_KEY', '');
     framesRainViewer.mockResolvedValue(frames(0, 4));
     const user = userEvent.setup();
     render(CarteNuages, props);
