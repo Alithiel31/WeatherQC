@@ -41,7 +41,7 @@ jobs:
 
       - name: Set up JDK 17
         # v5 : passage du runtime de l'action à Node 24, cf. `android.yml`.
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: '17'
           distribution: 'temurin'
