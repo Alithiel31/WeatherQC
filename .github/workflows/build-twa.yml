@@ -69,9 +69,25 @@ jobs:
         with:
           # Le paquet legacy "tools" (par défaut de l'action) n'existe plus dans
           # le dépôt Google : sdkmanager échoue dès qu'il essaie de le récupérer.
-          # Gradle télécharge lui-même platforms/build-tools au moment du build
-          # (licences déjà acceptées par l'action) ; seul platform-tools est requis ici.
+          # Bubblewrap valide la présence de platforms/build-tools AVANT de lancer
+          # Gradle (il ne laisse pas Gradle les télécharger à la volée comme prévu
+          # initialement) : compileSdkVersion 36 dans app/build.gradle impose ces
+          # deux paquets explicitement.
           packages: platform-tools platforms;android-36 build-tools;36.0.0
+
+      - name: Lier cmdline-tools vers "latest" (attendu par Bubblewrap)
+        # android-actions/setup-android installe les cmdline-tools sous
+        # cmdline-tools/<version>/ (ex. cmdline-tools/20.0/), jamais sous
+        # cmdline-tools/latest/. Bubblewrap, lui, cherche sdkmanager
+        # exclusivement à cmdline-tools/latest/bin/sdkmanager (ou à l'ancien
+        # tools/bin/sdkmanager, supprimé du dépôt Google). Sans ce lien, il ne
+        # trouve aucune installation SDK valide et échoue immédiatement avec
+        # "The provided androidSdk isn't correct", même quand tout est installé.
+        run: |
+          set -euo pipefail
+          latest_dir=$(find "$ANDROID_SDK_ROOT/cmdline-tools" -maxdepth 1 -mindepth 1 -type d ! -name latest | sort -V | tail -n1)
+          ln -sfn "$latest_dir" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+          echo "Lien créé : cmdline-tools/latest -> $latest_dir"
 
       # `GITHUB_RUN_NUMBER` est un compteur propre au workflow : renommer ce
       # fichier ou le recréer le remet à 1, le versionCode recule, et le Play
