@@ -24,6 +24,10 @@ RUN npx tsc
 # ── production : image minimale, cible de docker-compose ──────────────────
 FROM node:24-alpine AS production
 WORKDIR /app
+# libssl3/libcrypto3 patchés indépendamment de la date de publication du tag
+# node:24-alpine (CVE-2026-14456, DoS QUIC côté serveur OpenSSL — sans lien
+# avec ce backend qui n'expose pas de serveur QUIC, mais bloquant le scan CI).
+RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
