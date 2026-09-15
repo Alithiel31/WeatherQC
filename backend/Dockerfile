@@ -23,6 +23,10 @@ RUN npx tsc
 
 # ── production : image minimale, cible de docker-compose ──────────────────
 FROM node:24-alpine AS production
+# Applique les derniers correctifs de sécurité Alpine (ex. CVE-2026-14456 sur
+# libssl3/libcrypto3) : l'image de base peut ne pas avoir été republiée depuis
+# la sortie du correctif upstream, indépendamment de l'âge du tag.
+RUN apk update && apk upgrade --no-cache
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
