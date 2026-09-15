@@ -71,7 +71,7 @@ jobs:
           # le dépôt Google : sdkmanager échoue dès qu'il essaie de le récupérer.
           # Gradle télécharge lui-même platforms/build-tools au moment du build
           # (licences déjà acceptées par l'action) ; seul platform-tools est requis ici.
-          packages: platform-tools
+          packages: platform-tools platforms;android-36 build-tools;36.0.0
 
       # `GITHUB_RUN_NUMBER` est un compteur propre au workflow : renommer ce
       # fichier ou le recréer le remet à 1, le versionCode recule, et le Play
