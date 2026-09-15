@@ -66,6 +66,12 @@ jobs:
                 echo "${{ secrets.KEYSTORE_BASE64 }}" | tr -d ' \n\r' | base64 --decode > twa-qcweather/android.keystore
       - name: Set up Android SDK
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          # Le paquet legacy "tools" (par défaut de l'action) n'existe plus dans
+          # le dépôt Google : sdkmanager échoue dès qu'il essaie de le récupérer.
+          # Gradle télécharge lui-même platforms/build-tools au moment du build
+          # (licences déjà acceptées par l'action) ; seul platform-tools est requis ici.
+          packages: platform-tools
 
       # `GITHUB_RUN_NUMBER` est un compteur propre au workflow : renommer ce
       # fichier ou le recréer le remet à 1, le versionCode recule, et le Play
