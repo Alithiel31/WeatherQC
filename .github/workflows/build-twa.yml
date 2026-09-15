@@ -78,16 +78,31 @@ jobs:
       - name: Lier cmdline-tools vers "latest" (attendu par Bubblewrap)
         # android-actions/setup-android installe les cmdline-tools sous
         # cmdline-tools/<version>/ (ex. cmdline-tools/20.0/), jamais sous
-        # cmdline-tools/latest/. Bubblewrap, lui, cherche sdkmanager
-        # exclusivement à cmdline-tools/latest/bin/sdkmanager (ou à l'ancien
-        # tools/bin/sdkmanager, supprimé du dépôt Google). Sans ce lien, il ne
-        # trouve aucune installation SDK valide et échoue immédiatement avec
-        # "The provided androidSdk isn't correct", même quand tout est installé.
+        # cmdline-tools/latest/. Certains outils (dont sdkmanager lui-même,
+        # une fois relancé) s'attendent à ce lien standard ; on le garde par
+        # cohérence même si ce n'est pas lui que Bubblewrap consulte pour sa
+        # propre validation (cf. step suivant).
         run: |
           set -euo pipefail
           latest_dir=$(find "$ANDROID_SDK_ROOT/cmdline-tools" -maxdepth 1 -mindepth 1 -type d ! -name latest | sort -V | tail -n1)
           ln -sfn "$latest_dir" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
           echo "Lien créé : cmdline-tools/latest -> $latest_dir"
+
+      - name: Exposer sdkmanager à la racine du SDK (attendu par Bubblewrap)
+        # Source : AndroidSdkTools.validatePath() dans
+        # @bubblewrap/core/dist/lib/androidSdk/AndroidSdkTools.js (v1.25.0, ~L218).
+        # Bubblewrap valide `config.androidSdkPath` (= $ANDROID_SDK_ROOT ici) en
+        # exigeant un sous-dossier "tools/" OU "bin/" DIRECTEMENT à sa racine —
+        # le même chemin sert aussi de androidHome pour localiser build-tools/ et
+        # platform-tools/, donc androidSdkPath doit rester la racine du SDK.
+        # Aucun SDK moderne n'a "bin/" à sa racine : sdkmanager vit sous
+        # cmdline-tools/<version>/bin/. Sans ce lien, la validation échoue tout
+        # de suite avec "The provided androidSdk isn't correct", quel que soit
+        # l'état du reste du SDK.
+        run: |
+          set -euo pipefail
+          ln -sfn "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" "$ANDROID_SDK_ROOT/bin"
+          echo "Lien créé : $ANDROID_SDK_ROOT/bin -> cmdline-tools/latest/bin"
 
       # `GITHUB_RUN_NUMBER` est un compteur propre au workflow : renommer ce
       # fichier ou le recréer le remet à 1, le versionCode recule, et le Play
