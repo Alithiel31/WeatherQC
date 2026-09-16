@@ -112,6 +112,15 @@ L'application tourne sur un **Raspberry Pi** et est exposée publiquement via un
 Nginx fait office de reverse proxy à l'intérieur du conteneur frontend : il sert les fichiers statiques et redirige les appels `/api/` vers le backend.
 Le tunnel Cloudflare gère le **HTTPS** et le nom de domaine `qcweather.alithiel31.dev` — aucun certificat à gérer manuellement.
 
+> **Ne jamais lancer `docker compose up` à la main depuis un poste de dev pointant (via
+> contexte Docker distant) sur Caesura pour un déploiement de prod.** Docker Compose nomme le
+> projet d'après le dossier local d'où la commande est lancée : un nom différent du dossier de
+> travail du CI (`WeatherQC`) crée un **second stack de conteneurs**, qui se dispute le port 80
+> avec celui géré par `deploy-web.yml` — vécu concrètement, voir
+> [`TROUBLESHOOTING.md`](./TROUBLESHOOTING.md#6-le-déploiement-ci-reste-bloqué-en-queuedpending-indéfiniment).
+> Pour la prod, toujours passer par `npm run deploy:web` ; réserver `docker compose up` à la
+> main au développement/test local.
+
 **Déploiement continu** : `deploy-web.yml` tourne sur un runner self-hosted installé sur le Pi
 lui-même et se déclenche automatiquement à chaque push sur `main` touchant `backend/`,
 `frontend/` ou `docker-compose.yml` (ou manuellement). Il rejoue `docker compose --env-file frontend/.env up -d --build
