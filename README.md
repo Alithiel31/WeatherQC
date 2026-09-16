@@ -514,6 +514,10 @@ Environnement de développement, reproduction de la CI en local, convention de c
 
 Cas connus (config nginx, calibrage réseau, CI) : voir [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
 
+## Sécurité
+
+Pour signaler une vulnérabilité, voir [SECURITY.md](./SECURITY.md) — pas d'issue publique.
+
 ## License
 
 MIT — voir [LICENSE](./LICENSE)

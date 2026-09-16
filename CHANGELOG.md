@@ -2,6 +2,21 @@
 
 ## [Non publié]
 
+### Added
+
+- Un document `SECURITY.md` (et sa traduction `SECURITY.en.md`), qui manquait alors que le dépôt
+  manipule déjà un keystore de signature Android et un service account Play Store réels, et fait
+  tourner un scan `gitleaks` dédié. Décrit le canal de signalement privilégié (GitHub Security
+  Advisories, avec un repli par courriel), le périmètre couvert, et les mécanismes de sécurité déjà
+  en place plutôt que de les faire découvrir à qui signale une faille
+
+### Fixed
+
+- Le fond de carte de l'onglet « Nuages » (tuiles CARTO) affichait le filigrane « API KEY
+  REQUIRED » depuis que CARTO a cessé de servir ses tuiles anonymes sans dégradation visuelle.
+  Ajout de `VITE_CARTO_API_KEY`, sur le modèle de `VITE_OPENWEATHERMAP_KEY` — une clé gratuite,
+  embarquée au build, non secrète
+
 ## [3.1.0] - 2026-08-09
 
 ### Added

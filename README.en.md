@@ -503,6 +503,10 @@ Development environment, reproducing CI locally, commit convention: see [CONTRIB
 
 Known cases (nginx config, network calibration, CI): see [TROUBLESHOOTING.en.md](./TROUBLESHOOTING.en.md).
 
+## Security
+
+To report a vulnerability, see [SECURITY.en.md](./SECURITY.en.md) — no public issues.
+
 ## License
 
 MIT — see [LICENSE](./LICENSE)
