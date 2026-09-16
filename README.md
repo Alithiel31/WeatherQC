@@ -86,7 +86,9 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 # Éditer frontend/.env avec une clé OpenWeatherMap (gratuite) pour activer le repli
 # de la carte satellite — laisser vide se contente d'afficher un message
-# d'indisponibilité quand RainViewer n'a pas d'image. Ce même fichier sert aussi
+# d'indisponibilité quand RainViewer n'a pas d'image — et avec une clé CARTO
+# (gratuite, https://carto.com/basemaps/apikey/) pour que le fond de carte
+# s'affiche sans le filigrane « API KEY REQUIRED ». Ce même fichier sert aussi
 # de config Vite en développement local (`npm run dev` dans frontend/) : docker
 # compose le lit via le flag --env-file (voir la commande ci-dessous).
 ```
@@ -201,6 +203,7 @@ invocation touchant `docker-compose.yml` (voir CI et `deploy-web.yml`).
 | Variable | Obligatoire | Défaut | Description |
 |---|---|---|---|
 | `VITE_OPENWEATHERMAP_KEY` | ❌ | — | Clé API OpenWeatherMap (gratuite) pour le repli de la carte satellite ; vide = message d'indisponibilité au lieu du repli |
+| `VITE_CARTO_API_KEY` | ⚠️ recommandée | — | Clé API CARTO (gratuite — [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey/), envoyée par courriel sans file d'attente) pour le fond de carte de l'onglet « Nuages » ; vide = tuiles servies quand même mais recouvertes du filigrane CARTO « API KEY REQUIRED » depuis fin août 2026 |
 
 ---
 

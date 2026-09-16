@@ -39,6 +39,17 @@
    */
   const CLE_OWM = import.meta.env.VITE_OPENWEATHERMAP_KEY as string | undefined;
 
+  /**
+   * Fond de carte CARTO : depuis fin août 2026, une tuile demandée sans clé
+   * n'échoue plus — elle répond 200 avec un filigrane « API KEY REQUIRED ».
+   * Leaflet ne déclenche donc jamais `tileerror` et rien ne distingue une
+   * carte dégradée d'une carte saine. La clé gratuite (carto.com/basemaps,
+   * envoyée par courriel sans file d'attente, 5 M requêtes/mois) n'est pas un
+   * secret à protéger — comme `VITE_OPENWEATHERMAP_KEY`, elle circule dans
+   * l'URL des tuiles comme un jeton de carte public.
+   */
+  const CLE_CARTO = import.meta.env.VITE_CARTO_API_KEY as string | undefined;
+
   let repliOwmActif = $derived(
     mode === 'satellite' && donneesFrames?.satellite.length === 0 && !!CLE_OWM
   );
@@ -71,6 +82,11 @@
 
   function urlTuileNuagesOwm(): string {
     return `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${CLE_OWM}`;
+  }
+
+  function urlFondCarte(): string {
+    const base = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    return CLE_CARTO ? `${base}?key=${CLE_CARTO}` : base;
   }
 
   function viderCouches(): void {
@@ -158,7 +174,7 @@
       attributionControl: true,
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer(urlFondCarte(), {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a> · Nuages <a href="https://www.rainviewer.com/">RainViewer</a>',
       maxZoom: 12,
