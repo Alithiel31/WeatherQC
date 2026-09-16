@@ -104,3 +104,55 @@ Les tests d'intégration tournent sur des fixtures figées et ne peuvent pas dé
 2. Aligner le schéma correspondant dans `backend/src/schemas/` (`openmeteo.schema.ts`, `zippopotam.schema.ts` ou `rainviewer.schema.ts`).
 3. Relancer localement : `cd backend && npm run test:contract` (appels réseau réels).
 4. Une fois le schéma réaligné et le workflow repassé au vert, refermer l'issue manuellement — elle sera réutilisée tant qu'elle reste ouverte, pour éviter d'en empiler une par nuit.
+---
+
+## 6. Le déploiement CI reste bloqué en `Queued`/`Pending` indéfiniment
+
+### Symptôme
+
+`npm run deploy:web` (ou un push sur `main`) crée bien un run sur `deploy-web.yml`, mais il
+reste `Queued`/`Pending` pendant des heures, voire des jours. `gh run watch` — donc
+`npm run deploy:web`, qui l'appelle sans timeout — reste accroché sans jamais rendre la main.
+
+### Cause
+
+GitHub désenregistre automatiquement un runner self-hosted resté trop longtemps déconnecté du
+service (« Runner registrations are automatically deleted for runners that have not connected
+to the service recently »). Le service systemd peut très bien tourner encore localement sur le
+Pi ; côté serveur, plus aucun runner ne correspond aux labels `[self-hosted, raspberry-pi]`
+attendus par le workflow, donc le job ne trouve personne pour le prendre en charge.
+
+### Diagnostic
+
+```bash
+# État du service côté Pi (inactive/dead = suspect)
+systemctl status 'actions.runner.Alithiel31-WeatherQC*' --no-pager -l
+
+# Logs bruts du runner — chercher "Failed to create a session" /
+# "registration has been deleted"
+ls -lt ~/actions-runner-qcweather/_diag | head
+cat ~/actions-runner-qcweather/_diag/Runner_<date>.log
+```
+
+Sur GitHub : `Settings → Actions → Runners` du dépôt affiche `There are no runners configured`
+si l'enregistrement a bien été supprimé côté serveur.
+
+### Correction
+
+1. Régénérer un token depuis `Settings → Actions → Runners → New self-hosted runner` (Linux ARM64).
+2. Sur le Pi, dans `~/actions-runner-qcweather` :
+   ```bash
+   sudo ./svc.sh stop
+   ./config.sh remove --token <token>
+   # si le remove échoue silencieusement, supprimer la config locale à la main :
+   rm -f .runner .credentials .credentials_rsaparams .service
+   ./config.sh --url https://github.com/Alithiel31/WeatherQC \
+     --token <token> --name Caesura-qcweather --labels raspberry-pi \
+     --replace --unattended
+   sudo ./svc.sh start
+   ```
+3. **Point de vigilance** : reconfigurer le runner repart d'un `_work` propre.
+   `frontend/.env` et `backend/.env` (non versionnés, jamais régénérés par le CI — `clean:
+   false` les préserve d'un run à l'autre mais ne les recrée pas) doivent être redéposés à la
+   main dans `_work/WeatherQC/WeatherQC/{frontend,backend}/.env` après toute réinstallation du
+   runner, sinon le job suivant échoue avec `couldn't find env file`.
