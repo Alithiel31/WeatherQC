@@ -9,6 +9,13 @@
   tourner un scan `gitleaks` dédié. Décrit le canal de signalement privilégié (GitHub Security
   Advisories, avec un repli par courriel), le périmètre couvert, et les mécanismes de sécurité déjà
   en place plutôt que de les faire découvrir à qui signale une faille
+- Un document OpenAPI 3.1, généré au démarrage et exposé sur `GET /api/openapi.json`
+  (`backend/src/openapi.ts`), plutôt que la seule description manuelle dans le README. Les
+  paramètres de chaque route viennent des mêmes schémas Zod que ceux qui valident réellement la
+  requête (`backend/src/schemas/validation.ts`) : ils ne peuvent pas dériver du code sans que le
+  document dérive avec eux. Les corps de réponse n'ont pas cette garantie — le backend ne valide
+  pas ses propres sorties — et sont décrits séparément à des fins de documentation
+  (`backend/src/schemas/openapi-reponses.ts`)
 
 ### Fixed
 
