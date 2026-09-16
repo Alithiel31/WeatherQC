@@ -226,6 +226,15 @@ Routes disponibles :
 | `GET /api/geocode/:codePostal` | Géocode une RTA québécoise (ex. `H2X`) |
 | `GET /api/rainviewer` | Index des images satellite et radar pour la carte animée |
 | `GET /api/sante` | Vérification de l'état du service |
+| `GET /api/openapi.json` | Document OpenAPI 3.1 de l'API |
+
+`openapi.json` est généré au démarrage depuis les mêmes schémas Zod que ceux qui valident
+réellement les requêtes (`backend/src/schemas/validation.ts`) — pas une spec écrite à la main
+qu'on oublierait de mettre à jour. Les corps de réponse, eux, n'ont pas ce filet : le backend ne
+valide pas ses propres sorties, `backend/src/schemas/openapi-reponses.ts` les décrit séparément à
+la seule fin de documenter. Pour l'explorer : coller l'URL dans
+[Swagger Editor](https://editor.swagger.io) ou l'importer dans Postman/Insomnia — rien n'est
+servi en HTML par le backend, pour ne pas avoir à assouplir la CSP posée par nginx.
 
 Les appels aux APIs externes sont bornés par `FETCH_TIMEOUT_MS` et rejoués une fois en cas
 d'erreur réseau ou 5xx. Un amont qui ne répond pas à temps donne un **504**, un amont en
@@ -513,6 +522,10 @@ Environnement de développement, reproduction de la CI en local, convention de c
 ## Dépannage
 
 Cas connus (config nginx, calibrage réseau, CI) : voir [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
+
+## Sécurité
+
+Pour signaler une vulnérabilité, voir [SECURITY.md](./SECURITY.md) — pas d'issue publique.
 
 ## License
 

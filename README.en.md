@@ -221,6 +221,15 @@ Available routes:
 | `GET /api/geocode/:codePostal` | Geocodes a Quebec FSA (e.g. `H2X`) |
 | `GET /api/rainviewer` | Index of satellite and radar images for the animated map |
 | `GET /api/sante` | Service health check |
+| `GET /api/openapi.json` | OpenAPI 3.1 document for the API |
+
+`openapi.json` is generated at startup from the same Zod schemas that actually validate
+requests (`backend/src/schemas/validation.ts`) — not a hand-written spec that drifts from the
+code. Response bodies don't have that guarantee: the backend doesn't validate its own output,
+so `backend/src/schemas/openapi-reponses.ts` describes them separately for documentation
+purposes only. To explore it: paste the URL into [Swagger Editor](https://editor.swagger.io) or
+import it into Postman/Insomnia — nothing is served as HTML by the backend, to avoid loosening
+the CSP set by nginx.
 
 Calls to external APIs are bounded by `FETCH_TIMEOUT_MS` and retried once on network error or
 5xx. An upstream that doesn't respond in time returns a **504**, an upstream in error a
@@ -502,6 +511,10 @@ Development environment, reproducing CI locally, commit convention: see [CONTRIB
 ## Troubleshooting
 
 Known cases (nginx config, network calibration, CI): see [TROUBLESHOOTING.en.md](./TROUBLESHOOTING.en.md).
+
+## Security
+
+To report a vulnerability, see [SECURITY.en.md](./SECURITY.en.md) — no public issues.
 
 ## License
 
