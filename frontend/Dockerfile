@@ -20,7 +20,9 @@ COPY . .
 # Vite embarque les variables VITE_* dans le bundle au build, pas au runtime —
 # elle doit donc être fournie ici plutôt que via `env_file` en production.
 ARG VITE_OPENWEATHERMAP_KEY
+ARG VITE_CARTO_API_KEY
 ENV VITE_OPENWEATHERMAP_KEY=$VITE_OPENWEATHERMAP_KEY
+ENV VITE_CARTO_API_KEY=$VITE_CARTO_API_KEY
 RUN npm run build
 
 # ── production : nginx sert les fichiers statiques ────────────────────────
