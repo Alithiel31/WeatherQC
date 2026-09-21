@@ -20,11 +20,17 @@ COPY . .
 # Vite embarque les variables VITE_* dans le bundle au build, pas au runtime —
 # elle doit donc être fournie ici plutôt que via `env_file` en production.
 ARG VITE_OPENWEATHERMAP_KEY
+ARG VITE_CARTO_API_KEY
 ENV VITE_OPENWEATHERMAP_KEY=$VITE_OPENWEATHERMAP_KEY
+ENV VITE_CARTO_API_KEY=$VITE_CARTO_API_KEY
 RUN npm run build
 
 # ── production : nginx sert les fichiers statiques ────────────────────────
 FROM nginx:alpine AS production
+# Applique les derniers correctifs de sécurité Alpine (ex. CVE-2026-14456 sur
+# libssl3/libcrypto3) : l'image de base peut ne pas avoir été republiée depuis
+# la sortie du correctif upstream, indépendamment de l'âge du tag.
+RUN apk update && apk upgrade --no-cache
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80

@@ -10,6 +10,7 @@ import { requestId } from './middlewares/request-id.js';
 import { journalAcces } from './middlewares/acces.js';
 import { statistiquesCache } from './services/cache.service.js';
 import { etatDisjoncteurs } from './lib/breaker.js';
+import { openapiDocument } from './openapi.js';
 
 import villesRouter from './routers/villes.router.js';
 import previsionsRouter from './routers/previsions.router.js';
@@ -64,6 +65,10 @@ app.get('/api/sante', (_req, res) => {
     amonts: etatDisjoncteurs(),
   });
 });
+
+// Documentation, pas une route applicative : au même titre que /api/sante,
+// elle doit rester joignable sans consommer le quota d'un vrai client.
+app.get('/api/openapi.json', (_req, res) => res.json(openapiDocument));
 
 app.use('/api', limiteurApi);
 app.use('/api/geocode', limiteurGeocode);
