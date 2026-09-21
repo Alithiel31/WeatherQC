@@ -86,7 +86,9 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 # Éditer frontend/.env avec une clé OpenWeatherMap (gratuite) pour activer le repli
 # de la carte satellite — laisser vide se contente d'afficher un message
-# d'indisponibilité quand RainViewer n'a pas d'image. Ce même fichier sert aussi
+# d'indisponibilité quand RainViewer n'a pas d'image — et avec une clé CARTO
+# (gratuite, https://carto.com/basemaps/apikey/) pour que le fond de carte
+# s'affiche sans le filigrane « API KEY REQUIRED ». Ce même fichier sert aussi
 # de config Vite en développement local (`npm run dev` dans frontend/) : docker
 # compose le lit via le flag --env-file (voir la commande ci-dessous).
 ```
@@ -109,6 +111,15 @@ Nginx pose les en-têtes de sécurité du document — CSP, `X-Content-Type-Opti
 L'application tourne sur un **Raspberry Pi** et est exposée publiquement via un **tunnel Cloudflare** (aucun port à ouvrir sur le routeur).
 Nginx fait office de reverse proxy à l'intérieur du conteneur frontend : il sert les fichiers statiques et redirige les appels `/api/` vers le backend.
 Le tunnel Cloudflare gère le **HTTPS** et le nom de domaine `qcweather.alithiel31.dev` — aucun certificat à gérer manuellement.
+
+> **Ne jamais lancer `docker compose up` à la main depuis un poste de dev pointant (via
+> contexte Docker distant) sur Caesura pour un déploiement de prod.** Docker Compose nomme le
+> projet d'après le dossier local d'où la commande est lancée : un nom différent du dossier de
+> travail du CI (`WeatherQC`) crée un **second stack de conteneurs**, qui se dispute le port 80
+> avec celui géré par `deploy-web.yml` — vécu concrètement, voir
+> [`TROUBLESHOOTING.md`](./TROUBLESHOOTING.md#6-le-déploiement-ci-reste-bloqué-en-queuedpending-indéfiniment).
+> Pour la prod, toujours passer par `npm run deploy:web` ; réserver `docker compose up` à la
+> main au développement/test local.
 
 **Déploiement continu** : `deploy-web.yml` tourne sur un runner self-hosted installé sur le Pi
 lui-même et se déclenche automatiquement à chaque push sur `main` touchant `backend/`,
@@ -201,6 +212,7 @@ invocation touchant `docker-compose.yml` (voir CI et `deploy-web.yml`).
 | Variable | Obligatoire | Défaut | Description |
 |---|---|---|---|
 | `VITE_OPENWEATHERMAP_KEY` | ❌ | — | Clé API OpenWeatherMap (gratuite) pour le repli de la carte satellite ; vide = message d'indisponibilité au lieu du repli |
+| `VITE_CARTO_API_KEY` | ⚠️ recommandée | — | Clé API CARTO (gratuite — [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey/), envoyée par courriel sans file d'attente) pour le fond de carte de l'onglet « Nuages » ; vide = tuiles servies quand même mais recouvertes du filigrane CARTO « API KEY REQUIRED » depuis fin août 2026 |
 
 ---
 
@@ -223,6 +235,15 @@ Routes disponibles :
 | `GET /api/geocode/:codePostal` | Géocode une RTA québécoise (ex. `H2X`) |
 | `GET /api/rainviewer` | Index des images satellite et radar pour la carte animée |
 | `GET /api/sante` | Vérification de l'état du service |
+| `GET /api/openapi.json` | Document OpenAPI 3.1 de l'API |
+
+`openapi.json` est généré au démarrage depuis les mêmes schémas Zod que ceux qui valident
+réellement les requêtes (`backend/src/schemas/validation.ts`) — pas une spec écrite à la main
+qu'on oublierait de mettre à jour. Les corps de réponse, eux, n'ont pas ce filet : le backend ne
+valide pas ses propres sorties, `backend/src/schemas/openapi-reponses.ts` les décrit séparément à
+la seule fin de documenter. Pour l'explorer : coller l'URL dans
+[Swagger Editor](https://editor.swagger.io) ou l'importer dans Postman/Insomnia — rien n'est
+servi en HTML par le backend, pour ne pas avoir à assouplir la CSP posée par nginx.
 
 Les appels aux APIs externes sont bornés par `FETCH_TIMEOUT_MS` et rejoués une fois en cas
 d'erreur réseau ou 5xx. Un amont qui ne répond pas à temps donne un **504**, un amont en
@@ -510,6 +531,10 @@ Environnement de développement, reproduction de la CI en local, convention de c
 ## Dépannage
 
 Cas connus (config nginx, calibrage réseau, CI) : voir [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
+
+## Sécurité
+
+Pour signaler une vulnérabilité, voir [SECURITY.md](./SECURITY.md) — pas d'issue publique.
 
 ## License
 

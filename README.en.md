@@ -110,6 +110,15 @@ The app runs on a **Raspberry Pi** and is exposed publicly through a **Cloudflar
 Nginx acts as a reverse proxy inside the frontend container: it serves static files and forwards `/api/` calls to the backend.
 The Cloudflare tunnel handles **HTTPS** and the `qcweather.alithiel31.dev` domain name — no certificate to manage manually.
 
+> **Never run `docker compose up` by hand from a dev machine pointed (via a remote Docker
+> context) at Caesura for a production deploy.** Docker Compose names the project after the
+> local folder the command is run from: a name that differs from the CI's working directory
+> (`WeatherQC`) creates a **second container stack**, which then fights the one managed by
+> `deploy-web.yml` for port 80 — this actually happened, see
+> [`TROUBLESHOOTING.md`](./TROUBLESHOOTING.en.md#6-ci-deployment-stays-stuck-in-queuedpending-forever).
+> For production, always go through `npm run deploy:web`; keep manual `docker compose up` for
+> local development/testing only.
+
 **Continuous deployment**: `deploy-web.yml` runs on a self-hosted runner installed on the Pi
 itself and triggers automatically on every push to `main` touching `backend/`, `frontend/`, or
 `docker-compose.yml` (or manually). It replays `docker compose --env-file frontend/.env up -d --build --wait` in place —
@@ -221,6 +230,15 @@ Available routes:
 | `GET /api/geocode/:codePostal` | Geocodes a Quebec FSA (e.g. `H2X`) |
 | `GET /api/rainviewer` | Index of satellite and radar images for the animated map |
 | `GET /api/sante` | Service health check |
+| `GET /api/openapi.json` | OpenAPI 3.1 document for the API |
+
+`openapi.json` is generated at startup from the same Zod schemas that actually validate
+requests (`backend/src/schemas/validation.ts`) — not a hand-written spec that drifts from the
+code. Response bodies don't have that guarantee: the backend doesn't validate its own output,
+so `backend/src/schemas/openapi-reponses.ts` describes them separately for documentation
+purposes only. To explore it: paste the URL into [Swagger Editor](https://editor.swagger.io) or
+import it into Postman/Insomnia — nothing is served as HTML by the backend, to avoid loosening
+the CSP set by nginx.
 
 Calls to external APIs are bounded by `FETCH_TIMEOUT_MS` and retried once on network error or
 5xx. An upstream that doesn't respond in time returns a **504**, an upstream in error a
@@ -502,6 +520,10 @@ Development environment, reproducing CI locally, commit convention: see [CONTRIB
 ## Troubleshooting
 
 Known cases (nginx config, network calibration, CI): see [TROUBLESHOOTING.en.md](./TROUBLESHOOTING.en.md).
+
+## Security
+
+To report a vulnerability, see [SECURITY.en.md](./SECURITY.en.md) — no public issues.
 
 ## License
 
