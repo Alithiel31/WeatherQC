@@ -1,0 +1,20 @@
+# Météo Québec
+
+> Application web (PWA) et Android, gratuite et sans publicité, de prévisions météo pour le Québec, à partir des données ouvertes d'Open-Meteo.
+
+Météo Québec fournit les conditions actuelles, les prévisions horaires (48 h) et quotidiennes (7 jours), une carte satellite/radar animée, ainsi que des alertes météo push optionnelles, pour six villes du Québec (Montréal, Québec, Gatineau, Sherbrooke, Trois-Rivières, Saguenay) ou toute adresse dans les régions de tri d'acheminement postal québécoises (G, H, J). Le service n'a ni compte utilisateur, ni témoin (cookie), ni outil de mesure d'audience.
+
+## Pages principales
+
+- [Application](https://qcweather.alithiel31.dev/): prévisions météo en direct
+- [Politique de confidentialité](https://qcweather.alithiel31.dev/privacy-policy.html): renseignements traités, base légale (Loi 25 du Québec), droits
+- [Conditions d'utilisation](https://qcweather.alithiel31.dev/terms.html): limites de fiabilité des prévisions, usage acceptable
+- [Mentions légales](https://qcweather.alithiel31.dev/legal.html): éditeur, hébergement, sources de données, licence
+
+## Code source
+
+- [Dépôt GitHub, licence MIT](https://github.com/Alithiel31/WeatherQC)
+
+## À noter
+
+Le service est destiné au public québécois : la sélection de villes et la recherche par code postal ne couvrent que le Québec. Les prévisions sont fournies à titre indicatif et ne remplacent pas les avis officiels d'Environnement et Changement climatique Canada. La langue officielle du service est le français ; les pages ci-dessus ont une version anglaise de courtoisie (`.en.html`).

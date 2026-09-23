@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://qcweather.alithiel31.dev/sitemap.xml
