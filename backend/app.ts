@@ -1,11 +1,16 @@
 import app from './src/index.js';
 import { config } from './src/config.js';
 import { startCacheSweeper, stopCacheSweeper } from './src/services/cache.service.js';
+import { ouvrirAbonnements, fermerAbonnements } from './src/services/abonnements.service.js';
 import { log } from './src/lib/log.js';
 
 // Démarré ici et non à l'import du module de cache : les tests importent
-// `src/index.js` sans devoir composer avec un timer en arrière-plan.
+// `src/index.js` sans devoir composer avec un timer en arrière-plan. Même
+// raison pour la base des abonnements, ouverte explicitement plutôt qu'à
+// l'import de `abonnements.service.js` — les tests d'intégration ouvrent leur
+// propre base `:memory:` (voir `tests/setup.ts`).
 startCacheSweeper();
+ouvrirAbonnements(config.dbPath);
 
 const server = app.listen(config.port, () => {
   log.info('API météo démarrée', { port: config.port });
@@ -18,6 +23,7 @@ const DELAI_ARRET_FORCE_MS = 10_000;
 function arreter(signal: NodeJS.Signals): void {
   log.info('Arrêt demandé', { signal });
   stopCacheSweeper();
+  fermerAbonnements();
 
   server.close((erreur) => {
     if (erreur) {

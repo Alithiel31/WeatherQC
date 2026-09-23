@@ -6,6 +6,9 @@ frontend/dist/
 frontend/.svelte-kit/
 backend/dist/
 
+# Base des abonnements aux alertes météo (dev local — en conteneur, sur un volume Docker)
+backend/data/
+
 # Rapports de couverture et de tests
 coverage/
 rapport-tests.json

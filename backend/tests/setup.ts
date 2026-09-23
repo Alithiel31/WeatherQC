@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, vi } from 'vitest';
 import { clearCache } from '../src/services/cache.service.js';
 import { reinitialiserDisjoncteurs } from '../src/lib/breaker.js';
+import { ouvrirAbonnements, fermerAbonnements } from '../src/services/abonnements.service.js';
 
 // Filet de sécurité : aucun test de `npm run test:run` ne doit toucher le réseau.
 // Un test qui traverse un service externe pose son propre stub (voir
@@ -16,6 +17,10 @@ beforeEach(() => {
   // Même raison : un test qui a fait tomber un amont laisserait son disjoncteur
   // ouvert, et le test suivant échouerait sans avoir rien demandé.
   reinitialiserDisjoncteurs();
+  // Une base `:memory:` neuve par test : les abonnements sont un état de
+  // module comme le cache, mais contrairement à lui persistant côté serveur
+  // réel — donc encore plus important à isoler d'un test à l'autre.
+  ouvrirAbonnements(':memory:');
 
   vi.stubGlobal(
     'fetch',
@@ -29,4 +34,5 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  fermerAbonnements();
 });

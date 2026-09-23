@@ -13,6 +13,11 @@ services:
       target: production
     env_file:
       - ./backend/.env
+    volumes:
+      # Abonnements aux alertes météo (SQLite, voir DB_PATH dans le README) —
+      # sans ce volume, ils seraient perdus à chaque `docker compose up --build`,
+      # contrairement au cache qui, lui, est fait pour disparaître au redémarrage.
+      - backend-data:/app/data
     restart: unless-stopped
     logging: *logs
     deploy:
@@ -59,3 +64,6 @@ services:
         limits:
           # Nginx ne sert que des fichiers statiques et relaie /api/.
           memory: 128M
+
+volumes:
+  backend-data:

@@ -105,3 +105,11 @@ export const erreurSchema = z.object({
   error: z.string(),
   details: z.array(z.object({ chemin: z.string(), message: z.string() })).optional(),
 });
+
+export const clePubliqueSchema = z.object({
+  clePublique: z.string(),
+});
+
+export const abonnementConfirmeSchema = z.object({
+  statut: z.literal('abonne'),
+});

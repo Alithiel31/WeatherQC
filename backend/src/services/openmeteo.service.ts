@@ -20,6 +20,8 @@ export interface Previsions {
     temperature: number | null;
     code: number | null;
     precipitation: number | null;
+    /** Rafales à 10 m, en km/h — utilisées par le détecteur d'alertes météo. */
+    rafales: number | null;
   }[];
   quotidien: {
     date: string;
@@ -55,7 +57,9 @@ export async function fetchForecast({
       'wind_speed_10m',
       'is_day',
     ].join(','),
-    hourly: ['temperature_2m', 'weather_code', 'precipitation_probability'].join(','),
+    hourly: ['temperature_2m', 'weather_code', 'precipitation_probability', 'wind_gusts_10m'].join(
+      ','
+    ),
     daily: [
       'weather_code',
       'temperature_2m_max',
@@ -101,6 +105,7 @@ export async function fetchForecast({
       temperature: raw.hourly.temperature_2m[start + i],
       code: raw.hourly.weather_code[start + i],
       precipitation: raw.hourly.precipitation_probability[start + i],
+      rafales: raw.hourly.wind_gusts_10m[start + i],
     })),
     quotidien: raw.daily.time.map((t, i) => ({
       date: t,

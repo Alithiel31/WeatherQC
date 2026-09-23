@@ -20,6 +20,7 @@ describe('Contrat Open-Meteo (réseau réel)', () => {
       expect(heure.heure).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/);
       expect(Number.isFinite(heure.temperature)).toBe(true);
       expect(Number.isFinite(heure.code)).toBe(true);
+      expect(typeof heure.rafales === 'number' || heure.rafales === null).toBe(true);
     }
 
     expect(previsions.quotidien).toHaveLength(7);
