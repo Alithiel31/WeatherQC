@@ -6,7 +6,7 @@ import { abonnementSchema, desabonnementSchema } from '../schemas/validation.js'
 import { ajouterAbonnement, supprimerAbonnement } from '../services/abonnements.service.js';
 
 const MESSAGE_VAPID_ABSENT =
-  "Notifications indisponibles — clés VAPID non configurées côté serveur.";
+  'Notifications indisponibles — clés VAPID non configurées côté serveur.';
 
 export default {
   clePublique: (_req: Request, res: Response) => {

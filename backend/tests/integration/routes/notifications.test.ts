@@ -12,7 +12,11 @@ const SOUSCRIPTION_VALIDE = {
   },
 };
 
-const VAPID_TEST = { publicKey: 'clé-publique-test', privateKey: 'clé-privée-test', contact: 'mailto:test@exemple.com' };
+const VAPID_TEST = {
+  publicKey: 'clé-publique-test',
+  privateKey: 'clé-privée-test',
+  contact: 'mailto:test@exemple.com',
+};
 
 describe('Notifications push', () => {
   // `config` est un singleton partagé par tout le fichier de test : on note
@@ -35,7 +39,10 @@ describe('Notifications push', () => {
     });
 
     it('POST /api/notifications/abonnement répond 503', async () => {
-      await request(app).post('/api/notifications/abonnement').send(SOUSCRIPTION_VALIDE).expect(503);
+      await request(app)
+        .post('/api/notifications/abonnement')
+        .send(SOUSCRIPTION_VALIDE)
+        .expect(503);
     });
   });
 
@@ -83,12 +90,18 @@ describe('Notifications push', () => {
     it('POST /api/notifications/abonnement refuse un endpoint non-URL', async () => {
       await request(app)
         .post('/api/notifications/abonnement')
-        .send({ ...SOUSCRIPTION_VALIDE, subscription: { ...SOUSCRIPTION_VALIDE.subscription, endpoint: 'pas-une-url' } })
+        .send({
+          ...SOUSCRIPTION_VALIDE,
+          subscription: { ...SOUSCRIPTION_VALIDE.subscription, endpoint: 'pas-une-url' },
+        })
         .expect(400);
     });
 
     it('un second abonnement avec le même endpoint remplace le premier (pas de doublon)', async () => {
-      await request(app).post('/api/notifications/abonnement').send(SOUSCRIPTION_VALIDE).expect(201);
+      await request(app)
+        .post('/api/notifications/abonnement')
+        .send(SOUSCRIPTION_VALIDE)
+        .expect(201);
       await request(app)
         .post('/api/notifications/abonnement')
         .send({ ...SOUSCRIPTION_VALIDE, ville: 'quebec' })
@@ -99,7 +112,10 @@ describe('Notifications push', () => {
     });
 
     it('DELETE /api/notifications/abonnement retire un abonnement existant', async () => {
-      await request(app).post('/api/notifications/abonnement').send(SOUSCRIPTION_VALIDE).expect(201);
+      await request(app)
+        .post('/api/notifications/abonnement')
+        .send(SOUSCRIPTION_VALIDE)
+        .expect(201);
 
       await request(app)
         .delete('/api/notifications/abonnement')

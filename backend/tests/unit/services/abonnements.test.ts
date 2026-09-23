@@ -78,14 +78,24 @@ describe('abonnements.service', () => {
 
   describe('anti-spam (alertes déjà envoyées)', () => {
     it("dejaEnvoyee est faux tant qu'aucune alerte n'a été marquée", () => {
-      ajouterAbonnement({ ville: 'montreal', endpoint: 'https://push/1', p256dh: 'p1', auth: 'a1' });
+      ajouterAbonnement({
+        ville: 'montreal',
+        endpoint: 'https://push/1',
+        p256dh: 'p1',
+        auth: 'a1',
+      });
       const [{ id }] = abonnementsParVille('montreal');
 
       expect(dejaEnvoyee(id, 'vent')).toBe(false);
     });
 
     it('marquerEnvoyee rend dejaEnvoyee vrai pour ce couple abonnement+type', () => {
-      ajouterAbonnement({ ville: 'montreal', endpoint: 'https://push/1', p256dh: 'p1', auth: 'a1' });
+      ajouterAbonnement({
+        ville: 'montreal',
+        endpoint: 'https://push/1',
+        p256dh: 'p1',
+        auth: 'a1',
+      });
       const [{ id }] = abonnementsParVille('montreal');
 
       marquerEnvoyee(id, 'vent');
@@ -95,8 +105,13 @@ describe('abonnements.service', () => {
       expect(dejaEnvoyee(id, 'orage')).toBe(false);
     });
 
-    it("marquerEnvoyee deux fois sur le même couple ne lève pas (upsert)", () => {
-      ajouterAbonnement({ ville: 'montreal', endpoint: 'https://push/1', p256dh: 'p1', auth: 'a1' });
+    it('marquerEnvoyee deux fois sur le même couple ne lève pas (upsert)', () => {
+      ajouterAbonnement({
+        ville: 'montreal',
+        endpoint: 'https://push/1',
+        p256dh: 'p1',
+        auth: 'a1',
+      });
       const [{ id }] = abonnementsParVille('montreal');
 
       expect(() => {
@@ -107,7 +122,12 @@ describe('abonnements.service', () => {
     });
 
     it('effacerEnvoyee permet une nouvelle notification du même type', () => {
-      ajouterAbonnement({ ville: 'montreal', endpoint: 'https://push/1', p256dh: 'p1', auth: 'a1' });
+      ajouterAbonnement({
+        ville: 'montreal',
+        endpoint: 'https://push/1',
+        p256dh: 'p1',
+        auth: 'a1',
+      });
       const [{ id }] = abonnementsParVille('montreal');
 
       marquerEnvoyee(id, 'vent');
@@ -119,7 +139,12 @@ describe('abonnements.service', () => {
     // La contrainte ON DELETE CASCADE doit nettoyer l'anti-spam d'un
     // abonnement supprimé — sinon la table grossit indéfiniment.
     it('la suppression d’un abonnement efface son anti-spam associé', () => {
-      ajouterAbonnement({ ville: 'montreal', endpoint: 'https://push/1', p256dh: 'p1', auth: 'a1' });
+      ajouterAbonnement({
+        ville: 'montreal',
+        endpoint: 'https://push/1',
+        p256dh: 'p1',
+        auth: 'a1',
+      });
       const [{ id }] = abonnementsParVille('montreal');
       marquerEnvoyee(id, 'vent');
 

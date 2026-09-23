@@ -174,7 +174,9 @@ export const openapiDocument = {
         summary: 'Désabonne un navigateur des alertes météo',
         requestBody: corpsJson(desabonnementSchema),
         responses: {
-          '204': { description: 'Désabonné (idempotent — un endpoint déjà absent répond aussi 204)' },
+          '204': {
+            description: 'Désabonné (idempotent — un endpoint déjà absent répond aussi 204)',
+          },
           '400': reponseErreur('Corps invalide'),
         },
       },
