@@ -6,6 +6,7 @@
   import ConditionsActuelles from './lib/ConditionsActuelles.svelte';
   import RechercheCodePostal from './lib/RechercheCodePostal.svelte';
   import SelecteurVille from './lib/SelecteurVille.svelte';
+  import AlertesMeteo from './lib/AlertesMeteo.svelte';
   import { familleMeteo, heureMinute, libelleUniteTemp } from './lib/meteo.ts';
   import {
     previsionsVille,
@@ -38,6 +39,10 @@
   // précédente si le chargement échoue. Dérivé, le libellé annonçait alors une
   // ville dont on affichait les prévisions d'une autre.
   let nomLieu   = $state('');
+
+  // Pas d'abonnement par code postal (décision produit) : le nom n'est dérivé
+  // que pour une ville du sélecteur, jamais pour `prefs.lieuCP`.
+  let nomVilleActive = $derived(villes.find((v) => v.id === prefs.selection)?.nom ?? '');
 
   let chargementEnCours: AbortController | null = null;
   let rechercheEnCours: AbortController | null = null;
@@ -161,6 +166,10 @@
       onrechercher={rechercherCP}
     />
   </header>
+
+  {#if prefs.selection !== 'cp' && nomVilleActive}
+    <AlertesMeteo villeId={prefs.selection} villeNom={nomVilleActive} />
+  {/if}
 
   <!--
     Les erreurs étaient bien annoncées — `role="alert"` plus bas crée une région

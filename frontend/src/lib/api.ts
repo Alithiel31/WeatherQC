@@ -67,7 +67,7 @@ export async function previsionsCoordonnees(
  * Un corps illisible — page HTML d'un proxy, réponse vide — retombe sur `defaut`
  * plutôt que de masquer la panne derrière une erreur de parsing.
  */
-async function messageErreur(res: Response, defaut: string): Promise<string> {
+export async function messageErreur(res: Response, defaut: string): Promise<string> {
   try {
     const corps = (await res.json()) as { error?: string };
     return corps.error ?? defaut;
