@@ -117,6 +117,41 @@ describe('Service worker — présence et enregistrement', () => {
   });
 });
 
+/**
+ * `sw.ts` remplace la génération automatique (mode `injectManifest`) : seule
+ * façon d'y greffer `push`/`notificationclick`, impossibles en `generateSW`.
+ * Non minifié à dessein (voir `vite.config.js`) — les assertions littérales
+ * ci-dessus et ci-dessous (`NetworkFirst`, noms de cache…) resteraient sinon
+ * illisibles après la passe de minification.
+ */
+describe('Service worker — notifications push', () => {
+  it("écoute l'évènement push", () => {
+    expect(sw).toContain('addEventListener("push"');
+  });
+
+  it('affiche la notification via showNotification', () => {
+    expect(sw).toContain('showNotification');
+  });
+
+  it('ignore silencieusement une notification sans charge utile', () => {
+    // Un push sans `data` (ou illisible) ne doit pas faire planter le
+    // service worker — juste renoncer à l'affichage.
+    expect(sw).toContain('event.data');
+  });
+
+  it("écoute l'évènement notificationclick et ramène à l'application", () => {
+    expect(sw).toContain('addEventListener("notificationclick"');
+    expect(sw).toContain('openWindow');
+  });
+
+  it('active immédiatement le nouveau service worker (registerType: autoUpdate)', () => {
+    // `generateSW` injectait `skipWaiting`/`clientsClaim` automatiquement pour
+    // ce réglage ; en `injectManifest`, `sw.ts` doit les appeler lui-même.
+    expect(sw).toContain('skipWaiting');
+    expect(sw).toContain('clientsClaim');
+  });
+});
+
 describe('Service worker — stratégies de cache hors ligne', () => {
   it('sert les prévisions en NetworkFirst', () => {
     // Le README promet « dernières prévisions en cache » hors ligne : c'est
