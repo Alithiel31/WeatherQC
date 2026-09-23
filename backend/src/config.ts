@@ -80,10 +80,35 @@ export const environnementSchema = z.object({
   // amont, et durée de la suspension.
   BREAKER_SEUIL_ECHECS: entier(5),
   BREAKER_REPOS_MS: entier(30_000),
+  // Notifications push d'alertes météo. Facultatives : sans elles, l'API
+  // fonctionne normalement, seul l'abonnement aux alertes reste indisponible.
+  // Les deux clés vont ensemble — l'une sans l'autre est une config à moitié
+  // faite, détectée par le .refine() ci-dessous plutôt que par un crash à
+  // l'appel de web-push.
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_CONTACT_EMAIL: z.string().optional(),
+  // Fichier SQLite des abonnements aux alertes météo. Chemin relatif au
+  // répertoire de travail du process (`/app` en conteneur, monté sur un
+  // volume nommé — voir docker-compose.yml — pour survivre aux redéploiements).
+  DB_PATH: z.string().min(1).optional(),
 });
 
+// `.refine()` sur une copie, pas sur `environnementSchema` lui-même : ce
+// dernier reste un `z.object()` nu, dont `.shape` sert au test qui vérifie que
+// `.env.example` documente bien chaque variable du schéma. Un `ZodEffects`
+// (le type que produit `.refine()`) n'expose plus `.shape`.
+const environnementSchemaValide = environnementSchema.refine(
+  (v) => Boolean(v.VAPID_PUBLIC_KEY) === Boolean(v.VAPID_PRIVATE_KEY),
+  {
+    message:
+      'VAPID_PUBLIC_KEY et VAPID_PRIVATE_KEY doivent être définies ensemble, ou absentes toutes les deux',
+    path: ['VAPID_PRIVATE_KEY'],
+  }
+);
+
 export function chargerConfig(env: NodeJS.ProcessEnv = process.env) {
-  const analyse = environnementSchema.safeParse(env);
+  const analyse = environnementSchemaValide.safeParse(env);
 
   if (!analyse.success) {
     const details = analyse.error.issues
@@ -118,6 +143,17 @@ export function chargerConfig(env: NodeJS.ProcessEnv = process.env) {
       seuilEchecs: valide.BREAKER_SEUIL_ECHECS,
       reposMs: valide.BREAKER_REPOS_MS,
     },
+    // `null` plutôt que `undefined` : un objet absent est plus simple à tester
+    // (`config.vapid === null`) qu'un couple de champs facultatifs séparés.
+    vapid:
+      valide.VAPID_PUBLIC_KEY && valide.VAPID_PRIVATE_KEY
+        ? {
+            publicKey: valide.VAPID_PUBLIC_KEY,
+            privateKey: valide.VAPID_PRIVATE_KEY,
+            contact: valide.VAPID_CONTACT_EMAIL ?? 'mailto:contact@alithiel31.dev',
+          }
+        : null,
+    dbPath: valide.DB_PATH ?? 'data/abonnements.sqlite',
   };
 }
 

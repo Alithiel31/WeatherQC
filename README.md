@@ -201,6 +201,10 @@ L'application est en **test interne** (Internal Testing) sur le Google Play Stor
 | `BREAKER_SEUIL_ECHECS` | ❌ | `5` | Échecs consécutifs avant suspension des appels à un amont |
 | `BREAKER_REPOS_MS` | ❌ | `30000` | Durée de la suspension avant la requête de test |
 | `DEFAULT_TIMEZONE` | ❌ | `America/Toronto` | Timezone pour les prévisions Open-Meteo |
+| `VAPID_PUBLIC_KEY` | ❌ | — | Clé publique VAPID pour les notifications push d'alertes météo (générée avec `npx web-push generate-vapid-keys`) — absente, l'abonnement aux alertes reste indisponible |
+| `VAPID_PRIVATE_KEY` | ❌ | — | Clé privée VAPID correspondante — doit être fournie avec `VAPID_PUBLIC_KEY`, jamais seule |
+| `VAPID_CONTACT_EMAIL` | ❌ | `mailto:contact@alithiel31.dev` | Contact affiché aux navigateurs recevant les notifications (exigé par le protocole Web Push) |
+| `DB_PATH` | ❌ | `data/abonnements.sqlite` | Fichier SQLite des abonnements aux alertes météo — monté sur un volume Docker nommé en production |
 
 Variable de **build** frontend (`frontend/.env`, lue à la fois par Vite en développement local
 et par `docker compose` via le flag `--env-file frontend/.env` — voir `frontend/.env.example`

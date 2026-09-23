@@ -60,6 +60,45 @@ describe('chargerConfig', () => {
       /PORT[\s\S]*CACHE_TTL_GEOCODE/
     );
   });
+
+  describe('VAPID (notifications push)', () => {
+    it('vapid est null quand aucune clé n’est fournie', () => {
+      expect(chargerConfig({}).vapid).toBeNull();
+    });
+
+    it('vapid est rempli quand les deux clés sont fournies', () => {
+      const config = chargerConfig({
+        VAPID_PUBLIC_KEY: 'clé-publique',
+        VAPID_PRIVATE_KEY: 'clé-privée',
+      });
+
+      expect(config.vapid).toEqual({
+        publicKey: 'clé-publique',
+        privateKey: 'clé-privée',
+        contact: 'mailto:contact@alithiel31.dev',
+      });
+    });
+
+    it('reprend VAPID_CONTACT_EMAIL si fourni', () => {
+      const config = chargerConfig({
+        VAPID_PUBLIC_KEY: 'a',
+        VAPID_PRIVATE_KEY: 'b',
+        VAPID_CONTACT_EMAIL: 'mailto:autre@example.com',
+      });
+
+      expect(config.vapid?.contact).toBe('mailto:autre@example.com');
+    });
+
+    // Une config à moitié faite (une seule des deux clés) doit être détectée
+    // au démarrage, pas au premier envoi de notification.
+    it('refuse une clé publique seule', () => {
+      expect(() => chargerConfig({ VAPID_PUBLIC_KEY: 'seule' })).toThrow(/VAPID_PRIVATE_KEY/);
+    });
+
+    it('refuse une clé privée seule', () => {
+      expect(() => chargerConfig({ VAPID_PRIVATE_KEY: 'seule' })).toThrow(/VAPID_PRIVATE_KEY/);
+    });
+  });
 });
 
 /**
