@@ -16,6 +16,29 @@
   document dérive avec eux. Les corps de réponse n'ont pas cette garantie — le backend ne valide
   pas ses propres sorties — et sont décrits séparément à des fins de documentation
   (`backend/src/schemas/openapi-reponses.ts`)
+- Alertes météo push, de bout en bout. Détection des changements brusques — précipitation
+  imminente, chute de température, vent fort, verglas, orage — dans une fonction pure sans réseau
+  ni horloge (`backend/src/services/detecteur-alertes.ts`) ; abonnement par ville stocké en
+  `node:sqlite` avec anti-spam, un navigateur ne portant qu'un abonnement actif à la fois
+  (`backend/src/services/abonnements.service.ts`) ; cycle horaire de vérification et d'envoi Web
+  Push, qui nettoie automatiquement les abonnements expirés sur un 404/410
+  (`backend/src/services/verificateur-alertes.ts`) ; trois routes
+  (`GET /api/notifications/cle-publique`, `POST`/`DELETE /api/notifications/abonnement`). Côté
+  frontend, un contrôle d'abonnement sous l'en-tête de l'application (`AlertesMeteo.svelte`),
+  masqué plutôt qu'en erreur sur les navigateurs sans support Push (Safari iOS < 16.4, navigation
+  privée), et la réception effective dans un service worker maison (`frontend/src/sw.ts`)
+- Le service worker passe de `generateSW` à `injectManifest` (vite-plugin-pwa), seul moyen d'y
+  greffer les gestionnaires `push` et `notificationclick`. Le précache et le `runtimeCaching`
+  existants sont portés à l'identique dans `frontend/src/sw.ts`, avec `skipWaiting()` et
+  `clientsClaim()` désormais appelés explicitement : `generateSW` les injectait automatiquement
+  pour `registerType: 'autoUpdate'`, ce que `injectManifest` ne fait pas — sans eux, un
+  déploiement restait « en attente » jusqu'à la fermeture complète de tous les onglets
+- Documentation des alertes météo : section dédiée et nouvelles routes dans `README.md`/
+  `README.en.md`, mise à jour de la politique de confidentialité (FR/EN), qui affirmait encore
+  qu'aucune notification n'était envoyée, et un paragraphe dans les conditions d'utilisation sur
+  la fiabilité non garantie de la livraison
+- `CODE_OF_CONDUCT.md`, `SUPPORT.md` (et leurs traductions `.en.md`) et
+  `.github/PULL_REQUEST_TEMPLATE.md`, qui manquaient à la checklist Community Standards de GitHub
 
 ### Fixed
 
@@ -23,6 +46,15 @@
   REQUIRED » depuis que CARTO a cessé de servir ses tuiles anonymes sans dégradation visuelle.
   Ajout de `VITE_CARTO_API_KEY`, sur le modèle de `VITE_OPENWEATHERMAP_KEY` — une clé gratuite,
   embarquée au build, non secrète
+
+### Security
+
+- Le regex de la route de tuiles de fond du nouveau service worker
+  (`^https:\/\/.*\.basemaps\.cartocdn\.com\/.*`) matchait aussi une URL où le domaine n'était
+  qu'une sous-chaîne du chemin (ex. `https://evil.example/x.basemaps.cartocdn.com/y`), ce qui
+  aurait permis à un attaquant de faire mettre en cache durablement (`CacheFirst`) une réponse
+  venant d'une origine qu'il contrôle (CodeQL `js/incomplete-hostname-regexp`, high). Remplacé
+  par un test sur `url.hostname`
 
 ## [3.1.0] - 2026-08-09
 

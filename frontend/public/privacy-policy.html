@@ -13,7 +13,7 @@
       <p class="langue"><a href="/privacy-policy.en.html">🇬🇧 English version</a></p>
 
       <h1>Politique de confidentialité</h1>
-      <p class="date">Météo Québec — dernière mise à jour : 6 août 2026</p>
+      <p class="date">Météo Québec — dernière mise à jour : 23 septembre 2026</p>
 
       <p>
         Météo Québec est un projet personnel, gratuit et sans publicité, hébergé au Québec et
@@ -34,7 +34,10 @@
       <h2>Ce que nous ne faisons pas</h2>
       <ul>
         <li>Aucun compte, aucune inscription, aucun mot de passe.</li>
-        <li>Aucune base de données : rien vous concernant n'est enregistré sur nos serveurs.</li>
+        <li>
+          Aucune base de données, sauf si vous activez volontairement les alertes météo — voir «
+          Alertes météo (notifications) » plus bas.
+        </li>
         <li>
           Aucun outil de mesure d'audience (pas de Google Analytics, Matomo, Plausible ou autre).
         </li>
@@ -81,11 +84,19 @@
             <td><code>unite</code></td>
             <td>Votre choix d'unités, métriques ou impériales.</td>
           </tr>
+          <tr>
+            <td><code>villeAbonnee</code></td>
+            <td>
+              Si vous avez activé les alertes météo, la ville pour laquelle — voir « Alertes météo
+              (notifications) » plus bas.
+            </td>
+          </tr>
         </tbody>
       </table>
       <p>
         Vous pouvez les effacer à tout moment en vidant les données de site de votre navigateur, ou
-        en désinstallant l'application sur Android. Aucune trace ne subsiste de notre côté.
+        en désinstallant l'application sur Android. Aucune trace ne subsiste de notre côté, à
+        l'exception de l'abonnement aux alertes météo si vous en avez activé un — voir plus bas.
       </p>
 
       <h2>Ce que votre appareil envoie à nos serveurs</h2>
@@ -228,13 +239,66 @@
         votre appareil et se vide avec les données de site.
       </p>
 
-      <h2>Notifications sur Android</h2>
+      <h2>Alertes météo (notifications)</h2>
       <p>
-        La version Android déclare la permission de notification. À ce jour,
-        <strong>l'application n'envoie aucune notification</strong> : la permission est prévue pour
-        d'éventuelles alertes météo à venir. Si cette fonction est ajoutée, cette politique sera
-        mise à jour avant sa mise en service, et les notifications resteront refusables depuis les
-        réglages Android.
+        Cette fonction est <strong>entièrement facultative</strong> : elle ne s'active qu'à votre
+        demande, depuis le bouton « Activer les alertes météo » de l'application, pour l'une des six
+        villes proposées (jamais pour un lieu recherché par code postal).
+      </p>
+      <p>
+        Quand vous l'activez, votre navigateur crée un abonnement auprès de son propre service de
+        notifications push (par exemple ceux de Mozilla, Google ou Apple, selon le navigateur) —
+        votre appareil communique alors <strong>directement</strong> avec ce service, sans passer
+        par nos serveurs. Cet abonnement — une adresse technique et des clés de chiffrement, sans
+        aucun rapport avec votre identité — est ensuite transmis à notre serveur et
+        <strong>enregistré</strong>, avec la ville choisie. C'est la seule donnée que nos serveurs
+        conservent au-delà de la durée d'une requête.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Donnée enregistrée sur nos serveurs</th>
+            <th>Contenu</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Abonnement push</td>
+            <td>
+              Une adresse technique (« endpoint ») propre à votre navigateur et deux clés de
+              chiffrement, fournies par le service de notifications de votre navigateur — jamais par
+              vous.
+            </td>
+          </tr>
+          <tr>
+            <td>Ville suivie</td>
+            <td>L'une des six villes proposées par l'application.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Une fois par heure, notre serveur compare les prévisions à venir aux dernières connues. En
+        cas de changement brusque (précipitation imminente, chute de température, vent fort,
+        verglas, orage), il envoie une notification chiffrée à votre abonnement — jamais deux fois
+        pour la même situation tant qu'elle n'a pas cessé puis repris. Cette donnée n'est utilisée à
+        aucune autre fin.
+      </p>
+      <p>
+        Un navigateur ne porte qu'un seul abonnement actif à la fois : activer les alertes pour une
+        nouvelle ville remplace l'abonnement précédent plutôt que d'en ajouter un second.
+      </p>
+      <p>
+        Vous pouvez désactiver les alertes à tout moment depuis le bouton « Désactiver » de
+        l'application : l'abonnement est alors supprimé de nos serveurs immédiatement. Si vous
+        retirez la permission de notification depuis les réglages de votre navigateur ou d'Android
+        sans repasser par l'application, l'abonnement révoqué n'est effacé qu'à la prochaine alerte
+        qui aurait dû vous être envoyée — jusque-là, il reste enregistré mais inutilisable. Vider
+        les données de site efface immédiatement la mémorisation locale (<code>villeAbonnee</code>),
+        mais pas l'abonnement côté serveur, pour la même raison.
+      </p>
+      <p>
+        La version Android déclare la permission de notification pour cette même fonction — elle
+        s'active et se désactive de la même façon, et reste refusable depuis les réglages Android.
       </p>
 
       <h2>Vos droits</h2>

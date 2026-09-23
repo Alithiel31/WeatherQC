@@ -13,7 +13,7 @@
       <p class="langue"><a href="/privacy-policy.html">🇫🇷 Version française</a></p>
 
       <h1>Privacy Policy</h1>
-      <p class="date">Météo Québec — last updated: August 6, 2026</p>
+      <p class="date">Météo Québec — last updated: September 23, 2026</p>
 
       <p class="avis-langue">
         This English text is provided for convenience only. The service is offered to the public in
@@ -43,7 +43,10 @@
       <h2>What we do not do</h2>
       <ul>
         <li>No accounts, no sign-up, no passwords.</li>
-        <li>No database: nothing about you is stored on our servers.</li>
+        <li>
+          No database, unless you opt in to weather alerts — see “Weather alerts (notifications)”
+          below.
+        </li>
         <li>No analytics tools (no Google Analytics, Matomo, Plausible or similar).</li>
         <li>No cookies, no tracking pixels, no advertising trackers.</li>
         <li>
@@ -86,11 +89,19 @@
             <td><code>unite</code></td>
             <td>Your unit preference, metric or imperial.</td>
           </tr>
+          <tr>
+            <td><code>villeAbonnee</code></td>
+            <td>
+              If you turned on weather alerts, the city they are set for — see “Weather alerts
+              (notifications)” below.
+            </td>
+          </tr>
         </tbody>
       </table>
       <p>
         You can erase all of it at any time by clearing your browser's site data, or by uninstalling
-        the Android application. Nothing remains on our side.
+        the Android application. Nothing remains on our side, except for a weather alert
+        subscription if you turned one on — see below.
       </p>
 
       <h2>What your device sends to our servers</h2>
@@ -229,12 +240,64 @@
         site data.
       </p>
 
-      <h2>Android notifications</h2>
+      <h2>Weather alerts (notifications)</h2>
       <p>
-        The Android version declares the notification permission. As of today,
-        <strong>the application sends no notifications</strong>: the permission is reserved for
-        possible future weather alerts. Should that feature be added, this policy will be updated
-        before it goes live, and notifications will remain refusable from Android settings.
+        This feature is <strong>entirely opt-in</strong>: it only turns on when you ask for it, from
+        the “Turn on weather alerts” button in the application, for one of the six offered cities
+        (never for a place found through a postal code).
+      </p>
+      <p>
+        When you turn it on, your browser creates a subscription with its own push notification
+        service (for example Mozilla's, Google's or Apple's, depending on the browser) — your device
+        then talks <strong>directly</strong> to that service, without going through our servers.
+        That subscription — a technical address and encryption keys, unrelated to your identity — is
+        then sent to our server and <strong>stored</strong>, along with the city you chose. It is
+        the only data our servers keep beyond the length of a request.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Data stored on our servers</th>
+            <th>Contents</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Push subscription</td>
+            <td>
+              A technical address (“endpoint”) unique to your browser and two encryption keys,
+              supplied by your browser's notification service — never by you.
+            </td>
+          </tr>
+          <tr>
+            <td>Watched city</td>
+            <td>One of the six cities offered by the application.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Once an hour, our server compares upcoming forecasts against the last known ones. On a
+        sudden change (imminent precipitation, temperature drop, strong wind, freezing rain,
+        thunderstorm), it sends an encrypted notification to your subscription — never twice for the
+        same situation unless it stops and then happens again. This data is used for no other
+        purpose.
+      </p>
+      <p>
+        A browser only carries one active subscription at a time: turning on alerts for a new city
+        replaces the previous subscription rather than adding a second one.
+      </p>
+      <p>
+        You can turn off alerts at any time from the “Turn off” button in the application: the
+        subscription is then deleted from our servers immediately. If you revoke the notification
+        permission from your browser's or Android's settings without going through the application,
+        the revoked subscription is only erased the next time an alert would have been sent to it —
+        until then it stays stored but unusable. Clearing site data erases the local memory
+        (<code>villeAbonnee</code>) immediately, but not the server-side subscription, for the same
+        reason.
+      </p>
+      <p>
+        The Android version declares the notification permission for this same feature — it turns on
+        and off the same way, and remains refusable from Android settings.
       </p>
 
       <h2>Your rights</h2>

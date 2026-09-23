@@ -29,6 +29,7 @@ Données fournies par [Open-Meteo](https://open-meteo.com) — gratuit, sans cl�
 | 🏙️ Sélection de ville | 6 villes disponibles (Montréal, Québec, Gatineau, Sherbrooke, Trois-Rivières, Saguenay), choix mémorisé entre les sessions |
 | 🌅 Ciel dynamique | Dégradé d'arrière-plan selon les conditions et le jour/nuit |
 | 📱 PWA installable | Fonctionne hors ligne — dernières prévisions en cache |
+| 🔔 Alertes météo | Notifications push facultatives, par ville, sur changement brusque (précipitation, chute de température, vent, verglas, orage) — voir la section dédiée plus bas |
 | ⚡ Cache serveur | Configurable via `.env` pour limiter les appels à Open-Meteo |
 
 ---
@@ -240,6 +241,9 @@ Routes disponibles :
 | `GET /api/rainviewer` | Index des images satellite et radar pour la carte animée |
 | `GET /api/sante` | Vérification de l'état du service |
 | `GET /api/openapi.json` | Document OpenAPI 3.1 de l'API |
+| `GET /api/notifications/cle-publique` | Clé VAPID publique, nécessaire au navigateur pour s'abonner aux alertes météo |
+| `POST /api/notifications/abonnement` | Enregistre l'abonnement `PushManager` du navigateur pour une ville |
+| `DELETE /api/notifications/abonnement` | Retire un abonnement (idempotent) |
 
 `openapi.json` est généré au démarrage depuis les mêmes schémas Zod que ceux qui valident
 réellement les requêtes (`backend/src/schemas/validation.ts`) — pas une spec écrite à la main
@@ -433,6 +437,55 @@ cd frontend && npm run test:pwa
 
 ---
 
+## Notifications d'alertes météo
+
+Abonnement facultatif, par ville, à des alertes Web Push déclenchées par un changement météo
+brusque — précipitation imminente, chute de température, vent fort, verglas, orage. Les routes
+sont listées dans la table ci-dessus (`GET /api/notifications/cle-publique`,
+`POST`/`DELETE /api/notifications/abonnement`).
+
+```bash
+# backend/.env — générer une paire de clés VAPID (une fois)
+npx web-push generate-vapid-keys
+```
+
+Sans `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` configurées (voir Variables d'environnement
+ci-dessus), les routes `/api/notifications/*` répondent **503** et le contrôle « Activer les
+alertes météo » de l'interface échoue proprement à l'abonnement plutôt que de faire disparaître
+le reste de l'application.
+
+**Détection** (`backend/src/services/detecteur-alertes.ts`) — fonction pure, sans réseau ni
+horloge : compare l'état actuel aux prévisions horaires et rend les alertes qui franchissent un
+seuil (précipitation ≥ 70 % sous 2 h, chute ≥ 8 °C sous 6 h, rafales ≥ 60 km/h, verglas et orage
+par code météo WMO). Verglas et orage sont marquées « importantes ».
+
+**Abonnements** (`backend/src/services/abonnements.service.ts`) — stockage `node:sqlite`, un
+fichier par défaut (`DB_PATH`), une table d'abonnements (ville, endpoint, clés de chiffrement) et
+une table anti-spam qui empêche de renvoyer la même alerte tant que la situation qui l'a
+déclenchée n'a pas cessé puis repris. Un navigateur ne porte qu'un abonnement actif à la fois :
+ré-abonner un même `endpoint` à une autre ville remplace l'entrée existante plutôt que d'en créer
+une seconde.
+
+**Vérification et envoi** (`backend/src/services/verificateur-alertes.ts`) — cycle horaire, sur
+les seules villes ayant au moins un abonnement (`villesAbonnees()`, pour éviter d'interroger
+Open-Meteo pour les autres). Un abonnement dont l'envoi échoue avec un 404/410 Web Push est
+considéré expiré et supprimé automatiquement — c'est ainsi que se nettoient les abonnements
+orphelins (permission retirée, site désinstallé), sans action explicite de personne.
+
+**Frontend** — `frontend/src/lib/notifications.ts` (demande de permission, abonnement et
+désabonnement `PushManager`) et `AlertesMeteo.svelte` (contrôle affiché sous l'en-tête de
+l'application, masqué plutôt qu'en erreur si le navigateur ne supporte pas Push — Safari iOS
+< 16.4, navigation privée sur plusieurs navigateurs). La réception vit dans le service worker
+(`frontend/src/sw.ts`, mode `injectManifest` de vite-plugin-pwa — seul moyen d'y ajouter des
+gestionnaires `push`/`notificationclick`, que `generateSW` ne permet pas), qui affiche la
+notification reçue et ramène au premier onglet déjà ouvert au clic.
+
+Ce que le navigateur transmet et ce que le serveur conserve : voir la section « Alertes météo
+(notifications) » de la
+[politique de confidentialité](https://qcweather.alithiel31.dev/privacy-policy.html).
+
+---
+
 ## Structure
 
 ```
@@ -447,7 +500,7 @@ meteo-qc/
 │       ├── data/cities.ts            # Villes et coordonnées
 │       ├── routers/                  # Définition des routes
 │       ├── controllers/              # Logique des requêtes
-│       ├── services/                 # Open-Meteo, géocodage, RainViewer, cache
+│       ├── services/                 # Open-Meteo, géocodage, RainViewer, cache, alertes météo
 │       ├── middlewares/              # Erreurs, rate-limit, request-id, accès
 │       ├── schemas/                  # Validation Zod des réponses amont
 │       └── lib/                      # Disjoncteur, erreurs, log, requêtes HTTP
@@ -455,12 +508,15 @@ meteo-qc/
     ├── src/
     │   ├── main.ts                        # Montage de l'app + service worker
     │   ├── App.svelte                     # Ville active, ciel dynamique
+    │   ├── sw.ts                          # Service worker (précache, push, notificationclick)
     │   └── lib/
     │       ├── Horaire.svelte             # Bandeau 48 h
     │       ├── CarteNuages.svelte         # Carte Leaflet animée
     │       ├── Quotidien.svelte           # Prévisions 7 jours
     │       ├── ConditionsActuelles.svelte # Température, ressenti, vent, humidité
     │       ├── RechercheCodePostal.svelte # Recherche par code postal
+    │       ├── AlertesMeteo.svelte        # Contrôle d'abonnement aux alertes météo
+    │       ├── notifications.ts           # Abonnement/désabonnement PushManager
     │       ├── animationFrames.svelte.ts  # Machine d'animation de la carte
     │       ├── preferences.svelte.ts      # Ville et préférences mémorisées
     │       ├── stockage.ts                # Accès localStorage tolérant aux pannes
