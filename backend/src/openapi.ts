@@ -3,6 +3,8 @@ import {
   previsionsParVilleSchema,
   previsionsCoordonneesSchema,
   geocodeSchema,
+  abonnementSchema,
+  desabonnementSchema,
 } from './schemas/validation.js';
 import {
   villeSchema,
@@ -11,6 +13,8 @@ import {
   framesRainViewerSchema,
   santeSchema,
   erreurSchema,
+  clePubliqueSchema,
+  abonnementConfirmeSchema,
 } from './schemas/openapi-reponses.js';
 
 /**
@@ -144,6 +148,35 @@ export const openapiDocument = {
       get: {
         summary: 'État du service (healthcheck)',
         responses: { '200': reponseJson('Diagnostic', santeSchema) },
+      },
+    },
+    '/api/notifications/cle-publique': {
+      get: {
+        summary: 'Clé publique VAPID pour l’abonnement aux notifications push',
+        responses: {
+          '200': reponseJson('Clé publique', clePubliqueSchema),
+          '503': reponseErreur('Notifications indisponibles — clés VAPID non configurées'),
+        },
+      },
+    },
+    '/api/notifications/abonnement': {
+      post: {
+        summary: 'Abonne un navigateur aux alertes météo d’une ville',
+        requestBody: corpsJson(abonnementSchema),
+        responses: {
+          '201': reponseJson('Abonnement enregistré', abonnementConfirmeSchema),
+          '400': reponseErreur('Corps invalide (endpoint, clés ou ville manquants/malformés)'),
+          '404': reponseErreur('Ville inconnue'),
+          '503': reponseErreur('Notifications indisponibles — clés VAPID non configurées'),
+        },
+      },
+      delete: {
+        summary: 'Désabonne un navigateur des alertes météo',
+        requestBody: corpsJson(desabonnementSchema),
+        responses: {
+          '204': { description: 'Désabonné (idempotent — un endpoint déjà absent répond aussi 204)' },
+          '400': reponseErreur('Corps invalide'),
+        },
       },
     },
   },

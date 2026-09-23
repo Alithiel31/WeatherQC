@@ -23,3 +23,24 @@ export const geocodeSchema = z.object({
     .toUpperCase()
     .refine((val) => /^[A-Z]\d[A-Z]/.test(val.slice(0, 3)), 'Format invalide (ex: H2X ou K1A 0B1)'),
 });
+
+/**
+ * Corps attendu de `PushSubscription.toJSON()` côté navigateur — voir
+ * https://developer.mozilla.org/docs/Web/API/PushSubscription/toJSON.
+ */
+const pushSubscriptionSchema = z.object({
+  endpoint: z.url('endpoint doit être une URL absolue'),
+  keys: z.object({
+    p256dh: z.string().min(1, 'p256dh requis'),
+    auth: z.string().min(1, 'auth requis'),
+  }),
+});
+
+export const abonnementSchema = z.object({
+  ville: z.string().min(1, 'ville requise').toLowerCase(),
+  subscription: pushSubscriptionSchema,
+});
+
+export const desabonnementSchema = z.object({
+  endpoint: z.url('endpoint doit être une URL absolue'),
+});

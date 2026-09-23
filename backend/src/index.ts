@@ -16,6 +16,7 @@ import villesRouter from './routers/villes.router.js';
 import previsionsRouter from './routers/previsions.router.js';
 import geocodeRouter from './routers/geocode.router.js';
 import rainviewerRouter from './routers/rainviewer.router.js';
+import notificationsRouter from './routers/notifications.router.js';
 
 const app = express();
 
@@ -77,6 +78,7 @@ app.use('/api', villesRouter);
 app.use('/api', previsionsRouter);
 app.use('/api', geocodeRouter);
 app.use('/api', rainviewerRouter);
+app.use('/api', notificationsRouter);
 
 app.use(zodErrorHandler);
 app.use(globalErrorHandler);
