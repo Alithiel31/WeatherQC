@@ -80,6 +80,10 @@
         {enCours ? 'Désactivation…' : 'Désactiver'}
       </button>
     {:else}
+      <p class="avis">
+        Crée un abonnement technique (sans lien avec votre identité) enregistré sur nos serveurs
+        pour cette ville. <a href="/privacy-policy.html#alertes-meteo">Détails</a>.
+      </p>
       <button type="button" class="bascule" onclick={activer} disabled={enCours}>
         {enCours ? 'Activation…' : `Activer les alertes météo pour ${villeNom}`}
       </button>
@@ -105,6 +109,14 @@
   }
 
   .etat { margin: 0; flex: 1 1 auto; }
+
+  .avis {
+    margin: 0;
+    flex-basis: 100%;
+    font-size: 0.75rem;
+    opacity: 0.85;
+  }
+  .avis a { color: inherit; }
 
   .bascule {
     flex-shrink: 0;
