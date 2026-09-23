@@ -19,6 +19,7 @@ const mockRawResponse = {
     temperature_2m: [-4, -5, -6],
     weather_code: [2, 3, 3],
     precipitation_probability: [10, 20, 30],
+    wind_gusts_10m: [25, 35, 45],
   },
   daily: {
     time: ['2024-01-15'],
@@ -94,6 +95,7 @@ describe('fetchForecast', () => {
       expect(result.horaire[0].heure).toBe('2024-01-15T14:00');
       expect(result.horaire[0].temperature).toBe(-5);
       expect(result.horaire[0].precipitation).toBe(20);
+      expect(result.horaire[0].rafales).toBe(35);
     });
 
     it('utilise index 0 si aucune heure ne correspond (nowIndex = -1)', async () => {

@@ -30,6 +30,7 @@ export const previsionsOpenMeteoSchema = z.object({
     temperature_2m: serie,
     weather_code: serie,
     precipitation_probability: serie,
+    wind_gusts_10m: serie,
   }),
   daily: z.object({
     time: z.array(z.string()),
