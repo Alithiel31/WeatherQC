@@ -4,6 +4,14 @@
 
 ### Added
 
+- `robots.txt`, `sitemap.xml` et `llms.txt` à la racine du frontend, ainsi que `meta description`,
+  `link canonical` et Open Graph sur `index.html` et les six pages légales FR/EN — rien n'excluait
+  les robots (moteurs classiques ou agents IA), mais rien ne les guidait non plus, et aucune page
+  n'était identifiable hors contexte par un partage ou une indexation
+- Un texte explicatif, avec lien vers la politique de confidentialité, avant le bouton « Activer
+  les alertes météo » (`AlertesMeteo.svelte`) : le clic déclenchait jusqu'ici directement le prompt
+  natif de permission du navigateur sans qu'aucun contenu de la page n'explique au préalable ce qui
+  serait enregistré — insuffisant au regard de l'exigence de consentement éclairé de la Loi 25
 - Un document `SECURITY.md` (et sa traduction `SECURITY.en.md`), qui manquait alors que le dépôt
   manipule déjà un keystore de signature Android et un service account Play Store réels, et fait
   tourner un scan `gitleaks` dédié. Décrit le canal de signalement privilégié (GitHub Security
