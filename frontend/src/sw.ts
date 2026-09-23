@@ -43,7 +43,13 @@ registerRoute(
 );
 
 registerRoute(
-  /^https:\/\/.*\.basemaps\.cartocdn\.com\/.*/,
+  // Test sur `url.hostname` plutôt qu'un regex sur l'URL complète : un `.*`
+  // avant le nom d'hôte matcherait aussi un chemin comme
+  // `https://evil.example/x.basemaps.cartocdn.com/y`, où le domaine n'est
+  // qu'une sous-chaîne du chemin — un attaquant pourrait alors faire mettre
+  // en cache (CacheFirst, donc durablement) une réponse venant d'une origine
+  // qu'il contrôle (CodeQL js/incomplete-hostname-regexp).
+  ({ url }) => url.hostname.endsWith('.basemaps.cartocdn.com'),
   new CacheFirst({
     cacheName: 'tuiles-fond',
     plugins: [new ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 7 })],
