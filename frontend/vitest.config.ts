@@ -22,8 +22,11 @@ export default defineConfig({
       // vitest 4 : un module non testé pèse 0 % au lieu de disparaître.
       // `main.ts` en est absent : il ne fait que monter l'app et enregistrer le
       // service worker. Le tester reviendrait à affirmer des doublures.
+      // `sw.ts` en est absent aussi : il tourne dans un vrai
+      // `ServiceWorkerGlobalScope` que jsdom ne fournit pas — sa correction est
+      // vérifiée par `tests/pwa/build.test.ts` sur la sortie de build réelle.
       include: ['src/**/*.ts', 'src/**/*.svelte'],
-      exclude: ['src/main.ts', 'src/vite-env.d.ts'],
+      exclude: ['src/main.ts', 'src/sw.ts', 'src/vite-env.d.ts'],
       // Seuils calés sous la mesure réelle (96 / 89 / 95 / 97), pas sur un
       // chiffre rond : ils doivent bloquer une régression franche — un composant
       // ou un module qui perd ses tests — sans casser la CI dès qu'un refactor

@@ -15,5 +15,9 @@
     "tests/**/*.ts",
     "tests/**/*.svelte",
     "vitest.config.ts"
-  ]
+  ],
+  // `sw.ts` tourne dans un `ServiceWorkerGlobalScope`, incompatible avec le lib
+  // `DOM` implicite du reste de l'app (deux déclarations différentes de `self`,
+  // `caches`, etc.) — vérifié séparément via `tsconfig.sw.json`.
+  "exclude": ["src/sw.ts"]
 }
