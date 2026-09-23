@@ -2,6 +2,8 @@
 
 ## [Non publié]
 
+## [3.2.0] - 2026-09-23
+
 ### Added
 
 - `robots.txt`, `sitemap.xml` et `llms.txt` à la racine du frontend, ainsi que `meta description`,
