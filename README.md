@@ -36,41 +36,9 @@ Données fournies par [Open-Meteo](https://open-meteo.com) — gratuit, sans cl�
 
 ## Architecture
 
-Vue d'ensemble du système, du navigateur jusqu'aux APIs externes :
+Backend Express en proxy-cache devant Open-Meteo, Zippopotam et RainViewer ; frontend Svelte 5 en PWA installable ; coquille TWA Android — le tout derrière nginx et un tunnel Cloudflare, sur un Raspberry Pi. Le backend Express est le seul composant qui appelle les APIs externes, jamais directement depuis le navigateur.
 
-```mermaid
-flowchart LR
-    PWA[PWA Svelte]
-    TWA[TWA Android]
-
-    subgraph RPI["Raspberry Pi — Docker Compose"]
-        Nginx[Nginx<br/>reverse proxy + statique]
-        Backend[Backend Express<br/>cache · disjoncteur · rate-limit]
-    end
-
-    OM[Open-Meteo]
-    ZP[Zippopotam]
-    RV[RainViewer]
-
-    PWA -- HTTPS --> CF[Tunnel Cloudflare]
-    TWA -- HTTPS --> CF
-    CF --> Nginx
-    Nginx -- "/api/*" --> Backend
-    Nginx -- statique --> PWA
-    Backend --> OM
-    Backend --> ZP
-    Backend --> RV
-```
-
-Le navigateur et l'app Android passent tous deux par le même tunnel Cloudflare et la même
-instance nginx : la TWA n'est qu'une coquille qui charge le PWA depuis
-`qcweather.alithiel31.dev`, elle ne parle jamais directement au backend. Nginx sert les
-fichiers statiques et route `/api/*` vers le backend Express en same-origin (voir section
-Déploiement ci-dessous). Le backend Express est le seul composant qui appelle les APIs
-externes, derrière la couche de cache, de mutualisation des requêtes et de disjoncteur décrite
-dans « Résilience des amonts » plus bas — jamais directement depuis le navigateur.
-
-Détail des dossiers et fichiers du dépôt : voir la section Structure plus bas.
+Diagramme complet, résilience des amonts (mutualisation, cache dégradé, disjoncteur) et structure détaillée du dépôt : voir [docs/architecture.md](./docs/architecture.md).
 
 ---
 
@@ -136,399 +104,36 @@ npm run deploy:web       # ou deploy:android pour build-twa.yml
 
 ## Android (TWA)
 
-L'application est en **test interne** (Internal Testing) sur le Google Play Store, sous forme de TWA (Trusted Web Activity) : une coquille Android légère qui charge directement le PWA depuis `https://qcweather.alithiel31.dev`. La publication en piste publique est prévue à court terme — voir la note de statut ci-dessous.
+L'application est en **test interne** (Internal Testing) sur le Google Play Store, sous forme de TWA (Trusted Web Activity) qui charge directement le PWA depuis `https://qcweather.alithiel31.dev`. Package ID : `dev.alithiel31.qcweather` — sources : `twa-qcweather/`.
 
-**Package ID :** `dev.alithiel31.qcweather` — Sources : `twa-qcweather/`
-
-### Workflows CI/CD
-
-| Workflow | Déclencheur | Rôle |
-|---|---|---|
-| `android.yml` | PR ou push touchant `twa-qcweather/**` | `bundleRelease` **non signé** — filet avant merge |
-| `build-twa.yml` | Push sur `twa-qcweather/**` **depuis `main`**, ou manuel **depuis `main`** | Build + signature du `.aab` |
-| `deploy-twa.yml` | Après `build-twa.yml` réussi, ou manuel depuis `main` | Publication sur Play Store (Internal Testing) |
-
-> Le keystore de production n'est déchiffré que depuis `main` — `build-twa.yml` et
-> `deploy-twa.yml` portent la garde `github.ref == 'refs/heads/main'`, qui couvre aussi le
-> déclenchement manuel.
->
-> **La signature de production n'existe donc que sur `main`.** La compilation, elle, est
-> vérifiée dès la PR : `android.yml` exécute `bundleRelease` sans aucun secret — le projet ne
-> déclare pas de `signingConfig`, Bubblewrap injecte la signature au moment du build, et le
-> bundle produit par ce filet est non signé et jamais publié. Une montée de Gradle, d'AGP ou
-> d'`androidbrowserhelper` échoue donc avant merge, pas après.
->
-> Pour reproduire en local : `cd twa-qcweather && ./gradlew bundleRelease`.
-
-> `deploy-twa.yml` nécessite une **première soumission manuelle** dans Play Console — Google exige qu'une version existe déjà sur la piste avant d'accepter les uploads via API.
-
-> **Statut actuel** : la version disponible via `deploy-twa.yml` est limitée aux testeurs déclarés dans Play Console (piste Internal Testing) — le lien du badge en haut de ce document n'est donc pas encore accessible au public. La bascule vers une piste de production est en cours ; cette section sera mise à jour dès la publication effective.
-
-### Secrets GitHub requis
-
-| Secret | Description |
-|---|---|
-| `KEYSTORE_BASE64` | Keystore Android encodé en base64 |
-| `KEYSTORE_PASSWORD` | Mot de passe du keystore |
-| `KEY_PASSWORD` | Mot de passe de la clé de signature |
-| `PLAY_SERVICE_ACCOUNT_JSON` | Clé JSON du Service Account Google Play API |
-
-### Configurer le Service Account (une fois)
-
-1. [Google Cloud Console](https://console.cloud.google.com) → IAM & Admin → Service Accounts → Créer
-2. Télécharger la clé JSON → ajouter comme secret `PLAY_SERVICE_ACCOUNT_JSON`
-3. Play Console → Setup → API access → lier le service account → rôle **Release Manager**
+Workflows CI/CD, secrets GitHub requis et configuration du Service Account Google Play : voir [docs/android.md](./docs/android.md).
 
 ---
 
 ## Variables d'environnement
 
-| Variable | Obligatoire | Défaut | Description |
-|---|---|---|---|
-| `PORT` | ❌ | `3005` | Port du backend |
-| `NODE_ENV` | ❌ | `development` | Environnement (`production` en prod) |
-| `TAILSCALE_IP` | ❌ | — | IP Tailscale pour l'accès réseau distant |
-| `PUBLIC_ORIGINS` | ❌ | — | Origines CORS autorisées en plus du poste local et de Tailscale, séparées par des virgules |
-| `FETCH_TIMEOUT_MS` | ❌ | `5000` | Délai maximal d'un appel à Open-Meteo / Zippopotam |
-| `TRUST_PROXY_HOPS` | ❌ | `2` | Nombre de proxies devant l'API (cloudflared + nginx) |
-| `RATE_LIMIT_WINDOW_MS` | ❌ | `60000` | Fenêtre de la limitation de débit |
-| `RATE_LIMIT_MAX` | ❌ | `100` | Requêtes/fenêtre/IP sur `/api` |
-| `RATE_LIMIT_GEOCODE_MAX` | ❌ | `20` | Requêtes/fenêtre/IP sur `/api/geocode` |
-| `CACHE_TTL_PREVISIONS` | ❌ | `600000` | Durée du cache météo en ms (défaut : 10 min) |
-| `CACHE_TTL_GEOCODE` | ❌ | `2592000000` | Durée du cache géocodage en ms (défaut : 30 jours) |
-| `CACHE_TTL_RAINVIEWER` | ❌ | `300000` | Durée du cache de l'index RainViewer en ms (défaut : 5 min) |
-| `CACHE_MAX_ENTRIES` | ❌ | `500` | Plafond du nombre d'entrées en cache (éviction LRU) |
-| `CACHE_FACTEUR_OBSOLETE` | ❌ | `6` | Une entrée reste servable `facteur × TTL` après péremption si l'amont échoue |
-| `BREAKER_SEUIL_ECHECS` | ❌ | `5` | Échecs consécutifs avant suspension des appels à un amont |
-| `BREAKER_REPOS_MS` | ❌ | `30000` | Durée de la suspension avant la requête de test |
-| `DEFAULT_TIMEZONE` | ❌ | `America/Toronto` | Timezone pour les prévisions Open-Meteo |
-| `VAPID_PUBLIC_KEY` | ❌ | — | Clé publique VAPID pour les notifications push d'alertes météo (générée avec `npx web-push generate-vapid-keys`) — absente, l'abonnement aux alertes reste indisponible |
-| `VAPID_PRIVATE_KEY` | ❌ | — | Clé privée VAPID correspondante — doit être fournie avec `VAPID_PUBLIC_KEY`, jamais seule |
-| `VAPID_CONTACT_EMAIL` | ❌ | `mailto:contact@alithiel31.dev` | Contact affiché aux navigateurs recevant les notifications (exigé par le protocole Web Push) |
-| `DB_PATH` | ❌ | `data/abonnements.sqlite` | Fichier SQLite des abonnements aux alertes météo — monté sur un volume Docker nommé en production |
+Configuration backend validée par Zod au démarrage (`PORT`, caches, rate-limit, disjoncteur, VAPID pour les alertes push...) et variable de build frontend pour les clés de carte.
 
-Variable de **build** frontend (`frontend/.env`, lue à la fois par Vite en développement local
-et par `docker compose` via le flag `--env-file frontend/.env` — voir `frontend/.env.example`
-pour le détail) : contrairement au tableau ci-dessus, elle n'est pas validée par Zod côté
-serveur, elle est embarquée dans le bundle JS par Vite au moment du build. Compose ne supporte
-pas de directive `env_file` au niveau racine du fichier : le flag doit accompagner chaque
-invocation touchant `docker-compose.yml` (voir CI et `deploy-web.yml`).
-
-| Variable | Obligatoire | Défaut | Description |
-|---|---|---|---|
-| `VITE_OPENWEATHERMAP_KEY` | ❌ | — | Clé API OpenWeatherMap (gratuite) pour le repli de la carte satellite ; vide = message d'indisponibilité au lieu du repli |
-| `VITE_CARTO_API_KEY` | ⚠️ recommandée | — | Clé API CARTO (gratuite — [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey/), envoyée par courriel sans file d'attente) pour le fond de carte de l'onglet « Nuages » ; vide = tuiles servies quand même mais recouvertes du filigrane CARTO « API KEY REQUIRED » depuis fin août 2026 |
+Liste complète avec valeurs par défaut : voir [docs/environnement.md](./docs/environnement.md).
 
 ---
 
 ## Développement local
 
-### Backend (port 3005)
-
 ```bash
-cd backend && npm install
-npm run dev        # rechargement auto (tsx --watch)
+cd backend && npm install && npm run dev    # port 3005
+cd frontend && npm install && npm run dev   # port 5173
 ```
 
-Routes disponibles :
-
-| Route | Description |
-|---|---|
-| `GET /api/villes` | Liste des villes disponibles |
-| `GET /api/previsions/:ville` | Prévisions par ville (`montreal`, `quebec`, `gatineau`, `sherbrooke`, `trois-rivieres`, `saguenay`) |
-| `GET /api/previsions-coordonnees?lat=&lon=&nom=` | Prévisions pour un point GPS |
-| `GET /api/geocode/:codePostal` | Géocode une RTA québécoise (ex. `H2X`) |
-| `GET /api/rainviewer` | Index des images satellite et radar pour la carte animée |
-| `GET /api/sante` | Vérification de l'état du service |
-| `GET /api/openapi.json` | Document OpenAPI 3.1 de l'API |
-| `GET /api/notifications/cle-publique` | Clé VAPID publique, nécessaire au navigateur pour s'abonner aux alertes météo |
-| `POST /api/notifications/abonnement` | Enregistre l'abonnement `PushManager` du navigateur pour une ville |
-| `DELETE /api/notifications/abonnement` | Retire un abonnement (idempotent) |
-
-`openapi.json` est généré au démarrage depuis les mêmes schémas Zod que ceux qui valident
-réellement les requêtes (`backend/src/schemas/validation.ts`) — pas une spec écrite à la main
-qu'on oublierait de mettre à jour. Les corps de réponse, eux, n'ont pas ce filet : le backend ne
-valide pas ses propres sorties, `backend/src/schemas/openapi-reponses.ts` les décrit séparément à
-la seule fin de documenter. Pour l'explorer : coller l'URL dans
-[Swagger Editor](https://editor.swagger.io) ou l'importer dans Postman/Insomnia — rien n'est
-servi en HTML par le backend, pour ne pas avoir à assouplir la CSP posée par nginx.
-
-Les appels aux APIs externes sont bornés par `FETCH_TIMEOUT_MS` et rejoués une fois en cas
-d'erreur réseau ou 5xx. Un amont qui ne répond pas à temps donne un **504**, un amont en
-erreur un **502** — jamais une requête suspendue.
-
-Les trois amonts passent par ce même chemin, RainViewer compris : son index transitait
-autrefois directement du navigateur vers `api.rainviewer.com`, sans cache ni quota. Seul
-l'**index** est proxifié — les tuiles restent chargées en direct depuis
-`tilecache.rainviewer.com`, les faire transiter par le Raspberry Pi coûterait bien plus cher
-que ce que le cache ferait gagner. En contrepartie, la carte dépend désormais du backend :
-si celui-ci est injoignable, elle affiche son message de repli au lieu de se débrouiller
-seule.
-
-Les origines CORS autorisées sont le poste de développement, l'IP Tailscale si elle est
-configurée, et celles déclarées par `PUBLIC_ORIGINS`. En production, nginx proxifie `/api/`
-en same-origin : aucune requête ne porte d'en-tête `Origin`, donc un domaine public absent de
-la liste ne se voit sur aucune requête réelle — jusqu'au jour où un client est servi depuis
-un autre hôte.
-
-L'API est exposée publiquement : en-têtes de durcissement (`helmet`), corps JSON plafonné à
-10 ko et limitation de débit par IP cliente (**429** au-delà du quota). `/api/sante` n'est
-jamais limité — le healthcheck Docker l'interroge toutes les 30 s.
-
-Les réponses des APIs externes sont validées avant usage : une dérive de schéma chez Open-Meteo
-ou Zippopotam donne un **502** nommant le champ fautif, jamais un 500. Toutes les erreurs
-partagent la même enveloppe `{ status, error }`, à laquelle les erreurs de validation ajoutent
-`details`.
-
-Chaque réponse porte un en-tête `X-Request-Id` — repris de l'amont s'il est fourni — qu'on
-retrouve dans les logs. Un utilisateur qui signale une panne peut citer cet identifiant :
-
-```bash
-docker compose --env-file frontend/.env logs backend | grep <identifiant>
-```
-
-Chaque requête terminée produit une ligne — méthode, chemin, statut, durée, et l'origine de la
-réponse (`frais`, `obsolete`, `amont`) — et chaque appel amont la sienne, avec sa latence.
-C'est ce qui permet de trancher « c'est Open-Meteo » de « c'est le Pi » sans instrumenter quoi
-que ce soit. Les rejets du limiteur, qui n'atteignent jamais le gestionnaire d'erreurs,
-apparaissent en `warn` avec leur 429.
-
-`GET /api/sante` complète le tableau : version de Node, temps depuis le démarrage, mémoire
-résidente, statistiques de cache (entrées, hits, misses, taux) et état des disjoncteurs amont.
-
-### Résilience des amonts
-
-Trois mécanismes, tous visibles dans `/api/sante` :
-
-- **Mutualisation** — N requêtes simultanées sur une clé froide ne déclenchent qu'un seul appel
-  amont. Le TTL étant fixe, toutes les clés chaudes expirent ensemble : sans cela, la rafale
-  suivant une expiration partait en entier chez le fournisseur.
-- **Service dégradé** — une entrée périmée reste servable `CACHE_FACTEUR_OBSOLETE × TTL`, mais
-  uniquement si l'amont vient d'échouer. La réponse porte alors `obsolete: true` et
-  l'application l'affiche : des prévisions d'il y a vingt minutes valent mieux qu'un écran
-  d'erreur. Côté service worker, un greffon Workbox traite un 5xx comme une panne réseau —
-  sans quoi `NetworkFirst` ne consultait jamais le cache, un 502 étant une réponse *résolue*.
-- **Disjoncteur** — au-delà de `BREAKER_SEUIL_ECHECS` échecs consécutifs, les appels à cet
-  amont sont suspendus pendant `BREAKER_REPOS_MS` et répondent **503** immédiatement, puis une
-  seule requête teste le retour du service. Sans lui, un amont mort immobilisait ~10 s de
-  connexion par requête, multipliées par le nombre de clients — sur un Pi borné à 256 Mo, une
-  panne tierce devenait un épuisement local.
-
-Une variable d'environnement invalide (`PORT=abc`, quota vide) fait échouer le démarrage en la
-nommant, au lieu de laisser tourner le serveur avec un `NaN`.
-
-> **Calibrage de `TRUST_PROXY_HOPS`** — la limitation de débit s'applique par IP cliente.
-> Derrière cloudflared puis nginx, il faut remonter 2 sauts pour retrouver le vrai client ;
-> mal réglé, tous les visiteurs partagent le même compteur. Après un changement d'infra,
-> vérifier avec `curl -s https://qcweather.alithiel31.dev/api/villes -D - | grep -i ratelimit`
-> depuis deux réseaux différents : les compteurs doivent être indépendants.
-
-### Tests (backend)
-
-| Commande | Portée | Réseau |
-|---|---|---|
-| `npm run test:run` | Unitaires + intégration — lancé par le hook `pre-push` | ❌ aucun appel réseau |
-| `npm run test:unit` | Unitaires seuls | ❌ aucun appel réseau |
-| `npm run test:coverage` | Idem + rapport de couverture — **c'est ce que lance la CI** | ❌ aucun appel réseau |
-| `npm run test:contract` | Vérifie le contrat réel d'Open-Meteo, de Zippopotam et de RainViewer | ✅ appels réels |
-
-Les tests d'intégration s'appuient sur les fixtures de `backend/tests/fixtures/` : une panne
-d'API externe ne peut plus faire échouer une PR. `tests/setup.ts` fait échouer explicitement
-tout appel réseau non mocké.
-
-Les tests de contrat tournent séparément via le workflow `contract.yml` (nocturne + manuel) :
-c'est lui qui détecte une dérive de schéma chez les APIs externes. En cas d'échec il **ouvre
-une issue** étiquetée `derive-contrat`, et la réutilise tant qu'elle est ouverte — une
-détection que personne ne lit n'est pas une détection.
-
-Le job `docker` de la CI ne se contente plus de construire les images : il démarre la pile avec
-`docker compose up --wait` — ce qui exerce le healthcheck du backend, le
-`depends_on: service_healthy` du frontend et la configuration nginx dans son vrai réseau —
-puis interroge `/api/sante`, `/api/villes` et la coquille applicative à travers nginx. Une
-variable d'environnement invalide, un healthcheck cassé ou une config nginx fautive échouent
-désormais en CI plutôt qu'au déploiement.
-
-> `nginx -t` dans un conteneur isolé ne convient pas ici : `proxy_pass http://backend:3005`
-> exige de résoudre l'hôte `backend`, qui n'existe que dans le réseau du compose. C'est le
-> démarrage réel qui fait office de test.
-
-`test:coverage` échoue sous les seuils déclarés dans `backend/vitest.config.ts`. Ils sont
-calés **sous la mesure réelle**, pas sur un chiffre rond : ils bloquent une régression
-franche sans casser la CI dès qu'un refactor ajoute une garde difficile à atteindre.
-`app.ts` est exclu de la mesure — il ne contient que `listen()` et les gestionnaires de
-signaux, dont la vérification réelle est le healthcheck Docker.
-
-### Frontend (port 5173)
-
-```bash
-cd frontend && npm install
-npm run dev
-```
-
-Ouvrir `http://localhost:5173`. Le proxy Vite redirige `/api` vers le backend.
-
-Tous les appels réseau passent par `src/lib/api.ts` — c'est le seul endroit où `fetch`
-est appelé côté frontend, ce qui permet de le stubber d'un bloc dans les tests.
-
-### Tests (frontend)
-
-| Commande | Portée |
-|---|---|
-| `npm run test` | Mode watch pendant le développement |
-| `npm run test:run` | Une passe complète |
-| `npm run test:coverage` | Idem + rapport de couverture |
-| `npm run test:ci` | Idem + `rapport-tests.json` — **c'est ce que lance la CI** |
-| `npm run test:pwa` | Uniquement les vérifications PWA (manifeste + service worker) |
-| `npm run test:e2e` | Parcours de bout en bout dans Chromium (Playwright) |
-
-La CI publie `frontend/coverage/` et `frontend/rapport-tests.json` en artefact
-(`frontend-rapports`, conservé 14 jours), y compris quand le job échoue — c'est là que le
-rapport est le plus utile.
-
-Environnement `jsdom` + Testing Library. Comme côté backend, `tests/setup.ts` fait échouer
-explicitement tout appel réseau non mocké : un test ne peut pas dépendre de la disponibilité
-du backend ou de RainViewer.
-
-Les seuils de couverture vivent dans `frontend/vitest.config.ts`, calés sous la mesure
-réelle. `src/main.ts` en est exclu : il ne fait que monter l'app et enregistrer le service
-worker.
-
-### Parcours de bout en bout
-
-`e2e/` ouvre l'application **construite** dans Chromium via Playwright : sélection de ville et
-persistance du choix, recherche par code postal, message d'erreur du backend, bouton
-« Réessayer », bascule hors ligne, démarrage avec un stockage corrompu.
-
-L'API y est doublée par Playwright plutôt que servie par le vrai backend. Une suite de bout en
-bout qui dépend d'Open-Meteo redevient exactement ce que `tests/setup.ts` interdit partout
-ailleurs : un test qui échoue pour une raison étrangère au code. Le service worker est
-neutralisé pour la même raison — il intercepterait les requêtes avant les doublures, et ses
-garanties sont déjà vérifiées sur la sortie de build par `tests/pwa/build.test.ts`.
-
-```bash
-cd frontend && npm run test:e2e
-```
-
-> Un environnement fournissant déjà Chromium peut le désigner par
-> `PLAYWRIGHT_CHROMIUM_PATH` au lieu d'en télécharger un second, souvent d'une version
-> incompatible avec celle qu'attend Playwright.
-
-### Vérifications PWA
-
-`tests/pwa/build.test.ts` reconstruit l'app et lit la sortie de `dist/` pour vérifier les
-deux promesses affichées plus haut — installabilité et fonctionnement hors ligne :
-
-- le manifeste déclare `display: standalone`, un `start_url`, les icônes 192/512 et une
-  icône `maskable`, et n'y référence que des fichiers réellement présents ;
-- le service worker est généré, enregistré par le bundle, et précache la coquille ;
-- les stratégies de cache attendues sont bien câblées (`NetworkFirst` sur
-  `/api/previsions`, `CacheFirst` sur les tuiles de fond).
-
-```bash
-cd frontend && npm run test:pwa
-```
-
-> **Pourquoi pas Lighthouse** — depuis Lighthouse 12, la catégorie PWA et ses audits
-> (`installable-manifest`, `service-worker`) ont été **supprimés** ; Lighthouse 13 ne
-> connaît plus que `performance`, `accessibility`, `best-practices` et `seo`. Auditer
-> l'installabilité imposerait d'épingler une version abandonnée, plus un Chrome headless
-> et un serveur statique en CI. Les mêmes garanties se lisent dans la sortie de build,
-> en quelques secondes et sans navigateur.
+Routes disponibles, résilience réseau, tests unitaires/intégration/contrat, tests de bout en bout et vérifications PWA : voir [docs/developpement.md](./docs/developpement.md).
 
 ---
 
 ## Notifications d'alertes météo
 
-Abonnement facultatif, par ville, à des alertes Web Push déclenchées par un changement météo
-brusque — précipitation imminente, chute de température, vent fort, verglas, orage. Les routes
-sont listées dans la table ci-dessus (`GET /api/notifications/cle-publique`,
-`POST`/`DELETE /api/notifications/abonnement`).
+Abonnement facultatif, par ville, à des alertes Web Push déclenchées par un changement météo brusque — précipitation imminente, chute de température, vent fort, verglas, orage.
 
-```bash
-# backend/.env — générer une paire de clés VAPID (une fois)
-npx web-push generate-vapid-keys
-```
-
-Sans `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` configurées (voir Variables d'environnement
-ci-dessus), les routes `/api/notifications/*` répondent **503** et le contrôle « Activer les
-alertes météo » de l'interface échoue proprement à l'abonnement plutôt que de faire disparaître
-le reste de l'application.
-
-**Détection** (`backend/src/services/detecteur-alertes.ts`) — fonction pure, sans réseau ni
-horloge : compare l'état actuel aux prévisions horaires et rend les alertes qui franchissent un
-seuil (précipitation ≥ 70 % sous 2 h, chute ≥ 8 °C sous 6 h, rafales ≥ 60 km/h, verglas et orage
-par code météo WMO). Verglas et orage sont marquées « importantes ».
-
-**Abonnements** (`backend/src/services/abonnements.service.ts`) — stockage `node:sqlite`, un
-fichier par défaut (`DB_PATH`), une table d'abonnements (ville, endpoint, clés de chiffrement) et
-une table anti-spam qui empêche de renvoyer la même alerte tant que la situation qui l'a
-déclenchée n'a pas cessé puis repris. Un navigateur ne porte qu'un abonnement actif à la fois :
-ré-abonner un même `endpoint` à une autre ville remplace l'entrée existante plutôt que d'en créer
-une seconde.
-
-**Vérification et envoi** (`backend/src/services/verificateur-alertes.ts`) — cycle horaire, sur
-les seules villes ayant au moins un abonnement (`villesAbonnees()`, pour éviter d'interroger
-Open-Meteo pour les autres). Un abonnement dont l'envoi échoue avec un 404/410 Web Push est
-considéré expiré et supprimé automatiquement — c'est ainsi que se nettoient les abonnements
-orphelins (permission retirée, site désinstallé), sans action explicite de personne.
-
-**Frontend** — `frontend/src/lib/notifications.ts` (demande de permission, abonnement et
-désabonnement `PushManager`) et `AlertesMeteo.svelte` (contrôle affiché sous l'en-tête de
-l'application, masqué plutôt qu'en erreur si le navigateur ne supporte pas Push — Safari iOS
-< 16.4, navigation privée sur plusieurs navigateurs). La réception vit dans le service worker
-(`frontend/src/sw.ts`, mode `injectManifest` de vite-plugin-pwa — seul moyen d'y ajouter des
-gestionnaires `push`/`notificationclick`, que `generateSW` ne permet pas), qui affiche la
-notification reçue et ramène au premier onglet déjà ouvert au clic.
-
-Ce que le navigateur transmet et ce que le serveur conserve : voir la section « Alertes météo
-(notifications) » de la
-[politique de confidentialité](https://qcweather.alithiel31.dev/privacy-policy.html).
-
----
-
-## Structure
-
-```
-meteo-qc/
-├── docker-compose.yml
-├── backend/
-│   ├── app.ts                        # Point d'entrée (démarrage, arrêt gracieux)
-│   ├── .env.example                  # Template des variables d'environnement
-│   └── src/
-│       ├── index.ts                  # Construction de l'app Express
-│       ├── config.ts                 # Variables d'environnement validées (Zod)
-│       ├── data/cities.ts            # Villes et coordonnées
-│       ├── routers/                  # Définition des routes
-│       ├── controllers/              # Logique des requêtes
-│       ├── services/                 # Open-Meteo, géocodage, RainViewer, cache, alertes météo
-│       ├── middlewares/              # Erreurs, rate-limit, request-id, accès
-│       ├── schemas/                  # Validation Zod des réponses amont
-│       └── lib/                      # Disjoncteur, erreurs, log, requêtes HTTP
-└── frontend/
-    ├── src/
-    │   ├── main.ts                        # Montage de l'app + service worker
-    │   ├── App.svelte                     # Ville active, ciel dynamique
-    │   ├── sw.ts                          # Service worker (précache, push, notificationclick)
-    │   └── lib/
-    │       ├── Horaire.svelte             # Bandeau 48 h
-    │       ├── CarteNuages.svelte         # Carte Leaflet animée
-    │       ├── Quotidien.svelte           # Prévisions 7 jours
-    │       ├── ConditionsActuelles.svelte # Température, ressenti, vent, humidité
-    │       ├── RechercheCodePostal.svelte # Recherche par code postal
-    │       ├── AlertesMeteo.svelte        # Contrôle d'abonnement aux alertes météo
-    │       ├── notifications.ts           # Abonnement/désabonnement PushManager
-    │       ├── animationFrames.svelte.ts  # Machine d'animation de la carte
-    │       ├── preferences.svelte.ts      # Ville et préférences mémorisées
-    │       ├── stockage.ts                # Accès localStorage tolérant aux pannes
-    │       ├── api.ts                     # Appels backend et RainViewer
-    │       ├── meteo.ts                   # Codes WMO → labels FR, icônes
-    │       └── types.ts                   # Interfaces TypeScript
-    └── tests/
-        ├── unit/                   # meteo.ts, api.ts
-        ├── composants/             # Rendu Svelte (Testing Library)
-        ├── pwa/                    # Manifeste installable + service worker
-        └── helpers/                # Stubs de fetch
-```
+Détection, stockage des abonnements, cycle de vérification horaire et intégration frontend : voir [docs/notifications.md](./docs/notifications.md).
 
 ---
 
@@ -583,6 +188,14 @@ se tient à jour dans la console et non dans ce dépôt.
 | APIs externes | Open-Meteo · Zippopotam.us · CARTO / OpenStreetMap · RainViewer · OpenWeatherMap |
 | Android | TWA · Bubblewrap · Google Play Store |
 | CI/CD | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml` · `deploy-web.yml` · `codeql.yml` · `secrets.yml` · `contract.yml`) |
+
+## Documentation approfondie
+
+- [Architecture, résilience et structure du dépôt](./docs/architecture.md)
+- [Android (TWA)](./docs/android.md)
+- [Variables d'environnement](./docs/environnement.md)
+- [Développement local](./docs/developpement.md)
+- [Notifications d'alertes météo](./docs/notifications.md)
 
 ## Contribuer
 
