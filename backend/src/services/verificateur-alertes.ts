@@ -99,20 +99,44 @@ export async function cyclerAlertes(): Promise<void> {
 }
 
 let minuteur: ReturnType<typeof setInterval> | null = null;
+let premierCycle: ReturnType<typeof setTimeout> | null = null;
 
-export function demarrerVerificateur(intervalMs = 60 * 60 * 1000): void {
-  if (minuteur) return;
-  minuteur = setInterval(() => {
-    cyclerAlertes().catch((erreur) => {
-      log.error('Échec du cycle de vérification des alertes', {
-        message: erreur instanceof Error ? erreur.message : String(erreur),
-      });
+function lancerCycle(): void {
+  cyclerAlertes().catch((erreur) => {
+    log.error('Échec du cycle de vérification des alertes', {
+      message: erreur instanceof Error ? erreur.message : String(erreur),
     });
-  }, intervalMs);
+  });
+}
+
+/**
+ * Démarre la vérification périodique.
+ *
+ * Un premier cycle part après `delaiInitialMs`, sans attendre l'intervalle :
+ * chaque redéploiement relance le minuteur, et un simple `setInterval`
+ * repoussait donc la prochaine vérification d'une heure pleine à chaque fois.
+ * Le délai initial laisse le démarrage se stabiliser avant le premier appel
+ * à Open-Meteo.
+ */
+export function demarrerVerificateur(
+  intervalMs = 60 * 60 * 1000,
+  delaiInitialMs = 2 * 60 * 1000
+): void {
+  if (minuteur) return;
+  premierCycle = setTimeout(() => {
+    premierCycle = null;
+    lancerCycle();
+  }, delaiInitialMs);
+  premierCycle.unref?.();
+  minuteur = setInterval(lancerCycle, intervalMs);
   minuteur.unref?.();
 }
 
 export function arreterVerificateur(): void {
+  if (premierCycle) {
+    clearTimeout(premierCycle);
+    premierCycle = null;
+  }
   if (!minuteur) return;
   clearInterval(minuteur);
   minuteur = null;

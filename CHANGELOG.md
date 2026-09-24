@@ -2,6 +2,12 @@
 
 ## [Non publié]
 
+### Fixed
+
+- Le vérificateur d'alertes météo lance désormais un premier cycle deux minutes après le
+  démarrage du backend : avec un simple `setInterval`, chaque redéploiement repoussait la
+  vérification suivante d'une heure pleine
+
 ## [3.2.0] - 2026-09-23
 
 ### Added

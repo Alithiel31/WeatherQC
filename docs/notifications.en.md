@@ -30,7 +30,8 @@ an anti-spam table that stops the same alert from being resent while the situati
 it hasn't stopped and recurred. A browser only ever carries one active subscription: re-subscribing
 the same `endpoint` to another city replaces the existing entry instead of creating a second one.
 
-**Checking and sending** (`backend/src/services/verificateur-alertes.ts`) — an hourly cycle,
+**Checking and sending** (`backend/src/services/verificateur-alertes.ts`) — an hourly cycle (the first
+one runs two minutes after startup, so a redeploy doesn't push the check back by an hour),
 limited to cities with at least one subscription (`villesAbonnees()`, to avoid querying
 Open-Meteo for the rest). A subscription whose delivery fails with a 404/410 Web Push error is
 considered expired and deleted automatically — that's how orphaned subscriptions (permission
