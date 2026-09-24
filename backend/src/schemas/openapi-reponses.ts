@@ -1,13 +1,11 @@
 import { z } from 'zod';
 
 /**
- * Schémas de *documentation* uniquement — jamais utilisés pour valider une
- * réponse réelle. Contrairement aux schémas de `validation.ts`, qui sont la
- * source de vérité des requêtes entrantes, le backend ne valide pas ses
- * propres sorties : il n'existe donc pas de schéma existant à réutiliser côté
- * réponse. Celui-ci sert seulement à générer `/api/openapi.json` sans dupliquer
- * à la main la forme de chaque route dans une spec figée — et sans prétendre
- * qu'il garantit la conformité de ce que les contrôleurs renvoient réellement.
+ * Source de vérité des réponses sortantes : sert à la fois à générer
+ * `/api/openapi.json` et à valider, via `lib/reponse.ts#envoyerJson`, chaque
+ * réponse juste avant son envoi — une dérive entre ce que les contrôleurs
+ * renvoient réellement et ce qui est documenté échoue donc bruyamment
+ * (tests, puis 500 en prod) plutôt que de se propager silencieusement.
  */
 
 export const villeSchema = z.object({
@@ -16,6 +14,8 @@ export const villeSchema = z.object({
   latitude: z.number(),
   longitude: z.number(),
 });
+
+export const villesSchema = z.array(villeSchema);
 
 const conditionsActuellesSchema = z.object({
   temperature: z.number(),
@@ -31,6 +31,7 @@ const previsionsHorairesSchema = z.object({
   temperature: z.number().nullable(),
   code: z.number().nullable(),
   precipitation: z.number().nullable(),
+  rafales: z.number().nullable(),
 });
 
 const previsionsQuotidiennesSchema = z.object({

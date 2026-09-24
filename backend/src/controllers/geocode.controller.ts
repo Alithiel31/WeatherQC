@@ -2,6 +2,8 @@ import type { Request, Response } from 'express';
 import { geocodeRTA } from '../services/geocode.service.js';
 import { avecCache, TTL } from '../services/cache.service.js';
 import { geocodeSchema } from '../schemas/validation.js';
+import { lieuGeocodeSchema } from '../schemas/openapi-reponses.js';
+import { envoyerJson } from '../lib/reponse.js';
 
 // Format FSA canadien valide : lettre - chiffre - lettre (ex. H2X, K1A, V6B)
 export default {
@@ -14,6 +16,6 @@ export default {
     );
 
     res.origineCache = obsolete ? 'obsolete' : depuisCache ? 'frais' : 'amont';
-    res.json(data);
+    envoyerJson(res, lieuGeocodeSchema, data);
   },
 };

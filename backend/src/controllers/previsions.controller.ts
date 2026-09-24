@@ -4,6 +4,8 @@ import { fetchForecast } from '../services/openmeteo.service.js';
 import { avecCache, TTL } from '../services/cache.service.js';
 import { NotFoundError } from '../lib/errors.js';
 import { previsionsParVilleSchema, previsionsCoordonneesSchema } from '../schemas/validation.js';
+import { reponseMeteoSchema } from '../schemas/openapi-reponses.js';
+import { envoyerJson } from '../lib/reponse.js';
 
 export default {
   getByVille: async (req: Request, res: Response) => {
@@ -30,7 +32,7 @@ export default {
     );
 
     res.origineCache = obsolete ? 'obsolete' : depuisCache ? 'frais' : 'amont';
-    res.json({ ...data, depuisCache, obsolete });
+    envoyerJson(res, reponseMeteoSchema, { ...data, depuisCache, obsolete });
   },
 
   getByCoordonnees: async (req: Request, res: Response) => {
@@ -50,9 +52,9 @@ export default {
     res.origineCache = obsolete ? 'obsolete' : depuisCache ? 'frais' : 'amont';
     // Le `nom` accompagne la requête, pas les données : deux RTA voisines
     // partagent la même clé arrondie et doivent garder leur libellé.
-    res.json({
+    envoyerJson(res, reponseMeteoSchema, {
       ...data,
-      ville: { ...((data as Record<string, unknown>).ville as object), nom },
+      ville: { ...data.ville, nom },
       depuisCache,
       obsolete,
     });

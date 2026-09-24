@@ -11,6 +11,8 @@ import { journalAcces } from './middlewares/acces.js';
 import { statistiquesCache } from './services/cache.service.js';
 import { etatDisjoncteurs } from './lib/breaker.js';
 import { openapiDocument } from './openapi.js';
+import { santeSchema } from './schemas/openapi-reponses.js';
+import { envoyerJson } from './lib/reponse.js';
 
 import villesRouter from './routers/villes.router.js';
 import previsionsRouter from './routers/previsions.router.js';
@@ -57,7 +59,7 @@ app.use(express.json({ limit: '10kb' }));
 // sache si la faute revient au Raspberry Pi ou à un fournisseur. Aucune donnée
 // personnelle, rien qu'on ne puisse exposer publiquement.
 app.get('/api/sante', (_req, res) => {
-  res.json({
+  envoyerJson(res, santeSchema, {
     statut: 'ok',
     versionNode: process.version,
     demarreDepuisS: Math.round(process.uptime()),

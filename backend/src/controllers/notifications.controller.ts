@@ -4,6 +4,8 @@ import { config } from '../config.js';
 import { NotFoundError, ServiceIndisponibleError } from '../lib/errors.js';
 import { abonnementSchema, desabonnementSchema } from '../schemas/validation.js';
 import { ajouterAbonnement, supprimerAbonnement } from '../services/abonnements.service.js';
+import { clePubliqueSchema, abonnementConfirmeSchema } from '../schemas/openapi-reponses.js';
+import { envoyerJson } from '../lib/reponse.js';
 
 const MESSAGE_VAPID_ABSENT =
   'Notifications indisponibles — clés VAPID non configurées côté serveur.';
@@ -11,7 +13,7 @@ const MESSAGE_VAPID_ABSENT =
 export default {
   clePublique: (_req: Request, res: Response) => {
     if (!config.vapid) throw new ServiceIndisponibleError(MESSAGE_VAPID_ABSENT);
-    res.json({ clePublique: config.vapid.publicKey });
+    envoyerJson(res, clePubliqueSchema, { clePublique: config.vapid.publicKey });
   },
 
   sAbonner: (req: Request, res: Response) => {
@@ -34,7 +36,7 @@ export default {
       auth: subscription.keys.auth,
     });
 
-    res.status(201).json({ statut: 'abonne' });
+    envoyerJson(res, abonnementConfirmeSchema, { statut: 'abonne' }, 201);
   },
 
   // Idempotent à dessein : désabonner un endpoint déjà absent (double clic,

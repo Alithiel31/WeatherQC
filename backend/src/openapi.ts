@@ -7,7 +7,7 @@ import {
   desabonnementSchema,
 } from './schemas/validation.js';
 import {
-  villeSchema,
+  villesSchema,
   reponseMeteoSchema,
   lieuGeocodeSchema,
   framesRainViewerSchema,
@@ -98,7 +98,7 @@ export const openapiDocument = {
     '/api/villes': {
       get: {
         summary: 'Liste des villes disponibles',
-        responses: { '200': reponseJson('Villes disponibles', z.array(villeSchema)) },
+        responses: { '200': reponseJson('Villes disponibles', villesSchema) },
       },
     },
     '/api/previsions/{ville}': {

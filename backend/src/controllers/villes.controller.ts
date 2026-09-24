@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
 import { CITIES } from '../data/cities.js';
+import { villesSchema } from '../schemas/openapi-reponses.js';
+import { envoyerJson } from '../lib/reponse.js';
 
 export default {
   getAll: (_req: Request, res: Response) => {
@@ -9,6 +11,6 @@ export default {
       latitude,
       longitude,
     }));
-    res.json(villes);
+    envoyerJson(res, villesSchema, villes);
   },
 };
