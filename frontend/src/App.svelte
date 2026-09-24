@@ -168,7 +168,7 @@
   </header>
 
   {#if prefs.selection !== 'cp' && nomVilleActive}
-    <AlertesMeteo villeId={prefs.selection} villeNom={nomVilleActive} />
+    <AlertesMeteo villeId={prefs.selection} villeNom={nomVilleActive} preferences={prefs} />
   {/if}
 
   <!--

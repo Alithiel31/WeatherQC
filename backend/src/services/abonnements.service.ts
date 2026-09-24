@@ -1,6 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
+import type { Seuils } from './detecteur-alertes.js';
 
 /**
  * Stockage des abonnements aux alertes météo et de l'anti-spam associé.
@@ -12,6 +13,11 @@ import { dirname } from 'node:path';
  * la main sur une base `:memory:` isolée, sans timer ni fichier en arrière-plan.
  */
 
+/** Sous-ensemble de `Seuils` qu'un abonné peut personnaliser — voir `detecteur-alertes.ts`. */
+export type SeuilsPersonnalises = Partial<
+  Pick<Seuils, 'precipitationProbabilite' | 'chuteTemperature' | 'rafales'>
+>;
+
 export interface Abonnement {
   id: number;
   ville: string;
@@ -19,6 +25,8 @@ export interface Abonnement {
   p256dh: string;
   auth: string;
   creeLe: number;
+  /** Toujours présent, `{}` si l'abonné n'a rien personnalisé. */
+  seuils: SeuilsPersonnalises;
 }
 
 export interface NouvelAbonnement {
@@ -26,6 +34,7 @@ export interface NouvelAbonnement {
   endpoint: string;
   p256dh: string;
   auth: string;
+  seuils?: SeuilsPersonnalises;
 }
 
 let db: DatabaseSync | null = null;
@@ -50,6 +59,29 @@ const SCHEMA = `
   );
 `;
 
+const COLONNES_SEUILS = [
+  'seuil_precipitation_probabilite',
+  'seuil_chute_temperature',
+  'seuil_rafales',
+] as const;
+
+/**
+ * `CREATE TABLE IF NOT EXISTS` ne retrofit jamais de colonne sur un fichier
+ * déjà existant — nécessaire pour le SQLite déjà en production sur le Pi.
+ * `PRAGMA table_info` rend l'opération sans effet une fois les colonnes
+ * présentes : pas besoin d'une table de version pour ce seul ajout additif.
+ */
+function migrerColonnesSeuils(base: DatabaseSync): void {
+  const existantes = new Set(
+    (base.prepare('PRAGMA table_info(abonnements)').all() as { name: string }[]).map((c) => c.name)
+  );
+  for (const colonne of COLONNES_SEUILS) {
+    if (!existantes.has(colonne)) {
+      base.exec(`ALTER TABLE abonnements ADD COLUMN ${colonne} INTEGER`);
+    }
+  }
+}
+
 /**
  * Ouvre (ou crée) la base des abonnements.
  *
@@ -66,6 +98,7 @@ export function ouvrirAbonnements(chemin: string): void {
   db = new DatabaseSync(chemin);
   db.exec('PRAGMA foreign_keys = ON;');
   db.exec(SCHEMA);
+  migrerColonnesSeuils(db);
 }
 
 export function fermerAbonnements(): void {
@@ -90,14 +123,27 @@ function connexion(): DatabaseSync {
 export function ajouterAbonnement(a: NouvelAbonnement): void {
   connexion()
     .prepare(
-      `INSERT INTO abonnements (ville, endpoint, p256dh, auth, cree_le)
-       VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO abonnements (ville, endpoint, p256dh, auth, cree_le,
+         seuil_precipitation_probabilite, seuil_chute_temperature, seuil_rafales)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(endpoint) DO UPDATE SET
          ville = excluded.ville,
          p256dh = excluded.p256dh,
-         auth = excluded.auth`
+         auth = excluded.auth,
+         seuil_precipitation_probabilite = excluded.seuil_precipitation_probabilite,
+         seuil_chute_temperature = excluded.seuil_chute_temperature,
+         seuil_rafales = excluded.seuil_rafales`
     )
-    .run(a.ville, a.endpoint, a.p256dh, a.auth, Date.now());
+    .run(
+      a.ville,
+      a.endpoint,
+      a.p256dh,
+      a.auth,
+      Date.now(),
+      a.seuils?.precipitationProbabilite ?? null,
+      a.seuils?.chuteTemperature ?? null,
+      a.seuils?.rafales ?? null
+    );
 }
 
 /** Retire un abonnement par son `endpoint` — désabonnement volontaire ou expiré (410/404 Web Push). */
@@ -105,13 +151,54 @@ export function supprimerAbonnement(endpoint: string): void {
   connexion().prepare('DELETE FROM abonnements WHERE endpoint = ?').run(endpoint);
 }
 
+interface LigneAbonnement {
+  id: number;
+  ville: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  creeLe: number;
+  precipitationProbabilite: number | null;
+  chuteTemperature: number | null;
+  rafales: number | null;
+}
+
 export function abonnementsParVille(ville: string): Abonnement[] {
   const lignes = connexion()
     .prepare(
-      'SELECT id, ville, endpoint, p256dh, auth, cree_le AS creeLe FROM abonnements WHERE ville = ? ORDER BY id'
+      `SELECT id, ville, endpoint, p256dh, auth, cree_le AS creeLe,
+              seuil_precipitation_probabilite AS precipitationProbabilite,
+              seuil_chute_temperature AS chuteTemperature,
+              seuil_rafales AS rafales
+       FROM abonnements WHERE ville = ? ORDER BY id`
     )
-    .all(ville);
-  return lignes as unknown as Abonnement[];
+    .all(ville) as unknown as LigneAbonnement[];
+
+  return lignes.map(
+    ({
+      id,
+      ville: v,
+      endpoint,
+      p256dh,
+      auth,
+      creeLe,
+      precipitationProbabilite,
+      chuteTemperature,
+      rafales,
+    }) => ({
+      id,
+      ville: v,
+      endpoint,
+      p256dh,
+      auth,
+      creeLe,
+      seuils: {
+        ...(precipitationProbabilite != null && { precipitationProbabilite }),
+        ...(chuteTemperature != null && { chuteTemperature }),
+        ...(rafales != null && { rafales }),
+      },
+    })
+  );
 }
 
 /** Villes ayant au moins un abonnement — évite d'interroger Open-Meteo pour les autres au cycle horaire. */

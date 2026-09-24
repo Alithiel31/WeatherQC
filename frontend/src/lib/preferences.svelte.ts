@@ -1,5 +1,5 @@
 import { lireTexte, lireJSON, ecrire, ecrireJSON, supprimer } from './stockage.ts';
-import type { LieuCP } from './types.ts';
+import type { LieuCP, SeuilsAlerte } from './types.ts';
 import type { Unite } from './meteo.ts';
 
 const VILLE_DEFAUT = 'montreal';
@@ -27,6 +27,17 @@ function estLieuValide(valeur: unknown): valeur is LieuCP {
     typeof lieu.province === 'string' &&
     Number.isFinite(lieu.latitude) &&
     Number.isFinite(lieu.longitude)
+  );
+}
+
+/** Même défiance qu'`estLieuValide` envers une valeur relue du stockage. */
+function estSeuilsValide(valeur: unknown): valeur is SeuilsAlerte {
+  if (!valeur || typeof valeur !== 'object') return false;
+  const s = valeur as Record<string, unknown>;
+  return (
+    (s.precipitationProbabilite === undefined || Number.isFinite(s.precipitationProbabilite)) &&
+    (s.chuteTemperature === undefined || Number.isFinite(s.chuteTemperature)) &&
+    (s.rafales === undefined || Number.isFinite(s.rafales))
   );
 }
 
@@ -62,6 +73,11 @@ export function creerPreferences() {
   const uniteBrute = lireTexte('unite', UNITE_DEFAUT);
   let unite = $state<Unite>(estUniteValide(uniteBrute) ? uniteBrute : UNITE_DEFAUT);
 
+  const seuilsBrut = lireJSON<unknown>('seuilsAlerte', null);
+  const seuilsCharges = estSeuilsValide(seuilsBrut) ? seuilsBrut : null;
+  if (seuilsBrut !== null && seuilsCharges === null) supprimer('seuilsAlerte');
+  let seuilsAlerte = $state<SeuilsAlerte | null>(seuilsCharges);
+
   return {
     get selection() {
       return selection;
@@ -78,6 +94,9 @@ export function creerPreferences() {
     },
     get unite() {
       return unite;
+    },
+    get seuilsAlerte() {
+      return seuilsAlerte;
     },
 
     /** Bascule °C/km-h ↔ °F/mph. Un seul réglage : les deux voyagent ensemble. */
@@ -99,6 +118,12 @@ export function creerPreferences() {
       ecrire('selection', 'cp');
       ecrire('codePostal', saisie);
       ecrireJSON('lieuCP', lieu);
+    },
+
+    /** Retient les seuils d'alerte choisis, pour préremplir les curseurs à la prochaine visite. */
+    memoriserSeuils(seuils: SeuilsAlerte) {
+      seuilsAlerte = seuils;
+      ecrireJSON('seuilsAlerte', seuils);
     },
   };
 }

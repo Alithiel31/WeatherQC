@@ -19,7 +19,7 @@ export default {
   sAbonner: (req: Request, res: Response) => {
     if (!config.vapid) throw new ServiceIndisponibleError(MESSAGE_VAPID_ABSENT);
 
-    const { ville, subscription } = abonnementSchema.parse(req.body);
+    const { ville, subscription, seuils } = abonnementSchema.parse(req.body);
 
     // Même garde que `previsions.controller.ts` : `hasOwn` plutôt qu'un accès
     // direct, pour qu'une clé héritée d'Object ne passe pas la vérification.
@@ -34,6 +34,7 @@ export default {
       endpoint: subscription.endpoint,
       p256dh: subscription.keys.p256dh,
       auth: subscription.keys.auth,
+      seuils,
     });
 
     envoyerJson(res, abonnementConfirmeSchema, { statut: 'abonne' }, 201);

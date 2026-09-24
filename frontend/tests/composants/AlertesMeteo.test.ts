@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { userEvent } from '@testing-library/user-event';
 
 const { supportePush, villeAbonnee, abonner, desabonner, PermissionRefuseeError } = vi.hoisted(
@@ -27,8 +27,18 @@ const { ErreurApi } = vi.hoisted(() => ({ ErreurApi: class ErreurApi extends Err
 vi.mock('../../src/lib/api.ts', () => ({ ErreurApi }));
 
 const { default: AlertesMeteo } = await import('../../src/lib/AlertesMeteo.svelte');
+type Preferences = import('../../src/lib/preferences.svelte.ts').Preferences;
+type SeuilsAlerte = import('../../src/lib/types.ts').SeuilsAlerte;
 
-const props = { villeId: 'montreal', villeNom: 'Montréal' };
+/**
+ * Seuls `seuilsAlerte`/`memoriserSeuils` sont utilisés par le composant — le
+ * reste de `Preferences` (ville, code postal, unité...) lui est étranger.
+ */
+function preferencesFactices(seuilsAlerte: SeuilsAlerte | null = null) {
+  return { seuilsAlerte, memoriserSeuils: vi.fn() } as unknown as Preferences;
+}
+
+const props = { villeId: 'montreal', villeNom: 'Montréal', preferences: preferencesFactices() };
 const nomActiver = 'Activer les alertes météo pour Montréal';
 
 beforeEach(() => {
@@ -96,6 +106,44 @@ describe('support présent', () => {
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Désactiver' })).toBeTruthy());
     expect(abonner).toHaveBeenCalledWith('montreal');
+  });
+
+  it('la section « Personnaliser les seuils » est repliée par défaut', async () => {
+    const { container } = render(AlertesMeteo, props);
+    await screen.findByRole('button', { name: nomActiver });
+
+    expect(container.querySelector('details')?.open).toBe(false);
+  });
+
+  it('sans personnalisation, active sans seuils (signature identique à avant)', async () => {
+    const user = userEvent.setup();
+    abonner.mockResolvedValue(undefined);
+    render(AlertesMeteo, props);
+
+    await user.click(await screen.findByRole('button', { name: nomActiver }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Désactiver' })).toBeTruthy());
+    expect(abonner).toHaveBeenCalledWith('montreal');
+    expect(abonner).not.toHaveBeenCalledWith('montreal', expect.anything());
+  });
+
+  it('ouvrir la personnalisation et ajuster les curseurs passe les seuils choisis à abonner', async () => {
+    const user = userEvent.setup();
+    const preferences = preferencesFactices();
+    abonner.mockResolvedValue(undefined);
+    const { container } = render(AlertesMeteo, { ...props, preferences });
+
+    await user.click(await screen.findByText('Personnaliser les seuils'));
+    const [precip, chute, rafales] = container.querySelectorAll('input[type="range"]');
+    await fireEvent.input(precip, { target: { value: '50' } });
+    await fireEvent.input(chute, { target: { value: '5' } });
+    await fireEvent.input(rafales, { target: { value: '40' } });
+
+    await user.click(screen.getByRole('button', { name: nomActiver }));
+
+    const seuils = { precipitationProbabilite: 50, chuteTemperature: 5, rafales: 40 };
+    await waitFor(() => expect(abonner).toHaveBeenCalledWith('montreal', seuils));
+    expect(preferences.memoriserSeuils).toHaveBeenCalledWith(seuils);
   });
 
   it('affiche le message d’une PermissionRefuseeError plutôt que le message générique', async () => {

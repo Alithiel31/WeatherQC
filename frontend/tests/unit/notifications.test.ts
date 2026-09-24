@@ -29,7 +29,7 @@ function creerAbonnementFactice(endpoint = 'https://push.example/abc') {
 
 /** Distingue plusieurs routes, contrairement à `stubFetchJson()` — `abonner()` en appelle deux. */
 function stubFetchParUrl(reponses: Record<string, { status: number; corps: unknown }>) {
-  const mock = vi.fn(async (url: string) => {
+  const mock = vi.fn<(url: string, options?: RequestInit) => Promise<unknown>>(async (url) => {
     const reponse = reponses[url];
     if (!reponse) throw new Error(`Appel non prévu vers ${url}`);
     return {
@@ -174,6 +174,44 @@ describe('abonner', () => {
     );
     expect(localStorage.getItem('villeAbonnee')).toBe('montreal');
     expect(abonnement.unsubscribe).not.toHaveBeenCalled();
+  });
+
+  it('sans seuils personnalisés, le corps POST n’a pas de champ seuils', async () => {
+    vi.stubGlobal('Notification', { requestPermission: vi.fn().mockResolvedValue('granted') });
+    definirServiceWorker({
+      pushManager: { subscribe: vi.fn().mockResolvedValue(creerAbonnementFactice()) },
+    });
+    const fetchMock = stubFetchParUrl({
+      '/api/notifications/cle-publique': { status: 200, corps: { clePublique: 'clef-vapid' } },
+      '/api/notifications/abonnement': { status: 201, corps: { statut: 'abonne' } },
+    });
+
+    await abonner('montreal');
+
+    const [, options] = fetchMock.mock.calls.find(
+      ([url]) => url === '/api/notifications/abonnement'
+    )!;
+    expect(JSON.parse((options as RequestInit).body as string)).not.toHaveProperty('seuils');
+  });
+
+  it('avec des seuils personnalisés, le corps POST les inclut', async () => {
+    vi.stubGlobal('Notification', { requestPermission: vi.fn().mockResolvedValue('granted') });
+    definirServiceWorker({
+      pushManager: { subscribe: vi.fn().mockResolvedValue(creerAbonnementFactice()) },
+    });
+    const fetchMock = stubFetchParUrl({
+      '/api/notifications/cle-publique': { status: 200, corps: { clePublique: 'clef-vapid' } },
+      '/api/notifications/abonnement': { status: 201, corps: { statut: 'abonne' } },
+    });
+
+    await abonner('montreal', { rafales: 40 });
+
+    const [, options] = fetchMock.mock.calls.find(
+      ([url]) => url === '/api/notifications/abonnement'
+    )!;
+    expect(JSON.parse((options as RequestInit).body as string)).toMatchObject({
+      seuils: { rafales: 40 },
+    });
   });
 });
 

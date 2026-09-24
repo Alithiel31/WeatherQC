@@ -2,7 +2,12 @@ import { CITIES } from '../data/cities.js';
 import { config } from '../config.js';
 import { log } from '../lib/log.js';
 import { fetchForecast } from './openmeteo.service.js';
-import { detecterAlertes, redigerNotification, type TypeAlerte } from './detecteur-alertes.js';
+import {
+  detecterAlertes,
+  redigerNotification,
+  SEUILS_DEFAUT,
+  type TypeAlerte,
+} from './detecteur-alertes.js';
 import {
   villesAbonnees,
   abonnementsParVille,
@@ -43,13 +48,19 @@ async function cyclerVille(villeId: string): Promise<void> {
   }
 
   const previsions = await fetchForecast(ville);
-  const alertes = detecterAlertes(
-    { temperature: previsions.actuel.temperature, code: previsions.actuel.code },
-    previsions.horaire
-  );
-  const typesActifs = new Set(alertes.map((a) => a.type));
 
   for (const abonnement of abonnementsParVille(villeId)) {
+    // La détection dépend des seuils propres à cet abonnement — voir
+    // `abonnements.service.ts#SeuilsPersonnalises` — donc par abonné plutôt
+    // que mutualisée par ville, contrairement à `fetchForecast` ci-dessus qui
+    // reste un seul appel réseau par ville.
+    const alertes = detecterAlertes(
+      { temperature: previsions.actuel.temperature, code: previsions.actuel.code },
+      previsions.horaire,
+      { ...SEUILS_DEFAUT, ...abonnement.seuils }
+    );
+    const typesActifs = new Set(alertes.map((a) => a.type));
+
     // Anti-spam : un type qui ne se vérifie plus libère l'abonné pour la
     // prochaine occurrence de la même situation.
     for (const type of TOUS_LES_TYPES) {

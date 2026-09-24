@@ -79,3 +79,14 @@ export interface FramesRainViewer {
   satellite: ImageRainViewer[];
   radar: ImageRainViewer[];
 }
+
+/**
+ * Sous-ensemble des seuils d'alerte météo qu'un abonné peut personnaliser —
+ * voir `backend/src/services/abonnements.service.ts#SeuilsPersonnalises`.
+ * Les valeurs par défaut, si un champ est omis, vivent côté backend.
+ */
+export interface SeuilsAlerte {
+  precipitationProbabilite?: number;
+  chuteTemperature?: number;
+  rafales?: number;
+}

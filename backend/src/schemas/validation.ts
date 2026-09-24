@@ -36,9 +36,24 @@ const pushSubscriptionSchema = z.object({
   }),
 });
 
+/**
+ * Sous-ensemble de `Seuils` (`detecteur-alertes.ts`) qu'un abonné peut
+ * personnaliser — voir `abonnements.service.ts#SeuilsPersonnalises`.
+ */
+const seuilsPersonnalisesSchema = z.object({
+  precipitationProbabilite: z
+    .number()
+    .min(0, 'doit être >= 0')
+    .max(100, 'doit être <= 100')
+    .optional(),
+  chuteTemperature: z.number().positive('doit être positif').max(30, 'doit être <= 30').optional(),
+  rafales: z.number().positive('doit être positif').max(200, 'doit être <= 200').optional(),
+});
+
 export const abonnementSchema = z.object({
   ville: z.string().min(1, 'ville requise').toLowerCase(),
   subscription: pushSubscriptionSchema,
+  seuils: seuilsPersonnalisesSchema.optional(),
 });
 
 export const desabonnementSchema = z.object({

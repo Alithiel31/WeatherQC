@@ -68,6 +68,25 @@ describe('Notifications push', () => {
       expect(abonnements[0].endpoint).toBe(SOUSCRIPTION_VALIDE.subscription.endpoint);
     });
 
+    it('POST /api/notifications/abonnement accepte des seuils personnalisés et les persiste', async () => {
+      const res = await request(app)
+        .post('/api/notifications/abonnement')
+        .send({ ...SOUSCRIPTION_VALIDE, seuils: { rafales: 40 } })
+        .expect(201);
+
+      expect(res.body).toEqual({ statut: 'abonne' });
+      expect(abonnementsParVille('montreal')[0].seuils).toEqual({ rafales: 40 });
+    });
+
+    it('POST /api/notifications/abonnement refuse un seuil hors bornes', async () => {
+      const res = await request(app)
+        .post('/api/notifications/abonnement')
+        .send({ ...SOUSCRIPTION_VALIDE, seuils: { precipitationProbabilite: 150 } })
+        .expect(400);
+
+      expect(res.body.status).toBe(400);
+    });
+
     it('POST /api/notifications/abonnement refuse une ville inconnue', async () => {
       const res = await request(app)
         .post('/api/notifications/abonnement')

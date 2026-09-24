@@ -39,6 +39,50 @@ describe('abonnements.service', () => {
     expect(abonnementsParVille('quebec')).toEqual([]);
   });
 
+  it('sans seuils fournis, seuils est un objet vide', () => {
+    ajouterAbonnement({ ville: 'montreal', endpoint: 'https://push/1', p256dh: 'p1', auth: 'a1' });
+    expect(abonnementsParVille('montreal')[0].seuils).toEqual({});
+  });
+
+  it('ne retient que les seuils personnalisés fournis', () => {
+    ajouterAbonnement({
+      ville: 'montreal',
+      endpoint: 'https://push/1',
+      p256dh: 'p1',
+      auth: 'a1',
+      seuils: { rafales: 40 },
+    });
+    expect(abonnementsParVille('montreal')[0].seuils).toEqual({ rafales: 40 });
+  });
+
+  it('retrouve les trois seuils personnalisés quand ils sont tous fournis', () => {
+    ajouterAbonnement({
+      ville: 'montreal',
+      endpoint: 'https://push/1',
+      p256dh: 'p1',
+      auth: 'a1',
+      seuils: { precipitationProbabilite: 50, chuteTemperature: 5, rafales: 40 },
+    });
+    expect(abonnementsParVille('montreal')[0].seuils).toEqual({
+      precipitationProbabilite: 50,
+      chuteTemperature: 5,
+      rafales: 40,
+    });
+  });
+
+  it('réabonner sans seuils efface d’anciens seuils personnalisés', () => {
+    ajouterAbonnement({
+      ville: 'montreal',
+      endpoint: 'https://push/1',
+      p256dh: 'p1',
+      auth: 'a1',
+      seuils: { rafales: 40, chuteTemperature: 5 },
+    });
+    ajouterAbonnement({ ville: 'montreal', endpoint: 'https://push/1', p256dh: 'p1', auth: 'a1' });
+
+    expect(abonnementsParVille('montreal')[0].seuils).toEqual({});
+  });
+
   // Un navigateur ne porte qu'un abonnement push actif : réabonner le même
   // endpoint à une autre ville doit remplacer, pas dupliquer.
   it('remplace un abonnement existant réabonné à une autre ville (même endpoint)', () => {

@@ -1,5 +1,6 @@
 import { ErreurApi, messageErreur } from './api.ts';
 import { lireTexte, ecrire, supprimer } from './stockage.ts';
+import type { SeuilsAlerte } from './types.ts';
 
 /**
  * Levée quand l'utilisateur refuse la permission de notification. Distincte
@@ -71,8 +72,11 @@ async function recupererClePublique(): Promise<string> {
  * Demande la permission, s'abonne via `PushManager` et poste l'abonnement au
  * backend pour `ville`. Un abonnement existant pour une autre ville est
  * remplacé — le navigateur n'en porte qu'un à la fois pour cette origine.
+ *
+ * `seuils` omis (plutôt que `{}`) quand l'abonné n'a rien personnalisé : le
+ * backend applique alors ses propres valeurs par défaut.
  */
-export async function abonner(ville: string): Promise<void> {
+export async function abonner(ville: string, seuils?: SeuilsAlerte): Promise<void> {
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') {
     throw new PermissionRefuseeError('Permission de notification refusée.');
@@ -89,7 +93,7 @@ export async function abonner(ville: string): Promise<void> {
     const res = await fetch('/api/notifications/abonnement', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ville, subscription: abonnement.toJSON() }),
+      body: JSON.stringify({ ville, subscription: abonnement.toJSON(), ...(seuils && { seuils }) }),
     });
     if (!res.ok) {
       throw new ErreurApi(await messageErreur(res, 'Abonnement refusé par le serveur.'));

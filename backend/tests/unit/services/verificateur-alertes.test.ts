@@ -56,6 +56,13 @@ function previsionsAvecVent(): Previsions {
   return p;
 }
 
+/** Rafales à 50 km/h : sous SEUILS_DEFAUT.rafales (60), au-dessus d'un seuil personnalisé de 40. */
+function previsionsAvecVentModere(): Previsions {
+  const p = previsionsSansAlerte();
+  p.horaire[0].rafales = 50;
+  return p;
+}
+
 describe('verificateur-alertes', () => {
   const vapidOriginal = config.vapid;
 
@@ -98,6 +105,32 @@ describe('verificateur-alertes', () => {
       expect.objectContaining({ titre: expect.stringContaining('Vents forts') })
     );
     expect(dejaEnvoyee(abonnement.id, 'vent')).toBe(true);
+  });
+
+  it('applique le seuil personnalisé de chaque abonnement, indépendamment des autres', async () => {
+    ajouterAbonnement({
+      ville: 'montreal',
+      endpoint: 'https://push/sensible',
+      p256dh: 'p',
+      auth: 'a',
+      seuils: { rafales: 40 },
+    });
+    ajouterAbonnement({
+      ville: 'montreal',
+      endpoint: 'https://push/defaut',
+      p256dh: 'p',
+      auth: 'a',
+    });
+    vi.mocked(fetchForecast).mockResolvedValue(previsionsAvecVentModere());
+    vi.mocked(envoyerNotification).mockResolvedValue('envoyee');
+
+    await cyclerAlertes();
+
+    expect(envoyerNotification).toHaveBeenCalledTimes(1);
+    expect(envoyerNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ endpoint: 'https://push/sensible' }),
+      expect.anything()
+    );
   });
 
   it('ne renvoie pas une alerte déjà notifiée au cycle précédent', async () => {

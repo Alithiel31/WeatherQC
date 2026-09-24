@@ -173,3 +173,45 @@ describe('creerPreferences — unité', () => {
     expect(localStorage.getItem('unite')).toBe('metrique');
   });
 });
+
+describe('creerPreferences — seuils d’alerte', () => {
+  it('retombe sur null quand rien n’est mémorisé', () => {
+    expect(creerPreferences().seuilsAlerte).toBeNull();
+  });
+
+  it('relit des seuils mémorisés valides', () => {
+    localStorage.setItem('seuilsAlerte', JSON.stringify({ rafales: 40 }));
+
+    expect(creerPreferences().seuilsAlerte).toEqual({ rafales: 40 });
+  });
+
+  it.each([
+    ['du JSON cassé', '{cassé'],
+    ['une valeur qui n’est pas un objet', '"quarante"'],
+    ['un champ non numérique', JSON.stringify({ rafales: 'fort' })],
+  ])('rejette %s et efface la clé', (_cas, valeurBrute) => {
+    localStorage.setItem('seuilsAlerte', valeurBrute);
+
+    const prefs = creerPreferences();
+
+    expect(prefs.seuilsAlerte).toBeNull();
+    expect(localStorage.getItem('seuilsAlerte')).toBeNull();
+  });
+
+  it('mémorise les seuils choisis', () => {
+    const prefs = creerPreferences();
+
+    prefs.memoriserSeuils({ precipitationProbabilite: 50, chuteTemperature: 5, rafales: 40 });
+
+    expect(prefs.seuilsAlerte).toEqual({
+      precipitationProbabilite: 50,
+      chuteTemperature: 5,
+      rafales: 40,
+    });
+    expect(JSON.parse(localStorage.getItem('seuilsAlerte')!)).toEqual({
+      precipitationProbabilite: 50,
+      chuteTemperature: 5,
+      rafales: 40,
+    });
+  });
+});
