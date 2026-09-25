@@ -140,3 +140,42 @@ export function heureMinute(instant: string | number): string {
   const d = new Date(instant);
   return `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
 }
+
+/**
+ * Résumé texte de ce que montre la carte animée (`CarteNuages`), pour qui ne
+ * peut pas la voir. Contrairement au reste de l'interface, la carte n'a *aucun*
+ * équivalent non-visuel : ses tuiles radar/satellite sont hors de portée
+ * d'`aria-label` ou de `role="img"`, et `frontend/e2e/accessibilite.spec.ts`
+ * l'exclut d'ailleurs explicitement des scans axe pour cette raison. Ce résumé
+ * s'appuie sur la même donnée de probabilité de précipitation que la bande
+ * horaire plutôt que sur les tuiles elles-mêmes : la carte n'en est qu'une vue
+ * spatiale.
+ *
+ * Seuil de 20 % repris de `Horaire.svelte`, qui n'affiche son propre badge de
+ * pluie qu'à partir de ce seuil — le même chiffre doit désigner « significatif »
+ * partout dans l'application, pas une valeur different par écran.
+ */
+export function resumeCarte(
+  heures: Array<{ heure: string; code: number | null; precipitation: number | null }>
+): string {
+  const SEUIL = 20;
+  let pic: { i: number; precipitation: number; code: number | null } | null = null;
+
+  // Boucle `for` plutôt que `forEach` : TypeScript ne suit pas la réassignation
+  // de `pic` à travers la fermeture d'un callback, et le type se serait resserré
+  // à `never` une fois sorti de la boucle.
+  for (const [i, h] of heures.slice(0, 3).entries()) {
+    if (h.precipitation !== null && (!pic || h.precipitation > pic.precipitation)) {
+      pic = { i, precipitation: h.precipitation, code: h.code };
+    }
+  }
+
+  if (!pic || pic.precipitation < SEUIL) {
+    return 'Aucune précipitation significative attendue dans les prochaines heures.';
+  }
+
+  const mot = familleMeteo(pic.code ?? 3) === 'neige' ? 'Neige' : 'Pluie';
+  return pic.i === 0
+    ? `${mot} en cours ou imminente, probabilité de ${pic.precipitation} %.`
+    : `${mot} probable dans les prochaines heures, probabilité de ${pic.precipitation} %.`;
+}

@@ -230,6 +230,7 @@
         latitude={donnees.ville.latitude}
         longitude={donnees.ville.longitude}
         nom={donnees.ville.nom}
+        heures={donnees.horaire}
       />
     {/if}
 

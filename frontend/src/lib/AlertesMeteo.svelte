@@ -118,8 +118,16 @@
   }
   .avis a { color: inherit; }
 
+  /*
+    `flex-shrink: 0` forçait ce bouton à garder sa largeur intrinsèque même
+    trop étroit pour elle : à 320px (iPhone SE), « Activer les alertes météo
+    pour Montréal » dépassait le cadre de 2px — un vrai défilement horizontal
+    de la page, détecté par `e2e/accessibilite.spec.ts`. `min-width: 0` lève la
+    largeur minimale implicite des éléments flex, ce qui laisse le texte
+    revenir à la ligne dans le bouton plutôt que de le faire déborder.
+  */
   .bascule {
-    flex-shrink: 0;
+    min-width: 0;
     border: 1px solid rgba(255, 255, 255, 0.5);
     background: transparent;
     color: #fff;

@@ -71,6 +71,66 @@ test.describe('Accessibilité', () => {
     const annonce = page.locator('[aria-live="polite"]');
     await expect(annonce).toContainText('Montréal');
   });
+
+  test('la carte a un équivalent texte pour qui ne peut pas la voir', async ({ page }) => {
+    // `precipitation: 40` dans la fixture `previsions()` — au-dessus du seuil de
+    // 20 % utilisé par `resumeCarte` (voir `src/lib/meteo.ts`).
+    await interceptApi(page);
+    await page.goto('/');
+
+    await expect(page.getByText(/probabilité de 40 %/)).toBeVisible();
+  });
+
+  /**
+   * WCAG 2.1.4.10 (Reflow) : à 320 CSS px de large, aucun défilement horizontal
+   * de la page ne doit être nécessaire — la seule exception admise par le
+   * critère est le contenu qui exige un agencement bidimensionnel pour son
+   * usage (ici, la carte Leaflet elle-même, dont le défilement interne n'est
+   * pas concerné par cette vérification, qui porte sur le document entier).
+   */
+  test('aucun défilement horizontal à 320px de large (reflow WCAG 1.4.10)', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await interceptApi(page);
+    await page.goto('/');
+    await expect(page.getByRole('region', { name: 'Prévisions horaires' })).toBeVisible();
+
+    const largeur = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(largeur).toBeLessThanOrEqual(320);
+  });
+
+  /**
+   * WCAG 2.2 / 2.5.8 (Target Size Minimum, AA) : au moins 24×24 CSS px pour les
+   * cibles pointeur, à l'exception explicite du critère pour les liens dans une
+   * phrase ou un bloc de texte courant (`p a`, `.avis a`, `.legal a` — footer
+   * léger, séparé par des « · » comme une phrase plutôt qu'une liste de
+   * boutons), des contrôles natifs dont le rendu du curseur échappe au CSS
+   * (`input[type="range"]`), et du balisage injecté par Leaflet dans `.carte`
+   * (attribution, zoom +/-) — il ne nous appartient pas, même raison que son
+   * exclusion des scans axe plus haut.
+   */
+  test('les cibles interactives mesurent au moins 24×24px', async ({ page }) => {
+    await interceptApi(page);
+    await page.goto('/');
+    await expect(page.getByRole('region', { name: 'Prévisions horaires' })).toBeVisible();
+
+    const boutons = page.locator(
+      'button, a[href]:not(.legal a):not(p a):not(.carte a), input:not([type="range"])'
+    );
+    const total = await boutons.count();
+    expect(total).toBeGreaterThan(0);
+
+    for (let i = 0; i < total; i++) {
+      const cible = boutons.nth(i);
+      if (!(await cible.isVisible())) continue;
+      const boite = await cible.boundingBox();
+      expect(
+        boite,
+        `cible sans boîte englobante : ${await cible.evaluate((e) => e.outerHTML)}`
+      ).not.toBeNull();
+      expect(boite!.width, await cible.evaluate((e) => e.outerHTML)).toBeGreaterThanOrEqual(24);
+      expect(boite!.height, await cible.evaluate((e) => e.outerHTML)).toBeGreaterThanOrEqual(24);
+    }
+  });
 });
 
 /**

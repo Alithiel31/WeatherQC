@@ -198,6 +198,7 @@ se tient à jour dans la console et non dans ce dépôt.
 - [Notifications d'alertes météo](./docs/notifications.md)
 - [Veille des APIs tierces](./docs/veille-api-tierces.md)
 - [Guide de reprise](./docs/guide-de-reprise.md)
+- [Accessibilité](./docs/accessibilite.md)
 
 ## Contribuer
 

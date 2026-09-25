@@ -3,17 +3,22 @@
   import L from 'leaflet';
   import 'leaflet/dist/leaflet.css';
   import { framesRainViewer, HOTE_TUILES_DEFAUT } from './api.ts';
-  import { heureMinute } from './meteo.ts';
+  import { heureMinute, resumeCarte } from './meteo.ts';
   import { creerAnimation } from './animationFrames.svelte.ts';
-  import type { ImageRainViewer, FramesRainViewer } from './types.ts';
+  import type { ImageRainViewer, FramesRainViewer, PrevisionsHoraires } from './types.ts';
 
   interface Props {
     latitude: number;
     longitude: number;
     nom?: string;
+    heures?: PrevisionsHoraires[];
   }
 
-  const { latitude, longitude, nom = '' }: Props = $props();
+  const { latitude, longitude, nom = '', heures = [] }: Props = $props();
+
+  // Seule alternative non-visuelle aux tuiles radar/satellite — voir le
+  // commentaire de `resumeCarte` dans `meteo.ts`.
+  let resume = $derived(resumeCarte(heures));
 
   // Leaflet objects — $state.raw() to avoid deep proxy wrapping
   let conteneur = $state.raw<HTMLDivElement | undefined>(undefined);
@@ -220,6 +225,13 @@
     </div>
   </header>
 
+  <!--
+    Placé avant la carte, pas après : un lecteur d'écran qui parcourt la page
+    linéairement doit atteindre l'équivalent textuel avant la région sans
+    équivalent, pas seulement à sa suite.
+  -->
+  <p class="resume">{resume}</p>
+
   <div class="carte" bind:this={conteneur}></div>
 
   {#if erreurCarte || satelliteIndisponible}
@@ -281,6 +293,7 @@
   }
   .modes button.active { background: #fff; color: #16314d; }
   .modes button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .resume { margin: 0 0 0.7rem; font-size: 0.85rem; opacity: 0.9; }
   .carte { height: 16rem; border-radius: 0.7rem; overflow: hidden; }
   .controles { display: flex; align-items: center; gap: 0.7rem; margin-top: 0.7rem; }
   .lecture {
