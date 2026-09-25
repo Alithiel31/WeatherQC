@@ -1,5 +1,7 @@
 # Guide de reprise
 
+🇬🇧 [English version](./guide-de-reprise.en.md)
+
 [Retour au README](../README.md)
 
 Météo Québec a un seul mainteneur réel (**Jacques Duchamplecheval**, alias GitHub

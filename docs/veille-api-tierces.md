@@ -1,5 +1,7 @@
 # Veille des APIs tierces
 
+🇬🇧 [English version](./veille-api-tierces.en.md)
+
 [Retour au README](../README.md)
 
 Le backend et le frontend s'appuient sur cinq services externes **gratuits, sans contrat

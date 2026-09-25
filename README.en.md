@@ -196,6 +196,8 @@ rather than in this repository.
 - [Environment variables](./docs/environnement.en.md)
 - [Local development](./docs/developpement.en.md)
 - [Weather alerts (notifications)](./docs/notifications.en.md)
+- [Third-party API watch](./docs/veille-api-tierces.en.md)
+- [Handover guide](./docs/guide-de-reprise.en.md)
 
 ## Contributing
 
