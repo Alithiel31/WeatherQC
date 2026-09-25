@@ -196,6 +196,8 @@ se tient à jour dans la console et non dans ce dépôt.
 - [Variables d'environnement](./docs/environnement.md)
 - [Développement local](./docs/developpement.md)
 - [Notifications d'alertes météo](./docs/notifications.md)
+- [Veille des APIs tierces](./docs/veille-api-tierces.md)
+- [Guide de reprise](./docs/guide-de-reprise.md)
 
 ## Contribuer
 

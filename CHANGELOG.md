@@ -2,6 +2,19 @@
 
 ## [Non publié]
 
+### Added
+
+- `docs/veille-api-tierces.md` : liste des cinq fournisseurs externes gratuits (Open-Meteo,
+  Zippopotam, RainViewer, OpenWeatherMap, CARTO), lesquels sont déjà couverts par les tests de
+  contrat nocturnes (`contract.yml`) et lesquels ne le sont pas (OpenWeatherMap, CARTO — d'où le
+  filigrane CARTO apparu sans préavis fin août 2026), avec une fréquence de vérification manuelle
+  recommandée pour ces deux derniers
+- `docs/guide-de-reprise.md` : ordre de lecture de la documentation, liste des accès et secrets
+  nécessaires pour reprendre le projet (dépôt GitHub, Cloudflare, Tailscale, Raspberry Pi,
+  keystore Android, Google Play Console), et procédure de remise en marche du service à partir de
+  zéro — le mainteneur actuel étant seul, sans document de ce type la reprise du projet dépendrait
+  entièrement de sa disponibilité
+
 ### Fixed
 
 - Le vérificateur d'alertes météo lance désormais un premier cycle deux minutes après le
