@@ -32,7 +32,9 @@ déclenchée n'a pas cessé puis repris. Un navigateur ne porte qu'un abonnement
 ré-abonner un même `endpoint` à une autre ville remplace l'entrée existante plutôt que d'en créer
 une seconde.
 
-**Vérification et envoi** (`backend/src/services/verificateur-alertes.ts`) — cycle horaire, sur
+**Vérification et envoi** (`backend/src/services/verificateur-alertes.ts`) — cycle horaire (le premier
+cycle part deux minutes après le démarrage, pour qu'un redéploiement ne repousse pas la
+vérification d'une heure), sur
 les seules villes ayant au moins un abonnement (`villesAbonnees()`, pour éviter d'interroger
 Open-Meteo pour les autres). Un abonnement dont l'envoi échoue avec un 404/410 Web Push est
 considéré expiré et supprimé automatiquement — c'est ainsi que se nettoient les abonnements

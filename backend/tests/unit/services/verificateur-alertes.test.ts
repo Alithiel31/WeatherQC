@@ -181,6 +181,27 @@ describe('verificateur-alertes', () => {
       expect(fetchForecast).toHaveBeenCalled();
     });
 
+    it("lance un premier cycle après le délai initial, sans attendre l'intervalle", async () => {
+      ajouterAbonnement({ ville: 'montreal', endpoint: 'https://push/1', p256dh: 'p', auth: 'a' });
+      vi.mocked(fetchForecast).mockResolvedValue(previsionsSansAlerte());
+
+      demarrerVerificateur(60_000, 10);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(fetchForecast).toHaveBeenCalledTimes(1);
+    });
+
+    it('annule le premier cycle si le vérificateur est arrêté avant le délai initial', async () => {
+      ajouterAbonnement({ ville: 'montreal', endpoint: 'https://push/1', p256dh: 'p', auth: 'a' });
+      vi.mocked(fetchForecast).mockResolvedValue(previsionsSansAlerte());
+
+      demarrerVerificateur(60_000, 20);
+      arreterVerificateur();
+      await new Promise((resolve) => setTimeout(resolve, 60));
+
+      expect(fetchForecast).not.toHaveBeenCalled();
+    });
+
     it('est idempotent, et arreterVerificateur() peut être appelé plusieurs fois sans lever', () => {
       demarrerVerificateur(1000);
       demarrerVerificateur(1000);
