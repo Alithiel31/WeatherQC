@@ -78,6 +78,27 @@ describe('CarteNuages', () => {
     expect(screen.queryByText(/ne sont pas disponibles/)).toBeNull();
   });
 
+  it('affiche un résumé texte des précipitations à venir, seule alternative non-visuelle à la carte', async () => {
+    render(CarteNuages, {
+      ...props,
+      heures: [{ heure: '2026-08-03T12:00', temperature: 5, code: 73, precipitation: 45 }],
+    });
+
+    expect(
+      await screen.findByText(/Neige en cours ou imminente, probabilité de 45 %\./)
+    ).toBeTruthy();
+  });
+
+  it('signale l’absence de précipitation quand aucune heure n’est fournie', async () => {
+    render(CarteNuages, props);
+
+    expect(
+      await screen.findByText(
+        'Aucune précipitation significative attendue dans les prochaines heures.'
+      )
+    ).toBeTruthy();
+  });
+
   it('affiche un message de repli quand RainViewer est injoignable', async () => {
     framesRainViewer.mockRejectedValue(new Error('RainViewer indisponible'));
 

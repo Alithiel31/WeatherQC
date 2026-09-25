@@ -12,8 +12,13 @@ import {
   jourLong,
   heureCourte,
   heureMinute,
+  resumeCarte,
   VALEUR_ABSENTE,
 } from '../../src/lib/meteo.ts';
+
+function heure(precipitation: number | null, code: number | null = 2) {
+  return { heure: '2026-08-03T12:00', code, precipitation };
+}
 
 describe('descriptionMeteo', () => {
   it('traduit un code WMO connu', () => {
@@ -188,5 +193,45 @@ describe('heureMinute', () => {
   it('complète les minutes sur deux chiffres', () => {
     const iso = new Date(2026, 7, 3, 9, 0).toISOString();
     expect(heureMinute(iso)).toBe('9 h 00');
+  });
+});
+
+describe('resumeCarte', () => {
+  it('ne signale rien sous le seuil de 20 %, aligné sur celui de la bande horaire', () => {
+    expect(resumeCarte([heure(19), heure(0), heure(null)])).toBe(
+      'Aucune précipitation significative attendue dans les prochaines heures.'
+    );
+  });
+
+  it('ne regarde aucune donnée absente', () => {
+    expect(resumeCarte([heure(null), heure(null)])).toBe(
+      'Aucune précipitation significative attendue dans les prochaines heures.'
+    );
+  });
+
+  it('signale une précipitation en cours quand l’heure actuelle dépasse le seuil', () => {
+    expect(resumeCarte([heure(45, 61)])).toBe('Pluie en cours ou imminente, probabilité de 45 %.');
+  });
+
+  it('distingue la neige de la pluie via le code WMO de l’heure la plus probable', () => {
+    expect(resumeCarte([heure(45, 73)])).toBe('Neige en cours ou imminente, probabilité de 45 %.');
+  });
+
+  it('signale une précipitation à venir quand ce n’est pas l’heure actuelle qui domine', () => {
+    expect(resumeCarte([heure(10), heure(60, 61), heure(30)])).toBe(
+      'Pluie probable dans les prochaines heures, probabilité de 60 %.'
+    );
+  });
+
+  it('ne regarde que les trois prochaines heures', () => {
+    expect(resumeCarte([heure(0), heure(0), heure(0), heure(90, 61)])).toBe(
+      'Aucune précipitation significative attendue dans les prochaines heures.'
+    );
+  });
+
+  it('retient la probabilité la plus haute, pas la première au-dessus du seuil', () => {
+    expect(resumeCarte([heure(25), heure(80, 61)])).toBe(
+      'Pluie probable dans les prochaines heures, probabilité de 80 %.'
+    );
   });
 });

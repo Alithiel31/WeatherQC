@@ -14,8 +14,25 @@
   keystore Android, Google Play Console), et procédure de remise en marche du service à partir de
   zéro — le mainteneur actuel étant seul, sans document de ce type la reprise du projet dépendrait
   entièrement de sa disponibilité
+- Résumé texte des précipitations à venir sur la carte animée (`resumeCarte` dans
+  `frontend/src/lib/meteo.ts`, affiché par `CarteNuages.svelte`) : seule alternative non-visuelle
+  aux tuiles radar/satellite, qui n'en avaient aucune jusqu'ici — la carte reste explicitement
+  exclue des scans axe (balisage Leaflet) et son contenu est donc, par construction, invisible à
+  qui ne peut pas la voir
+- Deux tests de bout en bout dans `frontend/e2e/accessibilite.spec.ts` : absence de défilement
+  horizontal à 320px de large (WCAG 1.4.10, reflow) et taille minimale de 24×24px des cibles
+  interactives (WCAG 2.5.8), hors liens en ligne dans du texte et balisage propre à Leaflet
+- `docs/accessibilite.md` : récapitulatif de ce qui est déjà vérifié automatiquement (contraste,
+  axe, clavier, reflow, taille des cibles), de ce qui a été ajouté (résumé texte de la carte), de
+  ce qui reste hors de portée des outils automatisés, et un script de vérification manuelle avec
+  un lecteur d'écran
 
 ### Fixed
+
+- Le bouton d'activation des alertes météo (`AlertesMeteo.svelte`) débordait de 2px du cadre de
+  l'application à 320px de large (iPhone SE) : `flex-shrink: 0` l'empêchait de rétrécir sous sa
+  largeur de texte intrinsèque, provoquant un défilement horizontal de toute la page — détecté par
+  le nouveau test de reflow ci-dessus
 
 - Le vérificateur d'alertes météo lance désormais un premier cycle deux minutes après le
   démarrage du backend : avec un simple `setInterval`, chaque redéploiement repoussait la
