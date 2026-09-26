@@ -94,7 +94,9 @@ describe('Favoris — interactions', () => {
     render(Favoris, { favoris: [villeQuebec], onchoisir: vi.fn(), onretirer });
     await screen.findByText('15°');
 
-    await user.click(screen.getByRole('button', { name: /Retirer Québec de la liste des favoris/ }));
+    await user.click(
+      screen.getByRole('button', { name: /Retirer Québec de la liste des favoris/ })
+    );
 
     expect(onretirer).toHaveBeenCalledWith(villeQuebec);
   });

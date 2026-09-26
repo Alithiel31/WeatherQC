@@ -43,7 +43,9 @@ describe('GET /api/geocode/:codePostal', () => {
 
       expect(response.body.status).toBe(400);
       expect(response.body.error).toBe('Paramètres invalides');
-      expect(JSON.stringify(response.body.details)).toContain('réservé aux codes postaux du Québec');
+      expect(JSON.stringify(response.body.details)).toContain(
+        'réservé aux codes postaux du Québec'
+      );
     }
   );
 

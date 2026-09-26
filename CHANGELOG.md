@@ -4,6 +4,26 @@
 
 ### Added
 
+- Refonte visuelle de l'interface (`frontend/src/App.svelte` et l'ensemble des composants de
+  `frontend/src/lib/`) : direction « dark navy premium », cartes translucides à bordure bleutée,
+  hiérarchie visuelle renforcée sur la température actuelle, fond « ciel » enrichi d'une couche
+  atmosphérique procédurale selon la condition météo (étoiles la nuit, halo au dégagé, stries de
+  pluie/neige) — sans photo par lieu, l'application desservant n'importe quelle adresse québécoise
+- Alertes météo affichées directement à l'écran (`BandeauAlerte.svelte`) : `GET /api/previsions/*`
+  expose désormais un champ `alertes`, calculé à la demande à partir des mêmes fonctions pures que
+  le cron de notifications push (`detecterAlertes`/`redigerNotification` dans
+  `backend/src/services/detecteur-alertes.ts`) — jusqu'ici cette détection ne servait qu'à décider
+  quand notifier, sans jamais être visible pour qui regarde l'écran
+- Favoris : une étoile sur le lieu affiché (`ConditionsActuelles.svelte`) ajoute ou retire un
+  favori — ville du sélecteur ou lieu géocodé par code postal —, persisté côté client
+  (`preferences.svelte.ts`). Nouvel écran `Favoris.svelte` listant chaque favori avec un résumé
+  météo à jour
+- Écran Réglages regroupant l'unité de mesure et l'activation des notifications, jusqu'ici
+  dispersées dans l'en-tête et juste sous celui-ci
+- Navigation basse à quatre onglets (Accueil / Carte / Favoris / Réglages), ancrée sur les
+  sections de l'unique page — rendue de façon inconditionnelle pour rester atteignable pendant un
+  chargement ou un écran d'erreur (les liens légaux, désormais dans l'écran Réglages, doivent
+  rester accessibles précisément quand l'application ne fonctionne pas)
 - `docs/veille-api-tierces.md` : liste des cinq fournisseurs externes gratuits (Open-Meteo,
   Zippopotam, RainViewer, OpenWeatherMap, CARTO), lesquels sont déjà couverts par les tests de
   contrat nocturnes (`contract.yml`) et lesquels ne le sont pas (OpenWeatherMap, CARTO — d'où le
@@ -29,6 +49,11 @@
 
 ### Fixed
 
+- La recherche par code postal (`GET /api/geocode/:codePostal`) acceptait n'importe quel FSA
+  canadien bien formé : Zippopotam ne filtre par aucune province, si bien qu'un code postal de
+  Toronto ou Vancouver renvoyait de vraies prévisions — incohérent avec le positionnement 100 %
+  québécois de l'application (titre, description, domaine, liste de villes). Restreint aux FSA
+  dont la première lettre est `G`, `H` ou `J`, les seules attribuées au Québec
 - Le bouton d'activation des alertes météo (`AlertesMeteo.svelte`) débordait de 2px du cadre de
   l'application à 320px de large (iPhone SE) : `flex-shrink: 0` l'empêchait de rétrécir sous sa
   largeur de texte intrinsèque, provoquant un défilement horizontal de toute la page — détecté par

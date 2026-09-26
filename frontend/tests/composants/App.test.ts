@@ -507,9 +507,7 @@ describe('App — favoris', () => {
       { type: 'ville', id: 'montreal', nom: 'Montréal' },
     ]);
     expect(screen.queryByText(/Aucun favori/)).toBeNull();
-    expect(
-      screen.getByRole('button', { name: 'Retirer Montréal des favoris' })
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Retirer Montréal des favoris' })).toBeTruthy();
   });
 
   it('retire un favori en rebasculant l’étoile', async () => {
