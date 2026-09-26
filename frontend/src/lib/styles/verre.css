@@ -1,0 +1,17 @@
+/**
+ * Habillage « verre » partagé par les cartes (Horaire, Quotidien, CarteNuages,
+ * AlertesMeteo, BottomNav) : bordure bleutée fine + flou.
+ *
+ * Volontairement limité à la bordure/l'ombre/le flou : le fond translucide
+ * (`background: rgba(0,0,0,ALPHA)`) reste déclaré dans chaque composant, en
+ * toutes lettres, parce que `tests/unit/contraste.test.ts` le relit par regex
+ * pour vérifier le contraste WCAG — une classe partagée qui l'absorberait
+ * casserait ce test silencieusement.
+ */
+.carte-verre {
+  border: 1px solid var(--verre-bordure);
+  border-radius: var(--rayon-carte);
+  box-shadow: var(--ombre-carte);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}

@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import L from 'leaflet';
   import 'leaflet/dist/leaflet.css';
+  import './styles/verre.css';
   import { framesRainViewer, HOTE_TUILES_DEFAUT } from './api.ts';
   import { heureMinute, resumeCarte } from './meteo.ts';
   import { creerAnimation } from './animationFrames.svelte.ts';
@@ -210,7 +211,7 @@
   });
 </script>
 
-<section aria-label="Carte animée des nuages et précipitations">
+<section class="carte-verre" aria-label="Carte animée des nuages et précipitations">
   <header>
     <h2>Carte animée — {nom}</h2>
     <div class="modes" role="group" aria-label="Type de couche">
@@ -270,8 +271,8 @@
 <style>
   /* Même voile que `Horaire` et `Quotidien` : cf. le commentaire qui s'y trouve. */
   section {
-    background: rgba(0,0,0,0.2); border-radius: 1rem;
-    padding: 1rem; margin-top: 0.9rem; backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.2);
+    padding: 1.1rem; margin-top: 0.9rem;
   }
   header {
     display: flex; justify-content: space-between; align-items: center;
@@ -285,16 +286,21 @@
   .modes {
     display: inline-flex; gap: 0.2rem;
     background: rgba(0,0,0,0.25); border-radius: 999px; padding: 0.2rem; flex-shrink: 0;
+    border: 1px solid var(--verre-bordure, rgba(112,170,255,0.22));
   }
   .modes button {
     border: 0; background: transparent; color: #fff; font: inherit;
     font-size: 0.78rem; font-weight: 600; padding: 0.3rem 0.8rem;
     border-radius: 999px; cursor: pointer;
   }
-  .modes button.active { background: #fff; color: #16314d; }
+  /* Fond clair + texte marine : cf. le même choix dans `RechercheCodePostal.svelte`. */
+  .modes button.active { background: var(--accent-doux, #a9d3ff); color: #0d1c30; }
   .modes button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
   .resume { margin: 0 0 0.7rem; font-size: 0.85rem; opacity: 0.9; }
-  .carte { height: 16rem; border-radius: 0.7rem; overflow: hidden; }
+  .carte {
+    height: 16rem; border-radius: 0.9rem; overflow: hidden;
+    border: 1px solid var(--verre-bordure, rgba(112,170,255,0.22));
+  }
   .controles { display: flex; align-items: center; gap: 0.7rem; margin-top: 0.7rem; }
   .lecture {
     border: 0; background: rgba(0,0,0,0.3); color: #fff;
@@ -302,7 +308,7 @@
     cursor: pointer; flex-shrink: 0;
   }
   .lecture:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-  input[type="range"] { flex: 1; accent-color: #ffd479; }
+  input[type="range"] { flex: 1; accent-color: var(--accent, #4da3ff); }
   .heure { font-size: 0.85rem; font-variant-numeric: tabular-nums; min-width: 4rem; text-align: right; }
   .erreur { margin: 0.7rem 0 0; font-size: 0.85rem; opacity: 0.85; }
 </style>

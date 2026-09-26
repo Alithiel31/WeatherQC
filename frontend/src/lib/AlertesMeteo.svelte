@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import './styles/verre.css';
   import { ErreurApi } from './api.ts';
   import {
     supportePush,
@@ -73,7 +74,11 @@
 </script>
 
 {#if supporte}
-  <div class="alertes-meteo">
+  <div class="alertes-meteo carte-verre">
+    <svg class="cloche" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3.5a5 5 0 0 0-5 5v2.6c0 .8-.24 1.58-.68 2.24L5 15.5h14l-1.32-2.16a4 4 0 0 1-.68-2.24V8.5a5 5 0 0 0-5-5Z" />
+      <path d="M9.5 18.5a2.5 2.5 0 0 0 5 0" />
+    </svg>
     {#if abonneIci}
       <p class="etat">Alertes météo activées pour {villeNom}</p>
       <button type="button" class="bascule" onclick={desactiver} disabled={enCours}>
@@ -101,12 +106,12 @@
     flex-wrap: wrap;
     gap: 0.5rem 0.75rem;
     margin: 0.75rem 0 0;
-    padding: 0.5rem 0.9rem;
+    padding: 0.65rem 0.95rem;
     background: rgba(0, 0, 0, 0.25);
-    border-radius: 0.6rem;
     font-size: 0.85rem;
-    backdrop-filter: blur(6px);
   }
+
+  .cloche { flex-shrink: 0; color: var(--accent-doux, #a9d3ff); }
 
   .etat { margin: 0; flex: 1 1 auto; }
 
