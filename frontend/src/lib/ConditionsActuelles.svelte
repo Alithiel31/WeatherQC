@@ -38,14 +38,11 @@
 
   let photoSrc = $derived(photoVille(villeId, !actuel.jour));
 
-  // Bascule à `true` à chaque changement de `photoSrc` (nouvelle ville, ou
-  // jour → nuit) : sans ça, un premier échec de chargement condamnait aussi
-  // les villes/moments suivants, qui n'ont pourtant pas encore été essayés.
-  let photoOk = $state(true);
-  $effect(() => {
-    photoSrc;
-    photoOk = true;
-  });
+  // Mémorise le dernier `photoSrc` en échec (404, etc.), pas un simple
+  // booléen : un changement de ville ou de moment retente automatiquement,
+  // puisque le nouveau `photoSrc` ne correspond plus à celui qui a échoué.
+  let photoSrcEnErreur = $state<string | null>(null);
+  let photoOk = $derived(photoSrc !== null && photoSrc !== photoSrcEnErreur);
 </script>
 
 <section class="actuel" aria-label="Conditions actuelles">
@@ -74,13 +71,13 @@
   </header>
 
   <div class="bande-hero">
-    {#if photoSrc && photoOk}
+    {#if photoOk}
       <img
         class="photo"
         src={photoSrc}
         alt=""
         aria-hidden="true"
-        onerror={() => (photoOk = false)}
+        onerror={() => (photoSrcEnErreur = photoSrc)}
       />
       <!-- Voile de contraste, pas la couleur du ciel : pleinement opaque côté
            texte (aucun pixel de la photo, quelle qu'en soit la clarté, ne
