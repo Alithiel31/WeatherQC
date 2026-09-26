@@ -12,7 +12,7 @@ Un fichier `jour` et un fichier `nuit` par ville, même identifiant que
 `backend/src/data/cities.ts` :
 
 - `montreal-jour.webp` / `montreal-nuit.webp` ✅ livrées
-- `quebec-jour.webp` / `quebec-nuit.webp`
+- `quebec-jour.webp` / `quebec-nuit.webp` ✅ livrées
 - `gatineau-jour.webp` / `gatineau-nuit.webp`
 - `sherbrooke-jour.webp` / `sherbrooke-nuit.webp`
 - `trois-rivieres-jour.webp` / `trois-rivieres-nuit.webp`
@@ -26,6 +26,6 @@ Un fichier `jour` et un fichier `nuit` par ville, même identifiant que
 - `.webp` (pas de traitement offline particulier : ces fichiers ne sont pas
   ajoutés au précache du service worker, `vite.config.js` ne liste que les
   icônes dans `includeAssets` — un lieu hors ligne retombe simplement sur le
-  dégradé, comme pour la carte animée). Viser < 200 Ko par fichier ; les deux
-  premières livrées (Montréal) sont à 226 Ko et 287 Ko — acceptable, pas
-  urgent à retravailler.
+  dégradé, comme pour la carte animée). Viser < 200 Ko par fichier ; les
+  quatre premières livrées (Montréal, Québec) vont de 226 à 298 Ko —
+  acceptable, pas urgent à retravailler.
