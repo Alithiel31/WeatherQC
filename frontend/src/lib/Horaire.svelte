@@ -1,4 +1,5 @@
 <script lang="ts">
+  import './styles/verre.css';
   import { iconeMeteo, descriptionMeteo, degres, heureCourte, jourCourt } from './meteo.ts';
   import type { Unite } from './meteo.ts';
   import type { PrevisionsHoraires } from './types.ts';
@@ -18,7 +19,7 @@
   }
 </script>
 
-<section aria-label="Prévisions horaires">
+<section class="carte-verre" aria-label="Prévisions horaires">
   <h2>Heure par heure — 48 h</h2>
   <!--
     `overflow-x: auto` sans `tabindex` : un conteneur défilant n'est focusable par
@@ -38,7 +39,7 @@
   <div class="bande" tabindex="0" role="group" aria-label="48 heures à venir, liste défilante">
     <ul>
       {#each heures as h, i (h.heure)}
-        <li class:minuit={i > 0 && new Date(h.heure).getHours() === 0}>
+        <li class:minuit={i > 0 && new Date(h.heure).getHours() === 0} class:maintenant={i === 0}>
           <span class="heure">{etiquette(h, i)}</span>
           <!--
             L'icône portait `aria-hidden` sans équivalent textuel : un lecteur
@@ -67,27 +68,38 @@
     `tests/unit/contraste.test.ts` relit ces valeurs et refait le calcul.
   */
   section {
-    background: rgba(0,0,0,0.2); border-radius: 1rem;
-    padding: 1rem 0 0.75rem; backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.2);
+    padding: 1.1rem 0 0.9rem;
   }
   h2 {
-    margin: 0 1rem 0.6rem; font-size: 0.75rem; font-weight: 600;
+    margin: 0 1.1rem 0.75rem; font-size: 0.75rem; font-weight: 600;
     text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.75;
   }
   .bande { overflow-x: auto; scrollbar-width: thin; }
   .bande:focus-visible { outline: 2px solid #fff; outline-offset: -2px; border-radius: 0.5rem; }
   ul {
-    display: flex; gap: 0.4rem;
-    padding: 0 1rem 0.5rem; margin: 0; list-style: none;
+    display: flex; gap: 0.55rem;
+    padding: 0 1.1rem 0.5rem; margin: 0; list-style: none;
   }
   li {
     display: flex; flex-direction: column; align-items: center;
-    gap: 0.3rem; min-width: 3.4rem; font-variant-numeric: tabular-nums;
+    gap: 0.35rem; min-width: 3.6rem; font-variant-numeric: tabular-nums;
+    padding: 0.65rem 0.4rem; border-radius: 0.9rem;
+    border: 1px solid rgba(255,255,255,0.08);
   }
   .heure { font-size: 0.72rem; opacity: 0.75; white-space: nowrap; }
   .icone { font-size: 1.3rem; }
   .temp  { font-weight: 600; }
   .pluie { font-size: 0.68rem; color: #bfe3ff; }
-  .minuit { border-left: 1px solid rgba(255,255,255,0.35); padding-left: 0.5rem; }
-  .minuit .heure { font-weight: 700; opacity: 1; }
+  .minuit { border-left: 1px solid rgba(255,255,255,0.35); margin-left: 0.15rem; }
+
+  /* L'échéance courante ("Maint.") se distingue par la bordure/lueur bleu
+     électrique plutôt que par une opacité réduite des autres — cf. la
+     hiérarchie voulue : un seul repère fort, pas un dégradé de gris. */
+  .maintenant {
+    border-color: var(--verre-bordure-vive, rgba(112,170,255,0.42));
+    background: rgba(77, 163, 255, 0.12);
+    box-shadow: 0 0 0 1px rgba(77, 163, 255, 0.2) inset;
+  }
+  .maintenant .heure { font-weight: 700; opacity: 1; }
 </style>

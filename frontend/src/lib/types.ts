@@ -46,12 +46,26 @@ export interface PrevisionsQuotidiennes {
   coucher: string;
 }
 
+/**
+ * Alerte météo réelle, déjà rédigée côté backend
+ * (`detecterAlertes`/`redigerNotification`) — les mêmes fonctions pures que
+ * celles qui décident d'envoyer une notification push. Le frontend n'a donc
+ * pas à connaître les seuils ni les types d'alerte pour l'afficher.
+ */
+export interface Alerte {
+  type: string;
+  importante: boolean;
+  titre: string;
+  corps: string;
+}
+
 export interface ReponseMeteo {
   ville: Ville;
   misAJour: string;
   actuel: ConditionsActuelles;
   horaire: PrevisionsHoraires[];
   quotidien: PrevisionsQuotidiennes[];
+  alertes: Alerte[];
   depuisCache: boolean;
   /**
    * Vrai quand le backend a servi une entrée périmée parce que l'amont était en
@@ -68,6 +82,15 @@ export interface LieuCP {
   latitude: number;
   longitude: number;
 }
+
+/**
+ * Un favori désigne soit une ville du sélecteur (par son `id`, stable), soit un
+ * lieu géocodé par code postal (le `LieuCP` complet — sans ça, le retrouver
+ * demanderait de regéocoder le RTA à chaque démarrage). Type discriminé plutôt
+ * que deux listes séparées : un seul endroit décide de ce qu'est un favori, et
+ * `Favoris.svelte` n'a qu'une seule liste à parcourir dans l'ordre d'ajout.
+ */
+export type Favori = { type: 'ville'; id: string; nom: string } | { type: 'cp'; lieu: LieuCP };
 
 export interface ImageRainViewer {
   path: string;

@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
+import { userEvent } from '@testing-library/user-event';
 import ConditionsActuelles from '../../src/lib/ConditionsActuelles.svelte';
 import type { ConditionsActuelles as Conditions } from '../../src/lib/types.ts';
 
@@ -47,5 +48,47 @@ describe('ConditionsActuelles — icône de nuit', () => {
     render(ConditionsActuelles, { actuel: { ...actuel, jour: false }, lieu: 'Montréal' });
 
     expect(screen.getByText('☁️')).toBeTruthy();
+  });
+});
+
+describe('ConditionsActuelles — favori', () => {
+  it('ne rend pas l’étoile sans gestionnaire de bascule', () => {
+    render(ConditionsActuelles, { actuel, lieu: 'Montréal' });
+
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('affiche l’étoile et annonce l’état non favori', () => {
+    render(ConditionsActuelles, {
+      actuel,
+      lieu: 'Montréal',
+      estFavori: false,
+      onbasculerFavori: vi.fn(),
+    });
+
+    const bouton = screen.getByRole('button', { name: 'Ajouter Montréal aux favoris' });
+    expect(bouton.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('annonce l’état favori quand `estFavori` est vrai', () => {
+    render(ConditionsActuelles, {
+      actuel,
+      lieu: 'Montréal',
+      estFavori: true,
+      onbasculerFavori: vi.fn(),
+    });
+
+    const bouton = screen.getByRole('button', { name: 'Retirer Montréal des favoris' });
+    expect(bouton.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('appelle `onbasculerFavori` au clic', async () => {
+    const onbasculerFavori = vi.fn();
+    const user = userEvent.setup();
+    render(ConditionsActuelles, { actuel, lieu: 'Montréal', estFavori: false, onbasculerFavori });
+
+    await user.click(screen.getByRole('button', { name: 'Ajouter Montréal aux favoris' }));
+
+    expect(onbasculerFavori).toHaveBeenCalledOnce();
   });
 });

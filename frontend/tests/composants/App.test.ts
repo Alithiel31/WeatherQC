@@ -51,6 +51,7 @@ const montreal: ReponseMeteo = {
       coucher: '2026-08-03T20:15',
     },
   ],
+  alertes: [],
   depuisCache: false,
 };
 
@@ -471,5 +472,66 @@ describe('App — une erreur ne doit pas effacer les données affichées', () =>
       expect.stringContaining('Open-Meteo injoignable')
     );
     expect(screen.queryByText('Partiellement nuageux')).toBeNull();
+  });
+});
+
+// Régression : l'application affichait un sous-titre générique « Canada »,
+// incohérent avec un positionnement 100 % québécois (titre PWA, description,
+// domaine, liste de villes). Voir aussi la restriction FSA côté backend.
+describe('App — positionnement Québec', () => {
+  it('affiche « Québec » dans l’eyebrow et sous le nom du lieu', async () => {
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    expect(screen.getByText('Prévisions · Québec')).toBeTruthy();
+    expect(screen.getByText('Québec')).toBeTruthy();
+  });
+});
+
+describe('App — favoris', () => {
+  it('affiche la section Favoris vide par défaut', async () => {
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    expect(screen.getByText(/Aucun favori/)).toBeTruthy();
+  });
+
+  it('ajoute le lieu affiché aux favoris via l’étoile, et le retrouve dans la section Favoris', async () => {
+    const user = userEvent.setup();
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    await user.click(screen.getByRole('button', { name: 'Ajouter Montréal aux favoris' }));
+
+    expect(JSON.parse(localStorage.getItem('favoris')!)).toEqual([
+      { type: 'ville', id: 'montreal', nom: 'Montréal' },
+    ]);
+    expect(screen.queryByText(/Aucun favori/)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Retirer Montréal des favoris' })).toBeTruthy();
+  });
+
+  it('retire un favori en rebasculant l’étoile', async () => {
+    const user = userEvent.setup();
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    await user.click(screen.getByRole('button', { name: 'Ajouter Montréal aux favoris' }));
+    await user.click(screen.getByRole('button', { name: 'Retirer Montréal des favoris' }));
+
+    expect(JSON.parse(localStorage.getItem('favoris')!)).toEqual([]);
+    expect(screen.getByText(/Aucun favori/)).toBeTruthy();
+  });
+});
+
+describe('App — navigation basse', () => {
+  it('affiche les quatre onglets, atteignables même en écran d’erreur', async () => {
+    previsionsVille.mockRejectedValue(new ErreurApi('Open-Meteo injoignable'));
+
+    render(App);
+    await screen.findByRole('alert');
+
+    for (const nom of ['Accueil', 'Carte', 'Favoris', 'Réglages']) {
+      expect(screen.getByRole('button', { name: nom })).toBeTruthy();
+    }
   });
 });

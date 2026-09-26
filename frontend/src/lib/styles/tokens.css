@@ -1,0 +1,19 @@
+/**
+ * Jetons de design partagés pour la direction « dark navy premium ».
+ *
+ * Simples custom properties CSS : elles s'appliquent en cascade à tout le DOM
+ * dès que ce fichier est importé une fois (peu importe par quel composant),
+ * donc chaque `<style>` scoped Svelte peut y référer via `var(--...)` sans
+ * réimporter ce fichier lui-même.
+ */
+:root {
+  --verre-fond: rgba(10, 22, 42, 0.5);
+  --verre-fond-fort: rgba(7, 16, 32, 0.65);
+  --verre-bordure: rgba(112, 170, 255, 0.22);
+  --verre-bordure-vive: rgba(112, 170, 255, 0.42);
+  --accent: #4da3ff;
+  --accent-doux: #a9d3ff;
+  --rayon-carte: 1.25rem;
+  --rayon-pilule: 999px;
+  --ombre-carte: 0 1.5rem 3rem rgba(2, 6, 16, 0.5);
+}
