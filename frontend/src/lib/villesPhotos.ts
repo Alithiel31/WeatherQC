@@ -17,7 +17,7 @@ const VILLES_AVEC_PHOTO = new Set([
 ]);
 
 /**
- * Chemin attendu : `/villes/<id>-jour.jpg` ou `/villes/<id>-nuit.jpg`.
+ * Chemin attendu : `/villes/<id>-jour.webp` ou `/villes/<id>-nuit.webp`.
  *
  * Chemin public (pas un import de module) : un fichier absent répond 404 au
  * lieu de faire échouer le build tant que les photos ne sont pas livrées —
@@ -25,5 +25,5 @@ const VILLES_AVEC_PHOTO = new Set([
  */
 export function photoVille(villeId: string | null, nuit: boolean): string | null {
   if (!villeId || !VILLES_AVEC_PHOTO.has(villeId)) return null;
-  return `/villes/${villeId}-${nuit ? 'nuit' : 'jour'}.jpg`;
+  return `/villes/${villeId}-${nuit ? 'nuit' : 'jour'}.webp`;
 }
