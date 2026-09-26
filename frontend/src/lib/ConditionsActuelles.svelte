@@ -108,7 +108,7 @@
     </div>
   </div>
 
-  <dl class="details carte-verre">
+  <div class="details carte-verre">
     <div class="stat">
       <svg class="stat-icone" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
         <path d="M3 8h11a3 3 0 1 0-2.5-4.7" />
@@ -116,8 +116,8 @@
         <path d="M3 17h8" />
       </svg>
       <div class="stat-texte">
-        <dt>Vent</dt>
-        <dd>{vitesseVent(actuel.vent, unite)} {libelleUniteVent(unite)}</dd>
+        <p class="stat-label">Vent</p>
+        <p class="stat-valeur">{vitesseVent(actuel.vent, unite)} {libelleUniteVent(unite)}</p>
       </div>
     </div>
     <div class="stat">
@@ -125,11 +125,11 @@
         <path d="M12 3.5s6 7 6 11.2a6 6 0 1 1-12 0C6 10.5 12 3.5 12 3.5Z" />
       </svg>
       <div class="stat-texte">
-        <dt>Humidité</dt>
-        <dd>{actuel.humidite} %</dd>
+        <p class="stat-label">Humidité</p>
+        <p class="stat-valeur">{actuel.humidite} %</p>
       </div>
     </div>
-  </dl>
+  </div>
 </section>
 
 <style>
@@ -278,6 +278,6 @@
   .stat:first-child { border-right: 1px solid var(--verre-bordure, rgba(112, 170, 255, 0.22)); }
   .stat-icone { flex-shrink: 0; color: var(--accent-doux, #a9d3ff); }
   .stat-texte { min-width: 0; }
-  .details dt { margin: 0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.85; }
-  .details dd { margin: 0.15rem 0 0; font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat-label { margin: 0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.85; }
+  .stat-valeur { margin: 0.15rem 0 0; font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 </style>
