@@ -8,7 +8,8 @@
   `frontend/src/lib/`) : direction « dark navy premium », cartes translucides à bordure bleutée,
   hiérarchie visuelle renforcée sur la température actuelle, fond « ciel » enrichi d'une couche
   atmosphérique procédurale selon la condition météo (étoiles la nuit, halo au dégagé, stries de
-  pluie/neige) — sans photo par lieu, l'application desservant n'importe quelle adresse québécoise
+  pluie/neige) — repli conservé pour tout lieu sans photo dédiée (voir ci-dessous), l'application
+  desservant n'importe quelle adresse québécoise
 - Alertes météo affichées directement à l'écran (`BandeauAlerte.svelte`) : `GET /api/previsions/*`
   expose désormais un champ `alertes`, calculé à la demande à partir des mêmes fonctions pures que
   le cron de notifications push (`detecterAlertes`/`redigerNotification` dans
@@ -46,6 +47,11 @@
   axe, clavier, reflow, taille des cibles), de ce qui a été ajouté (résumé texte de la carte), de
   ce qui reste hors de portée des outils automatisés, et un script de vérification manuelle avec
   un lecteur d'écran
+- Photo jour/nuit en fond de la carte météo actuelle (`ConditionsActuelles.svelte`) pour les six
+  villes du sélecteur (`villesPhotos.ts`) : lue dans `frontend/public/villes/<id>-{jour,nuit}.jpg`,
+  absente du dépôt à ce stade — tant qu'un fichier manque, repli silencieux sur le dégradé
+  atmosphérique existant, y compris pour tout lieu trouvé par code postal (pas de photo possible
+  pour une adresse quelconque)
 
 ### Fixed
 
