@@ -13,6 +13,9 @@ services:
       target: production
     env_file:
       - ./backend/.env
+    environment:
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
     volumes:
       # Abonnements aux alertes météo (SQLite, voir DB_PATH dans le README) —
       # sans ce volume, ils seraient perdus à chaque `docker compose up --build`,
