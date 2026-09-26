@@ -299,7 +299,7 @@
       villeId={prefs.selection !== 'cp' ? prefs.selection : null}
     />
 
-    <BandeauAlerte alertes={donnees.alertes} />
+    <BandeauAlerte alertes={donnees.alertes} onvoirplus={() => allerA('reglages')} />
 
     <Horaire heures={donnees.horaire} unite={prefs.unite} />
 

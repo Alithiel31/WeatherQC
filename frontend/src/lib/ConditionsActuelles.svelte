@@ -43,6 +43,11 @@
   // puisque le nouveau `photoSrc` ne correspond plus à celui qui a échoué.
   let photoSrcEnErreur = $state<string | null>(null);
   let photoOk = $derived(photoSrc !== null && photoSrc !== photoSrcEnErreur);
+
+  // Même principe que `photoSrcEnErreur` : mémorise la source déjà chargée
+  // plutôt qu'un booléen, pour que le fondu reparte de zéro automatiquement
+  // à chaque changement de ville ou de moment, sans effet à réinitialiser.
+  let photoSrcChargee = $state<string | null>(null);
 </script>
 
 <section class="actuel" class:avec-photo={photoOk} aria-label="Conditions actuelles">
@@ -74,9 +79,12 @@
     {#if photoOk}
       <img
         class="photo"
+        class:chargee={photoSrc === photoSrcChargee}
         src={photoSrc}
         alt=""
         aria-hidden="true"
+        fetchpriority="high"
+        onload={() => (photoSrcChargee = photoSrc)}
         onerror={() => (photoSrcEnErreur = photoSrc)}
       />
       <!-- Voile de contraste, pas la couleur du ciel : pleinement opaque côté
@@ -100,10 +108,28 @@
     </div>
   </div>
 
-  <dl class="details">
-    <div><dt>Vent</dt><dd>{vitesseVent(actuel.vent, unite)} {libelleUniteVent(unite)}</dd></div>
-    <div><dt>Humidité</dt><dd>{actuel.humidite} %</dd></div>
-  </dl>
+  <div class="details carte-verre">
+    <div class="stat">
+      <svg class="stat-icone" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M3 8h11a3 3 0 1 0-2.5-4.7" />
+        <path d="M3 12.5h15a3 3 0 1 1-2.5 4.7" />
+        <path d="M3 17h8" />
+      </svg>
+      <div class="stat-texte">
+        <p class="stat-label">Vent</p>
+        <p class="stat-valeur">{vitesseVent(actuel.vent, unite)} {libelleUniteVent(unite)}</p>
+      </div>
+    </div>
+    <div class="stat">
+      <svg class="stat-icone" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3.5s6 7 6 11.2a6 6 0 1 1-12 0C6 10.5 12 3.5 12 3.5Z" />
+      </svg>
+      <div class="stat-texte">
+        <p class="stat-label">Humidité</p>
+        <p class="stat-valeur">{actuel.humidite} %</p>
+      </div>
+    </div>
+  </div>
 </section>
 
 <style>
@@ -183,6 +209,12 @@
     position: absolute; inset: 0;
     width: 100%; height: 100%;
     object-fit: cover; object-position: 78% 45%;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .photo.chargee { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .photo { transition: none; }
   }
   .voile-photo {
     position: absolute; inset: 0;
@@ -217,7 +249,35 @@
   .temperature sup { font-size: 0.32em; font-weight: 400; vertical-align: super; }
   .ressenti { margin: 0.2rem 0 0; font-size: 0.95rem; font-weight: 500; }
 
-  .details { display: flex; justify-content: center; gap: 2.5rem; margin: 1.5rem 0 0; }
-  .details dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; }
-  .details dd { margin: 0.2rem 0 0; font-size: 1.1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  /*
+    `.carte-verre` (bordure, ombre, flou) plutôt que les redéclarer ici — même
+    habillage que Horaire/Quotidien/CarteNuages/BandeauAlerte, cf. `verre.css`.
+    Seul le fond reste déclaré en toutes lettres, comme dans chaque carte : cf.
+    le commentaire de `verre.css` sur `tests/unit/contraste.test.ts`. Fond
+    propre plutôt que du texte posé à nu sur le ciel comme avant — la
+    lisibilité ne dépend donc plus du dégradé du moment.
+
+    `margin-top` diffère de la version `.avec-photo` : sans photo, rien
+    d'autre n'apporte d'espace avant cette carte (la bande héro ne porte pas
+    de padding bas dans ce cas) ; avec photo, `.hero` en ajoute déjà via son
+    `padding-bottom` — d'où une valeur plus faible ici pour un espacement visuel
+    équivalent dans les deux mises en page.
+  */
+  .details {
+    display: flex;
+    background: rgba(0, 0, 0, 0.22);
+    margin: 1.85rem 0 0;
+  }
+  .avec-photo .details { margin-top: 1.5rem; }
+  .stat {
+    flex: 1;
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.85rem 1.1rem;
+    text-align: left;
+  }
+  .stat:first-child { border-right: 1px solid var(--verre-bordure, rgba(112, 170, 255, 0.22)); }
+  .stat-icone { flex-shrink: 0; color: var(--accent-doux, #a9d3ff); }
+  .stat-texte { min-width: 0; }
+  .stat-label { margin: 0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.85; }
+  .stat-valeur { margin: 0.15rem 0 0; font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 </style>

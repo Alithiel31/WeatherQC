@@ -3,6 +3,7 @@
   import { previsionsVille, previsionsCoordonnees } from './api.ts';
   import { cleFavori } from './preferences.svelte.ts';
   import { iconeMeteo, descriptionMeteo, degres } from './meteo.ts';
+  import { photoVille } from './villesPhotos.ts';
   import type { Unite } from './meteo.ts';
   import type { Favori } from './types.ts';
 
@@ -47,6 +48,17 @@
     return favori.type === 'ville' ? favori.nom : favori.lieu.nom;
   }
 
+  /**
+   * `null` tant que le résumé n'est pas encore chargé (le moment jour/nuit
+   * n'est pas encore connu) ou pour un favori par code postal (jamais de
+   * photo dédiée, cf. `villesPhotos.ts`) : la vignette ne s'affiche alors
+   * simplement pas, la ligne reste telle qu'avant.
+   */
+  function photoFavori(favori: Favori, resume: Resume | 'erreur' | 'chargement' | undefined): string | null {
+    if (favori.type !== 'ville' || !resume || resume === 'erreur' || resume === 'chargement') return null;
+    return photoVille(favori.id, !resume.jour);
+  }
+
   // Charge le résumé de chaque favori pas encore vu — au montage, et de nouveau
   // si la liste change (ajout depuis l'étoile pendant que cet écran est monté).
   // Un favori déjà chargé ne l'est pas une seconde fois : `resumes` fait office
@@ -69,8 +81,12 @@
       {#each favoris as favori (cleFavori(favori))}
         {@const cle = cleFavori(favori)}
         {@const resume = resumes[cle]}
+        {@const photo = photoFavori(favori, resume)}
         <li class="entree-douce">
           <button type="button" class="cible pressable" onclick={() => onchoisir(favori)}>
+            {#if photo}
+              <span class="vignette" style="background-image: url('{photo}')" aria-hidden="true"></span>
+            {/if}
             <span class="nom">{nomFavori(favori)}</span>
             {#if resume === 'erreur'}
               <span class="etat">Indisponible</span>
@@ -132,6 +148,21 @@
     text-align: left;
     padding: 0.3rem 0;
     cursor: pointer;
+  }
+  /*
+    Repli en couleur unie plutôt qu'un `<img>` avec `onerror` : un fond
+    manquant reste juste une pastille neutre, sans JS ni état d'erreur à
+    suivre par ligne — cf. `ConditionsActuelles.svelte` pour le cas où
+    l'échec doit au contraire être détecté (photo plein cadre, pas une
+    vignette décorative de 2 rem).
+  */
+  .vignette {
+    flex-shrink: 0;
+    width: 2.3rem; height: 2.3rem;
+    border-radius: 0.6rem;
+    background-color: rgba(0, 0, 0, 0.3);
+    background-size: cover;
+    background-position: 70% 40%;
   }
   .nom { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .icone { font-size: 1.1rem; }
