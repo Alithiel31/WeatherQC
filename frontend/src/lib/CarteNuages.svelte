@@ -216,10 +216,12 @@
     <h2>Carte animée — {nom}</h2>
     <div class="modes" role="group" aria-label="Type de couche">
       <button
+        class="pressable"
         class:active={mode === 'satellite'}
         onclick={() => changerMode('satellite')}
         aria-pressed={mode === 'satellite'}>Nuages</button>
       <button
+        class="pressable"
         class:active={mode === 'radar'}
         onclick={() => changerMode('radar')}
         aria-pressed={mode === 'radar'}>Radar</button>
@@ -245,7 +247,7 @@
   {:else if animation.frames.length}
     <div class="controles">
       <button
-        class="lecture"
+        class="lecture pressable"
         onclick={() => animation.basculerLecture()}
         aria-label={animation.lecture ? 'Mettre en pause' : "Lancer l'animation"}
       >{animation.lecture ? '⏸' : '▶'}</button>

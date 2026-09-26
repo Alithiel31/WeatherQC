@@ -1,4 +1,5 @@
 <script lang="ts">
+  import './styles/verre.css';
   import {
     descriptionMeteo,
     iconeMeteo,
@@ -45,7 +46,7 @@
     {#if onbasculerFavori}
       <button
         type="button"
-        class="favori"
+        class="favori pressable"
         aria-pressed={estFavori}
         aria-label={estFavori ? `Retirer ${lieu} des favoris` : `Ajouter ${lieu} aux favoris`}
         onclick={onbasculerFavori}
@@ -94,6 +95,18 @@
   }
   .favori svg { color: var(--accent-doux, #a9d3ff); }
   .favori:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 0.3rem; }
+
+  /*
+    Le rebond ne joue qu'à l'ajout (attribut passant à "true"), jamais au
+    retrait : `animation-name` change de `none` à `pop` uniquement quand ce
+    sélecteur se met à matcher, ce qui suffit à déclencher l'animation sans
+    JS ni état supplémentaire.
+  */
+  @keyframes pop { 0% { transform: scale(1); } 45% { transform: scale(1.35); } 100% { transform: scale(1); } }
+  .favori[aria-pressed="true"] svg { animation: pop 0.35s ease; }
+  @media (prefers-reduced-motion: reduce) {
+    .favori[aria-pressed="true"] svg { animation: none; }
+  }
   .lieu { margin: 0; font-size: 1.2rem; font-weight: 700; }
   .sous-lieu {
     margin: 0.1rem 0 0; font-size: 0.7rem; font-weight: 600;

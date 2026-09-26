@@ -69,8 +69,8 @@
       {#each favoris as favori (cleFavori(favori))}
         {@const cle = cleFavori(favori)}
         {@const resume = resumes[cle]}
-        <li>
-          <button type="button" class="cible" onclick={() => onchoisir(favori)}>
+        <li class="entree-douce">
+          <button type="button" class="cible pressable" onclick={() => onchoisir(favori)}>
             <span class="nom">{nomFavori(favori)}</span>
             {#if resume === 'erreur'}
               <span class="etat">Indisponible</span>
@@ -85,7 +85,7 @@
           </button>
           <button
             type="button"
-            class="retirer"
+            class="retirer pressable"
             onclick={() => onretirer(favori)}
             aria-label={`Retirer ${nomFavori(favori)} de la liste des favoris`}
           >✕</button>

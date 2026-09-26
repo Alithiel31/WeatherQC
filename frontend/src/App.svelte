@@ -204,7 +204,7 @@
     <div class="ligne-titre">
       <h1 class="eyebrow">Prévisions · Québec</h1>
       <button
-        class="bascule-unite"
+        class="bascule-unite pressable"
         onclick={() => prefs.basculerUnite()}
         aria-pressed={prefs.unite === 'imperial'}
         aria-label="Unités impériales"
@@ -262,7 +262,7 @@
   {#if erreur && donnees && !chargement}
     <div class="bandeau-erreur" role="alert">
       <p>{erreur}</p>
-      <button class="reessayer" onclick={charger}>Réessayer</button>
+      <button class="reessayer pressable" onclick={charger}>Réessayer</button>
     </div>
   {/if}
 
@@ -274,7 +274,7 @@
   {:else if erreur && !donnees}
     <div class="etat erreur" role="alert">
       <p>{erreur}</p>
-      <button class="reessayer" onclick={charger}>Réessayer</button>
+      <button class="reessayer pressable" onclick={charger}>Réessayer</button>
     </div>
   {:else if donnees}
     <ConditionsActuelles
@@ -324,7 +324,7 @@
     <div class="ligne-reglage">
       <span>Unités</span>
       <button
-        class="bascule-unite-large"
+        class="bascule-unite-large pressable"
         onclick={() => prefs.basculerUnite()}
         aria-pressed={prefs.unite === 'imperial'}
       >°{libelleUniteTemp(prefs.unite)}</button>

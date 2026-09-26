@@ -15,3 +15,42 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
+
+/**
+ * Animations discrètes partagées — retour tactile au clic et entrée douce
+ * pour du contenu qui apparaît (bandeau d'alerte, cartes Favoris). Volontai-
+ * rement minimales : le brief priorise la hiérarchie visuelle et la lisibi-
+ * lité bien avant les effets, ceux-ci ne doivent jamais distraire.
+ */
+.pressable {
+  transition: transform 0.12s ease;
+}
+.pressable:active {
+  transform: scale(0.96);
+}
+
+@keyframes entree-douce {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.entree-douce {
+  animation: entree-douce 0.25s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pressable {
+    transition: none;
+  }
+  .pressable:active {
+    transform: none;
+  }
+  .entree-douce {
+    animation: none;
+  }
+}

@@ -15,7 +15,7 @@
 
 {#if premiere}
   <div
-    class="alerte carte-verre"
+    class="alerte carte-verre entree-douce"
     class:importante={premiere.importante}
     role={premiere.importante ? 'alert' : 'status'}
   >
