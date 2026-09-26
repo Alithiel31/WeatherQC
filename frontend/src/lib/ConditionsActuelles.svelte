@@ -100,7 +100,7 @@
     </div>
   </div>
 
-  <dl class="details">
+  <dl class="details carte-verre">
     <div class="stat">
       <svg class="stat-icone" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
         <path d="M3 8h11a3 3 0 1 0-2.5-4.7" />
@@ -236,18 +236,25 @@
   .ressenti { margin: 0.2rem 0 0; font-size: 0.95rem; font-weight: 500; }
 
   /*
-    Même voile que les autres cartes (Horaire, Quotidien…) : cf. leur
-    historique de contraste. Un fond propre ici, plutôt que du texte posé à
-    nu sur le ciel comme avant — la lisibilité ne dépend donc plus du
-    dégradé du moment, seulement de ce voile fixe.
+    `.carte-verre` (bordure, ombre, flou) plutôt que les redéclarer ici — même
+    habillage que Horaire/Quotidien/CarteNuages/BandeauAlerte, cf. `verre.css`.
+    Seul le fond reste déclaré en toutes lettres, comme dans chaque carte : cf.
+    le commentaire de `verre.css` sur `tests/unit/contraste.test.ts`. Fond
+    propre plutôt que du texte posé à nu sur le ciel comme avant — la
+    lisibilité ne dépend donc plus du dégradé du moment.
+
+    `margin-top` diffère de la version `.avec-photo` : sans photo, rien
+    d'autre n'apporte d'espace avant cette carte (la bande héro ne porte pas
+    de padding bas dans ce cas) ; avec photo, `.hero` en ajoute déjà via son
+    `padding-bottom` — d'où une valeur plus faible ici pour un espacement visuel
+    équivalent dans les deux mises en page.
   */
   .details {
     display: flex;
     background: rgba(0, 0, 0, 0.22);
-    border: 1px solid var(--verre-bordure, rgba(112, 170, 255, 0.22));
-    border-radius: 1rem;
-    margin: 1.5rem 0 0;
+    margin: 1.85rem 0 0;
   }
+  .avec-photo .details { margin-top: 1.5rem; }
   .stat {
     flex: 1;
     display: flex; align-items: center; gap: 0.6rem;
