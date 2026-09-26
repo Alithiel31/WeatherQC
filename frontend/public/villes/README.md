@@ -16,16 +16,21 @@ Un fichier `jour` et un fichier `nuit` par ville, même identifiant que
 - `gatineau-jour.webp` / `gatineau-nuit.webp` ✅ livrées
 - `sherbrooke-jour.webp` / `sherbrooke-nuit.webp` ✅ livrées
 - `trois-rivieres-jour.webp` / `trois-rivieres-nuit.webp` ✅ livrées
-- `saguenay-jour.webp` / `saguenay-nuit.webp`
+- `saguenay-jour.jpg` / `saguenay-nuit.jpg` ✅ livrées — `.jpg`, pas `.webp` :
+  format livré tel quel, sans outil de conversion disponible au moment de
+  l'intégration ; extension déclarée dans `EXTENSION_PAR_VILLE` de
+  `villesPhotos.ts`.
+
+**Les six villes sont livrées.**
 
 ## Format
 
 - Paysage 16:9, sujet plutôt centré-droit, tiers gauche plus calme (ciel/eau
   uniforme) — c'est la zone où le texte est superposé.
 - ~1600 px de large minimum.
-- `.webp` (pas de traitement offline particulier : ces fichiers ne sont pas
-  ajoutés au précache du service worker, `vite.config.js` ne liste que les
-  icônes dans `includeAssets` — un lieu hors ligne retombe simplement sur le
-  dégradé, comme pour la carte animée). Viser < 200 Ko par fichier ; les dix
-  livrées (Montréal, Québec, Gatineau, Sherbrooke, Trois-Rivières) vont de
-  226 à 305 Ko — acceptable, pas urgent à retravailler.
+- `.webp` par défaut (voir exception Saguenay ci-dessus) — pas de traitement
+  offline particulier : ces fichiers ne sont pas ajoutés au précache du
+  service worker, `vite.config.js` ne liste que les icônes dans
+  `includeAssets` — un lieu hors ligne retombe simplement sur le dégradé,
+  comme pour la carte animée. Viser < 200 Ko par fichier ; les douze livrées
+  vont de 160 à 305 Ko — acceptable, pas urgent à retravailler.
