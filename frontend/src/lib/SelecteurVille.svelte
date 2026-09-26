@@ -1,4 +1,5 @@
 <script lang="ts">
+  import './styles/verre.css';
   import type { VilleDisponible, LieuCP } from './types.ts';
 
   interface Props {
@@ -93,7 +94,7 @@
   <div class="zone-declencheur">
     <button
       type="button"
-      class="declencheur"
+      class="declencheur pressable"
       bind:this={declencheur}
       aria-haspopup="true"
       aria-expanded={ouvert}
@@ -117,6 +118,7 @@
             <button
               type="button"
               role="menuitem"
+              class="pressable"
               class:active={v.id === selection}
               aria-current={v.id === selection}
               onclick={() => choisir(v.id)}
@@ -128,6 +130,7 @@
             <button
               type="button"
               role="menuitem"
+              class="pressable"
               class:active={selection === 'cp'}
               aria-current={selection === 'cp'}
               onclick={() => choisir('cp')}

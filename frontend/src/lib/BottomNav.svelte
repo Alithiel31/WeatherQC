@@ -29,11 +29,12 @@
   {#each onglets as onglet (onglet.id)}
     <button
       type="button"
+      class="pressable"
       class:actif={actif === onglet.id}
       aria-current={actif === onglet.id}
       onclick={() => onnaviguer(onglet.id)}
     >
-      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <svg class="icone-onglet" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         {#if onglet.id === 'accueil'}
           <path d="M3 11.5 12 4l9 7.5" />
           <path d="M5.5 9.5V20h13V9.5" />
@@ -92,7 +93,12 @@
   button.actif svg { color: var(--accent-doux); }
   button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
+  .icone-onglet { transition: transform 0.15s ease; }
+  button.actif .icone-onglet { transform: translateY(-1px) scale(1.08); }
+
   @media (prefers-reduced-motion: reduce) {
     button { transition: none; }
+    .icone-onglet { transition: none; }
+    button.actif .icone-onglet { transform: none; }
   }
 </style>

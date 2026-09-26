@@ -81,7 +81,7 @@
     </svg>
     {#if abonneIci}
       <p class="etat">Alertes météo activées pour {villeNom}</p>
-      <button type="button" class="bascule" onclick={desactiver} disabled={enCours}>
+      <button type="button" class="bascule pressable" onclick={desactiver} disabled={enCours}>
         {enCours ? 'Désactivation…' : 'Désactiver'}
       </button>
     {:else}
@@ -89,7 +89,7 @@
         Crée un abonnement technique (sans lien avec votre identité) enregistré sur nos serveurs
         pour cette ville. <a href="/privacy-policy.html#alertes-meteo">Détails</a>.
       </p>
-      <button type="button" class="bascule" onclick={activer} disabled={enCours}>
+      <button type="button" class="bascule pressable" onclick={activer} disabled={enCours}>
         {enCours ? 'Activation…' : `Activer les alertes météo pour ${villeNom}`}
       </button>
     {/if}

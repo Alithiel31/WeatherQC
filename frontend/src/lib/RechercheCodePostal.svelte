@@ -1,4 +1,6 @@
 <script lang="ts">
+  import './styles/verre.css';
+
   interface Props {
     valeur: string;
     erreur: string | null;
@@ -22,17 +24,23 @@
   sur les claviers mobiles.
 -->
 <form class="recherche-cp" onsubmit={(e) => (e.preventDefault(), rechercher())}>
-  <label class="visually-hidden" for="cp">Code postal canadien</label>
-  <input
-    id="cp"
-    type="text"
-    placeholder="Code postal (ex. K1A 0B1)"
-    bind:value={valeur}
-    autocomplete="postal-code"
-    enterkeyhint="search"
-    maxlength="7"
-  />
-  <button type="submit" disabled={enCours}>
+  <div class="champ">
+    <svg class="loupe" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m20 20-4.3-4.3" />
+    </svg>
+    <label class="visually-hidden" for="cp">Code postal canadien</label>
+    <input
+      id="cp"
+      type="text"
+      placeholder="Code postal (ex. K1A 0B1)"
+      bind:value={valeur}
+      autocomplete="postal-code"
+      enterkeyhint="search"
+      maxlength="7"
+    />
+  </div>
+  <button type="submit" class="pressable" disabled={enCours}>
     {enCours ? 'Recherche…' : 'Rechercher'}
   </button>
 </form>
@@ -42,10 +50,15 @@
 
 <style>
   .recherche-cp { display: flex; gap: 0.4rem; }
+  .champ { position: relative; flex: 1; min-width: 0; }
+  .loupe {
+    position: absolute; top: 50%; left: 0.85rem; transform: translateY(-50%);
+    color: rgba(255,255,255,0.6); pointer-events: none;
+  }
   .recherche-cp input {
-    flex: 1; min-width: 0; border-radius: 999px;
+    width: 100%; border-radius: 999px;
     border: 1px solid var(--verre-bordure, rgba(112,170,255,0.22));
-    padding: 0.55rem 0.9rem; font: inherit;
+    padding: 0.55rem 0.9rem 0.55rem 2.4rem; font: inherit;
     background: rgba(0,0,0,0.22); color: #fff; backdrop-filter: blur(10px);
   }
   .recherche-cp input::placeholder { color: rgba(255,255,255,0.65); }
