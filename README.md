@@ -65,7 +65,7 @@ cp frontend/.env.example frontend/.env
 **2. Lancer**
 
 ```bash
-docker compose --env-file frontend/.env up --build -d
+docker compose --env-file frontend/.env --env-file backend/.env up --build -d
 ```
 
 Nginx pose les en-têtes de sécurité du document — CSP, `X-Content-Type-Options`,
@@ -92,8 +92,8 @@ Le tunnel Cloudflare gère le **HTTPS** et le nom de domaine `qcweather.alithiel
 
 **Déploiement continu** : `deploy-web.yml` tourne sur un runner self-hosted installé sur le Pi
 lui-même et se déclenche automatiquement à chaque push sur `main` touchant `backend/`,
-`frontend/` ou `docker-compose.yml` (ou manuellement). Il rejoue `docker compose --env-file frontend/.env up -d --build
---wait` sur place — le Pi va chercher le job en se connectant vers GitHub, aucun port entrant ni
+`frontend/` ou `docker-compose.yml` (ou manuellement). Il rejoue `docker compose --env-file frontend/.env --env-file backend/.env up -d --build
+--wait` (via Infisical, voir docs/notifications.md) sur place — le Pi va chercher le job en se connectant vers GitHub, aucun port entrant ni
 clé SSH à exposer. Pour le déclencher et suivre le déploiement en direct depuis un poste local :
 
 ```bash

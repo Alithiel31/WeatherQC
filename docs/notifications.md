@@ -20,6 +20,14 @@ Sans `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` configurées (voir
 **503** et le contrôle « Activer les alertes météo » de l'interface échoue proprement à
 l'abonnement plutôt que de faire disparaître le reste de l'application.
 
+**En prod**, ces deux clés ne vivent plus dans `backend/.env` sur le Pi : elles sont gérées dans
+Infisical (projet *Shared Keys*, environnement `prod`) et injectées au déploiement par
+`deploy-web.yml` via `infisical run` (Machine Identity `qcweather-deploy`, rôle lecture seule).
+`docker-compose.yml` les récupère via `${VAPID_PUBLIC_KEY}`/`${VAPID_PRIVATE_KEY}` dans le bloc
+`environment:` du service `backend` — substitution résolue depuis le shell (Infisical) en prod,
+depuis `backend/.env` (via `--env-file`) en local. Toute rotation de clé se fait uniquement dans
+Infisical, jamais à la main sur le Pi.
+
 **Détection** (`backend/src/services/detecteur-alertes.ts`) — fonction pure, sans réseau ni
 horloge : compare l'état actuel aux prévisions horaires et rend les alertes qui franchissent un
 seuil (précipitation ≥ 70 % sous 2 h, chute ≥ 8 °C sous 6 h, rafales ≥ 60 km/h, verglas et orage

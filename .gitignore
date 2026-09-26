@@ -43,3 +43,6 @@ app-release-bundle.aab
 # Rapports Playwright
 playwright-report/
 test-results/
+
+# Identifiants Machine Identity Infisical (voir .infisical-identity.env.example)
+.infisical-identity.env
