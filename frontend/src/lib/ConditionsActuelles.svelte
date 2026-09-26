@@ -101,8 +101,26 @@
   </div>
 
   <dl class="details">
-    <div><dt>Vent</dt><dd>{vitesseVent(actuel.vent, unite)} {libelleUniteVent(unite)}</dd></div>
-    <div><dt>Humidité</dt><dd>{actuel.humidite} %</dd></div>
+    <div class="stat">
+      <svg class="stat-icone" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M3 8h11a3 3 0 1 0-2.5-4.7" />
+        <path d="M3 12.5h15a3 3 0 1 1-2.5 4.7" />
+        <path d="M3 17h8" />
+      </svg>
+      <div class="stat-texte">
+        <dt>Vent</dt>
+        <dd>{vitesseVent(actuel.vent, unite)} {libelleUniteVent(unite)}</dd>
+      </div>
+    </div>
+    <div class="stat">
+      <svg class="stat-icone" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3.5s6 7 6 11.2a6 6 0 1 1-12 0C6 10.5 12 3.5 12 3.5Z" />
+      </svg>
+      <div class="stat-texte">
+        <dt>Humidité</dt>
+        <dd>{actuel.humidite} %</dd>
+      </div>
+    </div>
   </dl>
 </section>
 
@@ -217,7 +235,28 @@
   .temperature sup { font-size: 0.32em; font-weight: 400; vertical-align: super; }
   .ressenti { margin: 0.2rem 0 0; font-size: 0.95rem; font-weight: 500; }
 
-  .details { display: flex; justify-content: center; gap: 2.5rem; margin: 1.5rem 0 0; }
-  .details dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; }
-  .details dd { margin: 0.2rem 0 0; font-size: 1.1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  /*
+    Même voile que les autres cartes (Horaire, Quotidien…) : cf. leur
+    historique de contraste. Un fond propre ici, plutôt que du texte posé à
+    nu sur le ciel comme avant — la lisibilité ne dépend donc plus du
+    dégradé du moment, seulement de ce voile fixe.
+  */
+  .details {
+    display: flex;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid var(--verre-bordure, rgba(112, 170, 255, 0.22));
+    border-radius: 1rem;
+    margin: 1.5rem 0 0;
+  }
+  .stat {
+    flex: 1;
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.85rem 1.1rem;
+    text-align: left;
+  }
+  .stat:first-child { border-right: 1px solid var(--verre-bordure, rgba(112, 170, 255, 0.22)); }
+  .stat-icone { flex-shrink: 0; color: var(--accent-doux, #a9d3ff); }
+  .stat-texte { min-width: 0; }
+  .details dt { margin: 0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.85; }
+  .details dd { margin: 0.15rem 0 0; font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 </style>
