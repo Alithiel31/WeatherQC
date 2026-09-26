@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 import app from '../../src/index.js';
 import { reponseOpenMeteo } from '../fixtures/openmeteo.js';
+import { reponseZippopotam } from '../fixtures/zippopotam.js';
+import { reponseGeocodageMontreal } from '../fixtures/openmeteo-geocoding.js';
 import { config } from '../../src/config.js';
 
 /**
@@ -15,10 +17,15 @@ import { config } from '../../src/config.js';
 
 /** `fetch` qui répond une fois, puis tombe en panne. */
 function fetchQuiTombe(reponses: number) {
+  return fetchQuiTombeAvec(reponseOpenMeteo, reponses);
+}
+
+/** Même principe que `fetchQuiTombe`, mais avec un corps de réponse arbitraire. */
+function fetchQuiTombeAvec(payload: unknown, reponses: number) {
   let restantes = reponses;
   return vi.fn(async () => {
     if (restantes-- > 0) {
-      return { ok: true, status: 200, json: async () => reponseOpenMeteo } as unknown as Response;
+      return { ok: true, status: 200, json: async () => payload } as unknown as Response;
     }
     throw new TypeError('fetch failed');
   });
@@ -65,6 +72,36 @@ describe('Service dégradé', () => {
     );
 
     expect(mock).toHaveBeenCalledTimes(1);
+  });
+
+  it('sert un code postal géocodé périmé plutôt qu’une erreur', async () => {
+    vi.stubGlobal('fetch', fetchQuiTombeAvec(reponseZippopotam, 1));
+
+    const premiere = await request(app).get('/api/geocode/H2X').expect(200);
+
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(Date.now() + config.cache.ttlGeocode + 1000);
+    try {
+      const seconde = await request(app).get('/api/geocode/H2X').expect(200);
+      expect(seconde.body).toEqual(premiere.body);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('sert une ville géocodée par nom périmée plutôt qu’une erreur', async () => {
+    vi.stubGlobal('fetch', fetchQuiTombeAvec(reponseGeocodageMontreal, 1));
+
+    const premiere = await request(app).get('/api/geocode-ville/Montreal').expect(200);
+
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(Date.now() + config.cache.ttlGeocode + 1000);
+    try {
+      const seconde = await request(app).get('/api/geocode-ville/Montreal').expect(200);
+      expect(seconde.body).toEqual(premiere.body);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

@@ -1,7 +1,10 @@
 import { BadGatewayError, NotFoundError } from '../lib/errors.js';
 import { fetchAvecTimeout } from '../lib/http.js';
 import { reponseZippopotamSchema } from '../schemas/zippopotam.schema.js';
-import { reponseGeocodageSchema } from '../schemas/openmeteo-geocoding.schema.js';
+import {
+  reponseGeocodageSchema,
+  type ReponseGeocodage,
+} from '../schemas/openmeteo-geocoding.schema.js';
 
 /**
  * `rta` reste vide pour un lieu trouvé par nom de ville : Open-Meteo ne
@@ -58,6 +61,18 @@ export async function geocodeRTA(rta: string): Promise<LieuGeocode> {
 // pour le Québec cohabitent plutôt que de dépendre d'un seul accent.
 const ADMIN1_QUEBEC = new Set(['Québec', 'Quebec']);
 
+type ResultatGeocodage = NonNullable<ReponseGeocodage['results']>[number];
+
+/**
+ * Garde de type plutôt qu'un simple booléen : elle assure au compilateur que
+ * `admin1` est défini pour tout résultat qui la passe, sans repli `?? …`
+ * après coup — un repli aurait été du code mort, un résultat non québécois
+ * étant déjà écarté ici.
+ */
+function estQuebecois(r: ResultatGeocodage): r is ResultatGeocodage & { admin1: string } {
+  return r.country_code === 'CA' && r.admin1 !== undefined && ADMIN1_QUEBEC.has(r.admin1);
+}
+
 /**
  * Géocode un nom de ville via Open-Meteo, restreint au Québec — même
  * positionnement que `geocodeRTA` pour les codes postaux.
@@ -92,7 +107,7 @@ export async function geocodeNomVille(nom: string): Promise<LieuGeocode> {
   }
 
   const meilleur = (analyse.data.results ?? [])
-    .filter((r) => r.country_code === 'CA' && ADMIN1_QUEBEC.has(r.admin1 ?? ''))
+    .filter(estQuebecois)
     .sort((a, b) => (b.population ?? 0) - (a.population ?? 0))[0];
 
   if (!meilleur) {
@@ -102,7 +117,7 @@ export async function geocodeNomVille(nom: string): Promise<LieuGeocode> {
   return {
     rta: '',
     nom: meilleur.name,
-    province: meilleur.admin1 ?? 'Quebec',
+    province: meilleur.admin1,
     latitude: meilleur.latitude,
     longitude: meilleur.longitude,
   };

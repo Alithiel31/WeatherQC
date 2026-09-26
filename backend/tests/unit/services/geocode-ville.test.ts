@@ -53,6 +53,79 @@ describe('geocodeNomVille', () => {
 
       expect(result.nom).toBe('Saint-Jean-sur-Richelieu');
     });
+
+    // Open-Meteo omet parfois `population` — un résultat qui en manque ne doit
+    // pas faire échouer le classement, seulement perdre face à un homonyme qui
+    // en porte une.
+    it('traite une population absente comme nulle plutôt que d’échouer', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            results: [
+              {
+                name: 'Petite-Ville',
+                latitude: 46.1,
+                longitude: -71.9,
+                country_code: 'CA',
+                admin1: 'Québec',
+                // Pas de `population`.
+              },
+              {
+                name: 'Grande-Ville',
+                latitude: 45.5,
+                longitude: -73.6,
+                country_code: 'CA',
+                admin1: 'Québec',
+                population: 500,
+              },
+            ],
+          }),
+        })
+      );
+
+      const result = await geocodeNomVille('Ville');
+
+      expect(result.nom).toBe('Grande-Ville');
+    });
+
+    // Même cas que ci-dessus, ordre inversé : le classement doit tenir quel
+    // que soit celui des deux résultats que l'API place en premier.
+    it('traite une population absente comme nulle, ordre inversé', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            results: [
+              {
+                name: 'Grande-Ville',
+                latitude: 45.5,
+                longitude: -73.6,
+                country_code: 'CA',
+                admin1: 'Québec',
+                population: 500,
+              },
+              {
+                name: 'Petite-Ville',
+                latitude: 46.1,
+                longitude: -71.9,
+                country_code: 'CA',
+                admin1: 'Québec',
+                // Pas de `population`.
+              },
+            ],
+          }),
+        })
+      );
+
+      const result = await geocodeNomVille('Ville');
+
+      expect(result.nom).toBe('Grande-Ville');
+    });
   });
 
   describe('Aucun résultat', () => {
@@ -63,6 +136,21 @@ describe('geocodeNomVille', () => {
       );
 
       await expect(geocodeNomVille('Villeinexistante')).rejects.toThrow(NotFoundError);
+    });
+
+    it('lève NotFoundError si un résultat canadien n’a pas d’`admin1`', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            results: [{ name: 'Sans-Province', latitude: 1, longitude: 1, country_code: 'CA' }],
+          }),
+        })
+      );
+
+      await expect(geocodeNomVille('Sans-Province')).rejects.toThrow(NotFoundError);
     });
 
     it('lève NotFoundError si aucun résultat n’est au Québec', async () => {
