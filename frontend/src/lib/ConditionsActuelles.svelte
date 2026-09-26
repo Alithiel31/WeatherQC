@@ -45,7 +45,7 @@
   let photoOk = $derived(photoSrc !== null && photoSrc !== photoSrcEnErreur);
 </script>
 
-<section class="actuel" aria-label="Conditions actuelles">
+<section class="actuel" class:avec-photo={photoOk} aria-label="Conditions actuelles">
   <header class="lieu-entete">
     <svg class="pin" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21Z" />
@@ -107,7 +107,19 @@
 </section>
 
 <style>
-  .actuel { text-align: left; padding: 1.5rem 0 1.75rem; }
+  /*
+    Deux mises en page cohabitent, choisies par la présence réelle d'une
+    photo (`.avec-photo`, posée sur `photoOk` — pas seulement sur
+    `villeId` : une ville retenue dont le fichier n'est pas encore livré doit
+    recevoir la même mise en page que le repli, pas une version à moitié
+    alignée à gauche sans rien à son bord droit). La base ci-dessous est
+    l'ancienne mise en page centrée, qui reste donc le comportement par
+    défaut pour tout lieu sans photo (code postal, ville hors des six
+    retenues, ou photo pas encore livrée) ; `.avec-photo` la réécrit plus
+    bas pour les cas où une image s'affiche réellement.
+  */
+  .actuel { text-align: center; padding: 1.5rem 0 1.75rem; }
+  .actuel.avec-photo { text-align: left; }
 
   /*
     Bloc posé à nu sur le ciel (dégradé + voile de page, pas de voile de carte
@@ -117,12 +129,15 @@
     la transparence.
   */
   .lieu-entete {
-    display: flex; align-items: center; gap: 0.5rem;
+    display: inline-flex; align-items: center; gap: 0.5rem;
   }
+  .avec-photo .lieu-entete { display: flex; }
   .pin { flex-shrink: 0; margin-top: 0.1rem; }
-  /* `flex-grow` pousse l'étoile au bord droit — sans effet quand elle est
-     absente (rien après `.lieu-texte` dans ce cas). */
-  .lieu-texte { text-align: left; flex-grow: 1; }
+  .lieu-texte { text-align: left; }
+  /* `flex-grow` pousse l'étoile au bord droit — seulement pertinent quand
+     `.lieu-entete` occupe toute la largeur (`.avec-photo`) ; sans effet
+     sinon, et sans effet non plus quand l'étoile est absente. */
+  .avec-photo .lieu-texte { flex-grow: 1; }
   .favori {
     flex-shrink: 0; margin-left: 0.15rem;
     border: 0; background: transparent; color: #fff; padding: 0.2rem;
@@ -149,19 +164,20 @@
   }
 
   /*
-    Bande bleedée jusqu'au bord de l'écran (marges négatives = le padding
-    horizontal de `main`, cf. App.svelte) : c'est elle qui porte la photo,
-    jamais `.hero` — `.hero` reste un simple conteneur de texte pour que le
-    reste de la section n'ait pas à connaître l'existence de la photo.
+    Sans photo, `.bande-hero` ne porte rien de visuel — c'est `.hero` seul
+    qui fixe l'espacement (comme avant l'introduction de la photo). Le bleed
+    jusqu'au bord de l'écran (marges négatives = le padding horizontal de
+    `main`, cf. App.svelte) n'a de sens que sous `.avec-photo`, seul cas où
+    quelque chose déborde réellement.
   */
-  .bande-hero {
-    position: relative;
+  .bande-hero { position: relative; }
+  .avec-photo .bande-hero {
     margin: 0.65rem -1.25rem 0;
     padding: 0 1.25rem;
     overflow: hidden;
   }
   @media (min-width: 640px) {
-    .bande-hero { margin-inline: -2rem; padding-inline: 2rem; }
+    .avec-photo .bande-hero { margin-inline: -2rem; padding-inline: 2rem; }
   }
   .photo {
     position: absolute; inset: 0;
@@ -181,12 +197,18 @@
 
   .hero {
     position: relative;
-    display: flex; flex-direction: column; align-items: flex-start;
-    gap: 0.15rem; padding: 1.1rem 0 1.35rem;
+    display: flex; align-items: center; justify-content: center;
+    gap: 1rem; margin-top: 1.1rem;
   }
-  .icone { font-size: 3.4rem; line-height: 1; }
+  .avec-photo .hero {
+    flex-direction: column; align-items: flex-start; justify-content: flex-start;
+    gap: 0.15rem; margin-top: 0; padding: 1.1rem 0 1.35rem;
+  }
+  .icone { font-size: 4.25rem; line-height: 1; flex-shrink: 0; }
+  .avec-photo .icone { font-size: 3.4rem; flex-shrink: initial; }
   .hero-texte { text-align: left; }
-  .condition { margin: 0.3rem 0 0; font-size: 1.05rem; font-weight: 600; }
+  .condition { margin: 0; font-size: 1.05rem; font-weight: 600; }
+  .avec-photo .condition { margin: 0.3rem 0 0; }
   .temperature {
     margin: 0.1rem 0 0;
     font-size: clamp(4rem, 19vw, 6rem); font-weight: 200;
