@@ -22,9 +22,11 @@
   // Remplace l'ancien ruban à défilement horizontal : le bouton n'affiche plus
   // que la ville active, la liste complète vit dans un panneau qui ne s'ouvre
   // qu'à la demande.
+  // `rta` est vide pour un lieu trouvé par nom de ville — le nom sert alors
+  // lui-même d'étiquette, comme pour une ville du sélecteur.
   let libelleActif = $derived(
     selection === 'cp' && lieuCP
-      ? lieuCP.rta
+      ? lieuCP.rta || lieuCP.nom
       : (villes.find((v) => v.id === selection)?.nom ?? '')
   );
 
@@ -134,7 +136,7 @@
               class:active={selection === 'cp'}
               aria-current={selection === 'cp'}
               onclick={() => choisir('cp')}
-            >{lieuCP.rta}</button>
+            >{lieuCP.rta || lieuCP.nom}</button>
           </li>
         {/if}
       </ul>

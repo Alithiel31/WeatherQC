@@ -4,7 +4,7 @@
 
 [Back to README](../README.en.md)
 
-The backend and frontend rely on five external services that are **free, with no formal
+The backend and frontend rely on six external services that are **free, with no formal
 contract or SLA**. A provider can change its terms, quota, or response format without notice —
 it already happened: the CARTO base map has shown an "API KEY REQUIRED" watermark since late
 August 2026, with no advance notice spotted before the app displayed it in production (see
@@ -20,13 +20,14 @@ This page centralizes what to watch, where, and how often.
 |---|---|---|---|
 | [Open-Meteo](https://open-meteo.com) | Hourly/daily forecasts, no API key | [Terms of use](https://open-meteo.com/en/terms) · [Pricing](https://open-meteo.com/en/pricing) | ✅ `contract.yml` (nightly) |
 | [Zippopotam.us](https://www.zippopotam.us) | Postal code geocoding (Quebec FSA) | [Home page](https://www.zippopotam.us) (no dedicated ToS page known — check service availability and response format stability) | ✅ `contract.yml` (nightly) |
+| [Open-Meteo Geocoding](https://open-meteo.com/en/docs/geocoding-api) | City name geocoding | [Terms of use](https://open-meteo.com/en/terms) · [Documentation](https://open-meteo.com/en/docs/geocoding-api) | ✅ `contract.yml` (nightly) |
 | [RainViewer](https://www.rainviewer.com) | Precipitation radar tiles | [API documentation](https://www.rainviewer.com/api.html) | ✅ `contract.yml` (nightly) |
 | [OpenWeatherMap](https://openweathermap.org) | Cloud cover fallback when RainViewer has no satellite image | [Pricing](https://openweathermap.org/price) · [Terms](https://openweathermap.org/terms) | ❌ no contract test |
 | [CARTO](https://carto.com) | Base map on the "Clouds" tab (`VITE_CARTO_API_KEY`) | [Legal notices](https://carto.com/legal/) · [API key page](https://carto.com/basemaps/apikey/) | ❌ no contract test |
 
 `contract.yml` (see [docs/developpement.en.md](./developpement.en.md)) hits the real APIs every
 night and automatically opens a `derive-contrat` issue on schema drift — but only for
-Open-Meteo, Zippopotam, and RainViewer. **OpenWeatherMap and CARTO have no automated safety
+Open-Meteo, Open-Meteo Geocoding, Zippopotam, and RainViewer. **OpenWeatherMap and CARTO have no automated safety
 net**: a change from either provider (a key becoming mandatory, a reduced quota, a pricing
 change introduced) will only surface through a manual check, or by discovering it in production
 the way the CARTO watermark was.
@@ -35,7 +36,7 @@ the way the CARTO watermark was.
 
 ## What to check on each pass
 
-For each of the five providers:
+For each of the six providers:
 
 1. **Does the service still respond without a key / on the current free plan?** (test a real
    request if in doubt, rather than trusting documentation alone)
@@ -50,7 +51,7 @@ For each of the five providers:
 
 ## Recommended frequency
 
-- **Open-Meteo, Zippopotam, RainViewer**: covered by `contract.yml` — reading the
+- **Open-Meteo, Open-Meteo Geocoding, Zippopotam, RainViewer**: covered by `contract.yml` — reading the
   `derive-contrat` issue (if one exists) is enough, no periodic manual check needed.
 - **OpenWeatherMap and CARTO**: manual check every **quarter**, or immediately after any visible
   anomaly in production (watermark, missing tiles, unexpected 401/403 error).
@@ -59,7 +60,7 @@ For each of the five providers:
 
 ## Check log
 
-To be filled in on every pass over OpenWeatherMap and/or CARTO (the other three providers are
+To be filled in on every pass over OpenWeatherMap and/or CARTO (the other four providers are
 covered by `contract.yml`, no need to log them here).
 
 | Date | Provider | Result | Action taken |
@@ -70,7 +71,7 @@ covered by `contract.yml`, no need to log them here).
 
 ## If drift is found
 
-- **Open-Meteo / Zippopotam / RainViewer**: see the automatically opened `derive-contrat` issue,
+- **Open-Meteo / Open-Meteo Geocoding / Zippopotam / RainViewer**: see the automatically opened `derive-contrat` issue,
   fix the relevant Zod schema in `backend/src/schemas/`.
 - **OpenWeatherMap / CARTO**: update this document (table above), then assess whether the
   existing fallback (unavailability message, visible watermark) is still acceptable or whether

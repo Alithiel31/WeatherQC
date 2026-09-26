@@ -4,6 +4,10 @@
 
 ### Added
 
+- Recherche par nom de ville en plus du code postal (`RechercheCodePostal.svelte`) : un nom sans
+  forme de code postal part vers `GET /api/geocode-ville/:nom`, qui géocode via Open-Meteo
+  Geocoding et ne retient que la ville québécoise la plus peuplée en cas d'homonymie — pas
+  d'écran de désambiguïsation, comme pour la recherche par code postal existante
 - Refonte visuelle de l'interface (`frontend/src/App.svelte` et l'ensemble des composants de
   `frontend/src/lib/`) : direction « dark navy premium », cartes translucides à bordure bleutée,
   hiérarchie visuelle renforcée sur la température actuelle, fond « ciel » enrichi d'une couche

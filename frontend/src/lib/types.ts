@@ -75,6 +75,10 @@ export interface ReponseMeteo {
   obsolete?: boolean;
 }
 
+/**
+ * Lieu géocodé — par code postal (`rta` porte alors le FSA, ex. « H2X ») ou par
+ * nom de ville (`rta` vide : Open-Meteo ne renvoie pas de code postal).
+ */
 export interface LieuCP {
   rta: string;
   nom: string;

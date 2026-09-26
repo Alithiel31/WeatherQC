@@ -25,7 +25,7 @@ Data provided by [Open-Meteo](https://open-meteo.com) — free, no API key.
 | 🕐 Hourly forecast | Hour by hour over 48 h |
 | 📅 Daily forecast | 7 days with min–max bars and sunrise/sunset times |
 | 🛰️ Animated map | Cloud satellite (infrared) + precipitation radar via RainViewer + Leaflet |
-| 📮 Postal code search | Geocoding of the Quebec FSA (G, H, J) via Zippopotam |
+| 📮 Postal code or city search | Geocoding of the Quebec FSA (G, H, J) via Zippopotam, or a city name via Open-Meteo Geocoding |
 | 🏙️ City selection | 6 cities available (Montréal, Québec, Gatineau, Sherbrooke, Trois-Rivières, Saguenay), choice remembered across sessions |
 | 🌅 Dynamic sky | Background gradient based on conditions and day/night |
 | 📱 Installable PWA | Works offline — latest forecast cached |
@@ -185,7 +185,7 @@ rather than in this repository.
 | Map | Leaflet · RainViewer |
 | Infra | Docker · Nginx |
 | Network access | Tailscale |
-| External APIs | Open-Meteo · Zippopotam.us · CARTO / OpenStreetMap |
+| External APIs | Open-Meteo · Open-Meteo Geocoding · Zippopotam.us · CARTO / OpenStreetMap |
 | Android | TWA · Bubblewrap · Google Play Store |
 | CI/CD | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml` · `deploy-web.yml` · `codeql.yml` · `secrets.yml` · `contract.yml`) |
 

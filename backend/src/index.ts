@@ -73,6 +73,7 @@ app.get('/api/openapi.json', (_req, res) => res.json(openapiDocument));
 
 app.use('/api', limiteurApi);
 app.use('/api/geocode', limiteurGeocode);
+app.use('/api/geocode-ville', limiteurGeocode);
 
 app.use('/api', villesRouter);
 app.use('/api', previsionsRouter);

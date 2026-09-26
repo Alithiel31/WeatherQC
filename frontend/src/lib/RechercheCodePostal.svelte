@@ -29,15 +29,15 @@
       <circle cx="10.5" cy="10.5" r="6.5" />
       <path d="m20 20-4.3-4.3" />
     </svg>
-    <label class="visually-hidden" for="cp">Code postal canadien</label>
+    <label class="visually-hidden" for="cp">Code postal ou nom de ville</label>
     <input
       id="cp"
       type="text"
-      placeholder="Code postal (ex. K1A 0B1)"
+      placeholder="Code postal ou ville (ex. H2X ou Montréal)"
       bind:value={valeur}
-      autocomplete="postal-code"
+      autocomplete="off"
       enterkeyhint="search"
-      maxlength="7"
+      maxlength="60"
     />
   </div>
   <button type="submit" class="pressable" disabled={enCours}>

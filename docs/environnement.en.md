@@ -10,11 +10,11 @@
 | `NODE_ENV` | ❌ | `development` | Environment (`production` in prod) |
 | `TAILSCALE_IP` | ❌ | — | Tailscale IP for remote network access |
 | `PUBLIC_ORIGINS` | ❌ | — | CORS origins allowed in addition to the local machine and Tailscale, comma-separated |
-| `FETCH_TIMEOUT_MS` | ❌ | `5000` | Max delay of a call to Open-Meteo / Zippopotam |
+| `FETCH_TIMEOUT_MS` | ❌ | `5000` | Max delay of a call to Open-Meteo / Zippopotam / Open-Meteo Geocoding |
 | `TRUST_PROXY_HOPS` | ❌ | `2` | Number of proxies in front of the API (cloudflared + nginx) |
 | `RATE_LIMIT_WINDOW_MS` | ❌ | `60000` | Rate limiting window |
 | `RATE_LIMIT_MAX` | ❌ | `100` | Requests/window/IP on `/api` |
-| `RATE_LIMIT_GEOCODE_MAX` | ❌ | `20` | Requests/window/IP on `/api/geocode` |
+| `RATE_LIMIT_GEOCODE_MAX` | ❌ | `20` | Requests/window/IP on `/api/geocode` and `/api/geocode-ville` |
 | `CACHE_TTL_PREVISIONS` | ❌ | `600000` | Weather cache duration in ms (default: 10 min) |
 | `CACHE_TTL_GEOCODE` | ❌ | `2592000000` | Geocoding cache duration in ms (default: 30 days) |
 | `CACHE_TTL_RAINVIEWER` | ❌ | `300000` | RainViewer index cache duration in ms (default: 5 min) |

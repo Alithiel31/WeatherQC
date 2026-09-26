@@ -17,6 +17,7 @@ flowchart LR
     end
 
     OM[Open-Meteo]
+    OMG[Open-Meteo Geocoding]
     ZP[Zippopotam]
     RV[RainViewer]
 
@@ -26,6 +27,7 @@ flowchart LR
     Nginx -- "/api/*" --> Backend
     Nginx -- static --> PWA
     Backend --> OM
+    Backend --> OMG
     Backend --> ZP
     Backend --> RV
 ```
@@ -97,7 +99,7 @@ meteo-qc/
     │       ├── CarteNuages.svelte         # Animated Leaflet map
     │       ├── Quotidien.svelte           # 7-day forecast
     │       ├── ConditionsActuelles.svelte # Temperature, feels-like, wind, humidity
-    │       ├── RechercheCodePostal.svelte # Postal code search
+    │       ├── RechercheCodePostal.svelte # Postal code or city name search
     │       ├── AlertesMeteo.svelte        # Weather alert subscription control
     │       ├── notifications.ts           # PushManager subscribe/unsubscribe
     │       ├── animationFrames.svelte.ts  # Map animation state machine

@@ -17,6 +17,7 @@
     previsionsVille,
     previsionsCoordonnees,
     geocoder,
+    geocoderVille,
     villesDisponibles,
     VILLES_REPLI,
     ErreurApi,
@@ -116,8 +117,12 @@
     // Cible et libellé capturés avec la requête : ils ne bougeront plus, même si
     // l'utilisateur reclique pendant qu'elle est en vol.
     const lieu = prefs.selection === 'cp' && prefs.lieuCP ? prefs.lieuCP : null;
+    // `rta` est vide pour un lieu trouvé par nom de ville — rien à mettre entre
+    // parenthèses dans ce cas, le nom seul suffit.
     const etiquette = lieu
-      ? `${lieu.nom} (${lieu.rta})`
+      ? lieu.rta
+        ? `${lieu.nom} (${lieu.rta})`
+        : lieu.nom
       : (villes.find((v) => v.id === prefs.selection)?.nom ?? '');
 
     chargement = true;
@@ -154,6 +159,10 @@
     charger();
   }
 
+  // Un code postal canadien commence toujours par lettre-chiffre-lettre (ex.
+  // H2X, K1A 0B1) — tout le reste part vers la recherche par nom de ville.
+  const FORME_CODE_POSTAL = /^[A-Za-z]\d[A-Za-z]/;
+
   async function rechercherCP(saisie: string): Promise<void> {
     // Même raisonnement que `charger()` : sans annulation, deux soumissions
     // rapides laissaient la dernière réponse gagner, et `retenirLieu` persistait
@@ -166,7 +175,10 @@
     erreurCP = null;
     rechercheCP = true;
     try {
-      prefs.retenirLieu(await geocoder(saisie, controleur.signal), saisie);
+      const lieu = FORME_CODE_POSTAL.test(saisie)
+        ? await geocoder(saisie, controleur.signal)
+        : await geocoderVille(saisie, controleur.signal);
+      prefs.retenirLieu(lieu, saisie);
       charger();
     } catch (e) {
       if (controleur.signal.aborted) return;

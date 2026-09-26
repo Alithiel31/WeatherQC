@@ -32,6 +32,14 @@ export const geocodeSchema = z.object({
     ),
 });
 
+export const rechercheVilleSchema = z.object({
+  nom: z
+    .string()
+    .trim()
+    .min(2, 'Nom de ville trop court (2 caractères minimum)')
+    .max(60, 'Nom de ville trop long (60 caractères maximum)'),
+});
+
 /**
  * Corps attendu de `PushSubscription.toJSON()` côté navigateur — voir
  * https://developer.mozilla.org/docs/Web/API/PushSubscription/toJSON.

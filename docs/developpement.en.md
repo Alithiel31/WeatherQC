@@ -19,6 +19,7 @@ Available routes:
 | `GET /api/previsions/:ville` | Forecast by city (`montreal`, `quebec`, `gatineau`, `sherbrooke`, `trois-rivieres`, `saguenay`) |
 | `GET /api/previsions-coordonnees?lat=&lon=&nom=` | Forecast for a GPS point |
 | `GET /api/geocode/:codePostal` | Geocodes a Quebec FSA (e.g. `H2X`) |
+| `GET /api/geocode-ville/:nom` | Geocodes a Quebec city by name |
 | `GET /api/rainviewer` | Index of satellite and radar images for the animated map |
 | `GET /api/sante` | Service health check |
 | `GET /api/openapi.json` | OpenAPI 3.1 document for the API |

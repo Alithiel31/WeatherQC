@@ -10,14 +10,21 @@ vi.mock('../../src/lib/CarteNuages.svelte', async () => {
   return { default: Vide };
 });
 
-const { previsionsVille, previsionsCoordonnees, geocoder, villesDisponibles, ErreurApi } =
-  vi.hoisted(() => ({
-    previsionsVille: vi.fn(),
-    previsionsCoordonnees: vi.fn(),
-    geocoder: vi.fn(),
-    villesDisponibles: vi.fn(),
-    ErreurApi: class ErreurApi extends Error {},
-  }));
+const {
+  previsionsVille,
+  previsionsCoordonnees,
+  geocoder,
+  geocoderVille,
+  villesDisponibles,
+  ErreurApi,
+} = vi.hoisted(() => ({
+  previsionsVille: vi.fn(),
+  previsionsCoordonnees: vi.fn(),
+  geocoder: vi.fn(),
+  geocoderVille: vi.fn(),
+  villesDisponibles: vi.fn(),
+  ErreurApi: class ErreurApi extends Error {},
+}));
 
 const VILLES_REPLI = [
   { id: 'montreal', nom: 'Montréal' },
@@ -28,6 +35,7 @@ vi.mock('../../src/lib/api.ts', () => ({
   previsionsVille,
   previsionsCoordonnees,
   geocoder,
+  geocoderVille,
   villesDisponibles,
   VILLES_REPLI,
   ErreurApi,
@@ -325,7 +333,7 @@ describe('App — recherche par code postal', () => {
     render(App);
     await screen.findByText('Partiellement nuageux');
 
-    await user.type(screen.getByLabelText('Code postal canadien'), 'H2X 1Y4');
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'H2X 1Y4');
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
 
     await waitFor(() =>
@@ -349,14 +357,14 @@ describe('App — recherche par code postal', () => {
 
   it('affiche le message du backend quand le code postal est refusé', async () => {
     const user = userEvent.setup();
-    geocoder.mockRejectedValue(new ErreurApi('Code postal introuvable : ZZZ'));
+    geocoder.mockRejectedValue(new ErreurApi('Code postal introuvable : Z9Z'));
     render(App);
     await screen.findByText('Partiellement nuageux');
 
-    await user.type(screen.getByLabelText('Code postal canadien'), 'ZZZ');
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'Z9Z');
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
 
-    expect(await screen.findByText('Code postal introuvable : ZZZ')).toBeTruthy();
+    expect(await screen.findByText('Code postal introuvable : Z9Z')).toBeTruthy();
   });
 
   it('affiche un message générique sur une panne réseau', async () => {
@@ -365,7 +373,7 @@ describe('App — recherche par code postal', () => {
     render(App);
     await screen.findByText('Partiellement nuageux');
 
-    await user.type(screen.getByLabelText('Code postal canadien'), 'H2X');
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'H2X');
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
 
     expect(await screen.findByText('Recherche impossible. Vérifiez la connexion.')).toBeTruthy();
@@ -382,7 +390,7 @@ describe('App — recherche par code postal', () => {
     const { unmount } = render(App);
     await screen.findByText('Partiellement nuageux');
 
-    await user.type(screen.getByLabelText('Code postal canadien'), 'H2X');
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'H2X');
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
     await screen.findByRole('button', { name: 'Recherche…' });
 
@@ -399,7 +407,7 @@ describe('App — recherche par code postal', () => {
     render(App);
     await screen.findByText('Partiellement nuageux');
 
-    await user.type(screen.getByLabelText('Code postal canadien'), 'H2X');
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'H2X');
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
 
     // Jusqu'à 10 s peuvent s'écouler avant la réponse : sans retour visuel,
@@ -410,17 +418,53 @@ describe('App — recherche par code postal', () => {
 
   it('efface l’erreur de code postal quand on change de ville', async () => {
     const user = userEvent.setup();
-    geocoder.mockRejectedValue(new ErreurApi('Code postal introuvable : ZZZ'));
+    geocoder.mockRejectedValue(new ErreurApi('Code postal introuvable : Z9Z'));
     render(App);
     await screen.findByText('Partiellement nuageux');
 
-    await user.type(screen.getByLabelText('Code postal canadien'), 'ZZZ');
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'Z9Z');
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
-    await screen.findByText('Code postal introuvable : ZZZ');
+    await screen.findByText('Code postal introuvable : Z9Z');
 
     await choisirVille(user, 'Québec');
 
-    await waitFor(() => expect(screen.queryByText('Code postal introuvable : ZZZ')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Code postal introuvable : Z9Z')).toBeNull());
+  });
+});
+
+describe('App — recherche par nom de ville', () => {
+  it('bascule sur les coordonnées géocodées par nom plutôt que par code postal', async () => {
+    const user = userEvent.setup();
+    const lieuVille: LieuCP = { ...lieu, rta: '' };
+    geocoderVille.mockResolvedValue(lieuVille);
+    previsionsCoordonnees.mockResolvedValue(montreal);
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'Montréal');
+    await user.click(screen.getByRole('button', { name: 'Rechercher' }));
+
+    await waitFor(() =>
+      expect(previsionsCoordonnees).toHaveBeenCalledWith(lieuVille, expect.any(AbortSignal))
+    );
+    expect(geocoderVille).toHaveBeenCalledWith('Montréal', expect.any(AbortSignal));
+    expect(geocoder).not.toHaveBeenCalled();
+  });
+
+  it('affiche le message du backend quand la ville est introuvable', async () => {
+    const user = userEvent.setup();
+    geocoderVille.mockRejectedValue(
+      new ErreurApi('Aucune ville québécoise trouvée pour « Nulle-Part ».')
+    );
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'Nulle-Part');
+    await user.click(screen.getByRole('button', { name: 'Rechercher' }));
+
+    expect(
+      await screen.findByText('Aucune ville québécoise trouvée pour « Nulle-Part ».')
+    ).toBeTruthy();
   });
 });
 

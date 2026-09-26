@@ -1,7 +1,14 @@
 import { BadGatewayError, NotFoundError } from '../lib/errors.js';
 import { fetchAvecTimeout } from '../lib/http.js';
 import { reponseZippopotamSchema } from '../schemas/zippopotam.schema.js';
+import { reponseGeocodageSchema } from '../schemas/openmeteo-geocoding.schema.js';
 
+/**
+ * `rta` reste vide pour un lieu trouvé par nom de ville : Open-Meteo ne
+ * renvoie pas de code postal, seulement des coordonnées. Les deux façons de
+ * géocoder produisent la même forme pour que le reste de l'app (cache des
+ * favoris, affichage) n'ait qu'un seul type de lieu géocodé à connaître.
+ */
 export interface LieuGeocode {
   rta: string;
   nom: string;
@@ -44,5 +51,59 @@ export async function geocodeRTA(rta: string): Promise<LieuGeocode> {
     province: place.state,
     latitude: parseFloat(place.latitude),
     longitude: parseFloat(place.longitude),
+  };
+}
+
+// Open-Meteo traduit `admin1` selon `language` — les deux graphies possibles
+// pour le Québec cohabitent plutôt que de dépendre d'un seul accent.
+const ADMIN1_QUEBEC = new Set(['Québec', 'Quebec']);
+
+/**
+ * Géocode un nom de ville via Open-Meteo, restreint au Québec — même
+ * positionnement que `geocodeRTA` pour les codes postaux.
+ *
+ * Plusieurs villes québécoises peuvent partager un nom (ex. Saint-Jean) :
+ * plutôt qu'un écran de désambiguïsation, on retient la plus peuplée, comme
+ * le ferait quiconque tape ce nom sans plus de précision.
+ */
+export async function geocodeNomVille(nom: string): Promise<LieuGeocode> {
+  const params = new URLSearchParams({
+    name: nom,
+    count: '20',
+    language: 'fr',
+    format: 'json',
+  });
+
+  const res = await fetchAvecTimeout(`https://geocoding-api.open-meteo.com/v1/search?${params}`, {
+    service: 'Open-Meteo Geocoding',
+  });
+
+  if (!res.ok) {
+    throw new BadGatewayError(`Open-Meteo Geocoding a répondu ${res.status}`);
+  }
+
+  const analyse = reponseGeocodageSchema.safeParse(await res.json());
+  if (!analyse.success) {
+    throw new BadGatewayError(
+      `Réponse Open-Meteo Geocoding inexploitable : ${analyse.error.issues
+        .map((e) => e.path.join('.'))
+        .join(', ')}`
+    );
+  }
+
+  const meilleur = (analyse.data.results ?? [])
+    .filter((r) => r.country_code === 'CA' && ADMIN1_QUEBEC.has(r.admin1 ?? ''))
+    .sort((a, b) => (b.population ?? 0) - (a.population ?? 0))[0];
+
+  if (!meilleur) {
+    throw new NotFoundError(`Aucune ville québécoise trouvée pour « ${nom} ».`);
+  }
+
+  return {
+    rta: '',
+    nom: meilleur.name,
+    province: meilleur.admin1 ?? 'Quebec',
+    latitude: meilleur.latitude,
+    longitude: meilleur.longitude,
   };
 }

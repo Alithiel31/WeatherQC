@@ -25,7 +25,7 @@ Données fournies par [Open-Meteo](https://open-meteo.com) — gratuit, sans cl�
 | 🕐 Prévisions horaires | Heure par heure sur 48 h |
 | 📅 Prévisions quotidiennes | 7 jours avec barres min–max et heures de lever/coucher |
 | 🛰️ Carte animée | Satellite nuages (infrarouge) + radar précipitations via RainViewer + Leaflet, avec repli sur la couverture nuageuse OpenWeatherMap quand RainViewer n'a pas d'image satellite |
-| 📮 Recherche par code postal | Géocodage de la RTA québécoise (G, H, J) via Zippopotam |
+| 📮 Recherche par code postal ou ville | Géocodage de la RTA québécoise (G, H, J) via Zippopotam, ou d'un nom de ville via Open-Meteo Geocoding |
 | 🏙️ Sélection de ville | 6 villes disponibles (Montréal, Québec, Gatineau, Sherbrooke, Trois-Rivières, Saguenay), choix mémorisé entre les sessions |
 | 🌅 Ciel dynamique | Dégradé d'arrière-plan selon les conditions et le jour/nuit |
 | 📱 PWA installable | Fonctionne hors ligne — dernières prévisions en cache |
@@ -185,7 +185,7 @@ se tient à jour dans la console et non dans ce dépôt.
 | Carte | Leaflet · RainViewer |
 | Infra | Docker · Nginx |
 | Accès réseau | Tailscale |
-| APIs externes | Open-Meteo · Zippopotam.us · CARTO / OpenStreetMap · RainViewer · OpenWeatherMap |
+| APIs externes | Open-Meteo · Open-Meteo Geocoding · Zippopotam.us · CARTO / OpenStreetMap · RainViewer · OpenWeatherMap |
 | Android | TWA · Bubblewrap · Google Play Store |
 | CI/CD | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml` · `deploy-web.yml` · `codeql.yml` · `secrets.yml` · `contract.yml`) |
 

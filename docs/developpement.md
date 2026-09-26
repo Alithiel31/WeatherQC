@@ -19,6 +19,7 @@ Routes disponibles :
 | `GET /api/previsions/:ville` | Prévisions par ville (`montreal`, `quebec`, `gatineau`, `sherbrooke`, `trois-rivieres`, `saguenay`) |
 | `GET /api/previsions-coordonnees?lat=&lon=&nom=` | Prévisions pour un point GPS |
 | `GET /api/geocode/:codePostal` | Géocode une RTA québécoise (ex. `H2X`) |
+| `GET /api/geocode-ville/:nom` | Géocode une ville québécoise par son nom |
 | `GET /api/rainviewer` | Index des images satellite et radar pour la carte animée |
 | `GET /api/sante` | Vérification de l'état du service |
 | `GET /api/openapi.json` | Document OpenAPI 3.1 de l'API |
