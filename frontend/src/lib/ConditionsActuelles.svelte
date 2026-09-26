@@ -9,6 +9,7 @@
     libelleUniteTemp,
     libelleUniteVent,
   } from './meteo.ts';
+  import { photoVille } from './villesPhotos.ts';
   import type { Unite } from './meteo.ts';
   import type { ConditionsActuelles } from './types.ts';
 
@@ -21,6 +22,8 @@
     /** Absents en dehors d'`App.svelte` (tests, aperçu isolé) : l'étoile ne s'affiche pas. */
     estFavori?: boolean;
     onbasculerFavori?: () => void;
+    /** `prefs.selection`, sauf pour un lieu par code postal — voir `villesPhotos.ts`. */
+    villeId?: string | null;
   }
 
   const {
@@ -30,7 +33,19 @@
     unite = 'metrique',
     estFavori = false,
     onbasculerFavori,
+    villeId = null,
   }: Props = $props();
+
+  let photoSrc = $derived(photoVille(villeId, !actuel.jour));
+
+  // Bascule à `true` à chaque changement de `photoSrc` (nouvelle ville, ou
+  // jour → nuit) : sans ça, un premier échec de chargement condamnait aussi
+  // les villes/moments suivants, qui n'ont pourtant pas encore été essayés.
+  let photoOk = $state(true);
+  $effect(() => {
+    photoSrc;
+    photoOk = true;
+  });
 </script>
 
 <section class="actuel" aria-label="Conditions actuelles">
@@ -58,12 +73,33 @@
     {/if}
   </header>
 
-  <div class="hero">
-    <span class="icone" aria-hidden="true">{iconeMeteo(actuel.code, actuel.jour)}</span>
-    <div class="hero-texte">
-      <p class="condition">{descriptionMeteo(actuel.code)}</p>
-      <p class="temperature">{temperatureArrondie(actuel.temperature, unite)}<sup>°{libelleUniteTemp(unite)}</sup></p>
-      <p class="ressenti">Ressenti <span>{degres(actuel.ressenti, unite)}</span></p>
+  <div class="bande-hero">
+    {#if photoSrc && photoOk}
+      <img
+        class="photo"
+        src={photoSrc}
+        alt=""
+        aria-hidden="true"
+        onerror={() => (photoOk = false)}
+      />
+      <!-- Voile de contraste, pas la couleur du ciel : pleinement opaque côté
+           texte (aucun pixel de la photo, quelle qu'en soit la clarté, ne
+           doit y transparaître), il s'efface ensuite vers la droite où la
+           photo n'a plus de texte à porter. Composé à .88 sur du blanc pur
+           (le pire cas possible), le résultat reste sous #26303c — largement
+           sous le seuil 4.5:1 avec du texte blanc par-dessus. Pas de calcul
+           automatisé possible ici (photo, pas un littéral CSS) : cf.
+           `tests/unit/contraste.test.ts`, qui ne couvre que les dégradés de
+           secours d'App.svelte. -->
+      <div class="voile-photo" aria-hidden="true"></div>
+    {/if}
+    <div class="hero">
+      <span class="icone" aria-hidden="true">{iconeMeteo(actuel.code, actuel.jour)}</span>
+      <div class="hero-texte">
+        <p class="condition">{descriptionMeteo(actuel.code)}</p>
+        <p class="temperature">{temperatureArrondie(actuel.temperature, unite)}<sup>°{libelleUniteTemp(unite)}</sup></p>
+        <p class="ressenti">Ressenti <span>{degres(actuel.ressenti, unite)}</span></p>
+      </div>
     </div>
   </div>
 
@@ -74,7 +110,7 @@
 </section>
 
 <style>
-  .actuel { text-align: center; padding: 1.5rem 0 1.75rem; }
+  .actuel { text-align: left; padding: 1.5rem 0 1.75rem; }
 
   /*
     Bloc posé à nu sur le ciel (dégradé + voile de page, pas de voile de carte
@@ -84,10 +120,12 @@
     la transparence.
   */
   .lieu-entete {
-    display: inline-flex; align-items: center; gap: 0.5rem;
+    display: flex; align-items: center; gap: 0.5rem;
   }
   .pin { flex-shrink: 0; margin-top: 0.1rem; }
-  .lieu-texte { text-align: left; }
+  /* `flex-grow` pousse l'étoile au bord droit — sans effet quand elle est
+     absente (rien après `.lieu-texte` dans ce cas). */
+  .lieu-texte { text-align: left; flex-grow: 1; }
   .favori {
     flex-shrink: 0; margin-left: 0.15rem;
     border: 0; background: transparent; color: #fff; padding: 0.2rem;
@@ -113,13 +151,45 @@
     letter-spacing: 0.12em; text-transform: uppercase;
   }
 
-  .hero {
-    display: flex; align-items: center; justify-content: center;
-    gap: 1rem; margin-top: 1.1rem;
+  /*
+    Bande bleedée jusqu'au bord de l'écran (marges négatives = le padding
+    horizontal de `main`, cf. App.svelte) : c'est elle qui porte la photo,
+    jamais `.hero` — `.hero` reste un simple conteneur de texte pour que le
+    reste de la section n'ait pas à connaître l'existence de la photo.
+  */
+  .bande-hero {
+    position: relative;
+    margin: 0.65rem -1.25rem 0;
+    padding: 0 1.25rem;
+    overflow: hidden;
   }
-  .icone { font-size: 4.25rem; line-height: 1; flex-shrink: 0; }
+  @media (min-width: 640px) {
+    .bande-hero { margin-inline: -2rem; padding-inline: 2rem; }
+  }
+  .photo {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: 78% 45%;
+  }
+  .voile-photo {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(
+      100deg,
+      rgba(6, 14, 26, 0.88) 0%,
+      rgba(6, 14, 26, 0.88) 34%,
+      rgba(6, 14, 26, 0.5) 62%,
+      rgba(6, 14, 26, 0) 84%
+    );
+  }
+
+  .hero {
+    position: relative;
+    display: flex; flex-direction: column; align-items: flex-start;
+    gap: 0.15rem; padding: 1.1rem 0 1.35rem;
+  }
+  .icone { font-size: 3.4rem; line-height: 1; }
   .hero-texte { text-align: left; }
-  .condition { margin: 0; font-size: 1.05rem; font-weight: 600; }
+  .condition { margin: 0.3rem 0 0; font-size: 1.05rem; font-weight: 600; }
   .temperature {
     margin: 0.1rem 0 0;
     font-size: clamp(4rem, 19vw, 6rem); font-weight: 200;

@@ -284,6 +284,7 @@
       unite={prefs.unite}
       estFavori={estFavoriActuel}
       onbasculerFavori={basculerFavoriActuel}
+      villeId={prefs.selection !== 'cp' ? prefs.selection : null}
     />
 
     <BandeauAlerte alertes={donnees.alertes} />
