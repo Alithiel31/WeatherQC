@@ -16,12 +16,20 @@ export const previsionsCoordonneesSchema = z.object({
   nom: z.string().max(80, 'nom max 80 caractères').optional().default('Position personnalisée'),
 });
 
+// Premières lettres des FSA couvrant le Québec (G, H, J) — Postes Canada
+// attribue une lettre par région, jamais partagée entre deux provinces.
+const PREMIERE_LETTRE_QUEBEC = new Set(['G', 'H', 'J']);
+
 export const geocodeSchema = z.object({
   codePostal: z
     .string()
     .min(1, 'Code postal requis')
     .toUpperCase()
-    .refine((val) => /^[A-Z]\d[A-Z]/.test(val.slice(0, 3)), 'Format invalide (ex: H2X ou K1A 0B1)'),
+    .refine((val) => /^[A-Z]\d[A-Z]/.test(val.slice(0, 3)), 'Format invalide (ex: H2X ou K1A 0B1)')
+    .refine(
+      (val) => PREMIERE_LETTRE_QUEBEC.has(val[0]),
+      'Ce service est réservé aux codes postaux du Québec.'
+    ),
 });
 
 /**

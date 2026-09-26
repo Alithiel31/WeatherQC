@@ -1,5 +1,5 @@
 import { lireTexte, lireJSON, ecrire, ecrireJSON, supprimer } from './stockage.ts';
-import type { LieuCP } from './types.ts';
+import type { LieuCP, Favori } from './types.ts';
 import type { Unite } from './meteo.ts';
 
 const VILLE_DEFAUT = 'montreal';
@@ -28,6 +28,24 @@ function estLieuValide(valeur: unknown): valeur is LieuCP {
     Number.isFinite(lieu.latitude) &&
     Number.isFinite(lieu.longitude)
   );
+}
+
+/** Même raisonnement que `estLieuValide` : une entrée corrompue est écartée, pas fatale. */
+function estFavoriValide(valeur: unknown): valeur is Favori {
+  if (!valeur || typeof valeur !== 'object') return false;
+  const f = valeur as Record<string, unknown>;
+  if (f.type === 'ville') return typeof f.id === 'string' && typeof f.nom === 'string';
+  if (f.type === 'cp') return estLieuValide(f.lieu);
+  return false;
+}
+
+/**
+ * Clé de dédoublonnage/comparaison — un favori n'existe qu'une fois dans la
+ * liste. Exportée : `Favoris.svelte` s'en sert aussi comme clé de boucle et
+ * comme clé du cache de résumés météo par favori.
+ */
+export function cleFavori(f: Favori): string {
+  return f.type === 'ville' ? `ville:${f.id}` : `cp:${f.lieu.rta}`;
 }
 
 /**
@@ -61,6 +79,11 @@ export function creerPreferences() {
 
   const uniteBrute = lireTexte('unite', UNITE_DEFAUT);
   let unite = $state<Unite>(estUniteValide(uniteBrute) ? uniteBrute : UNITE_DEFAUT);
+
+  const favorisBruts = lireJSON<unknown[]>('favoris', []);
+  let favoris = $state<Favori[]>(
+    Array.isArray(favorisBruts) ? favorisBruts.filter(estFavoriValide) : []
+  );
 
   return {
     get selection() {
@@ -99,6 +122,30 @@ export function creerPreferences() {
       ecrire('selection', 'cp');
       ecrire('codePostal', saisie);
       ecrireJSON('lieuCP', lieu);
+    },
+
+    get favoris() {
+      return favoris;
+    },
+
+    estFavori(cible: Favori): boolean {
+      const cle = cleFavori(cible);
+      return favoris.some((f) => cleFavori(f) === cle);
+    },
+
+    /** Ajoute ou retire `cible` des favoris selon son état actuel. */
+    basculerFavori(cible: Favori) {
+      const cle = cleFavori(cible);
+      favoris = favoris.some((f) => cleFavori(f) === cle)
+        ? favoris.filter((f) => cleFavori(f) !== cle)
+        : [...favoris, cible];
+      ecrireJSON('favoris', favoris);
+    },
+
+    retirerFavori(cible: Favori) {
+      const cle = cleFavori(cible);
+      favoris = favoris.filter((f) => cleFavori(f) !== cle);
+      ecrireJSON('favoris', favoris);
     },
   };
 }

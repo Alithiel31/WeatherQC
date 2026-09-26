@@ -17,9 +17,19 @@
     /** "Canada" ou "‹province›, Canada" — figé au même moment que `lieu`, voir App.svelte. */
     sousTitre?: string;
     unite?: Unite;
+    /** Absents en dehors d'`App.svelte` (tests, aperçu isolé) : l'étoile ne s'affiche pas. */
+    estFavori?: boolean;
+    onbasculerFavori?: () => void;
   }
 
-  const { actuel, lieu, sousTitre = '', unite = 'metrique' }: Props = $props();
+  const {
+    actuel,
+    lieu,
+    sousTitre = '',
+    unite = 'metrique',
+    estFavori = false,
+    onbasculerFavori,
+  }: Props = $props();
 </script>
 
 <section class="actuel" aria-label="Conditions actuelles">
@@ -32,6 +42,19 @@
       <p class="lieu">{lieu}</p>
       {#if sousTitre}<p class="sous-lieu">{sousTitre}</p>{/if}
     </div>
+    {#if onbasculerFavori}
+      <button
+        type="button"
+        class="favori"
+        aria-pressed={estFavori}
+        aria-label={estFavori ? `Retirer ${lieu} des favoris` : `Ajouter ${lieu} aux favoris`}
+        onclick={onbasculerFavori}
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill={estFavori ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+          <path d="M12 3.5 14.7 9l6 .9-4.35 4.15L17.4 20 12 17l-5.4 3 1.05-5.95L3.3 9.9l6-.9 2.7-5.5Z" />
+        </svg>
+      </button>
+    {/if}
   </header>
 
   <div class="hero">
@@ -64,6 +87,13 @@
   }
   .pin { flex-shrink: 0; margin-top: 0.1rem; }
   .lieu-texte { text-align: left; }
+  .favori {
+    flex-shrink: 0; margin-left: 0.15rem;
+    border: 0; background: transparent; color: #fff; padding: 0.2rem;
+    cursor: pointer; line-height: 0;
+  }
+  .favori svg { color: var(--accent-doux, #a9d3ff); }
+  .favori:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 0.3rem; }
   .lieu { margin: 0; font-size: 1.2rem; font-weight: 700; }
   .sous-lieu {
     margin: 0.1rem 0 0; font-size: 0.7rem; font-weight: 600;

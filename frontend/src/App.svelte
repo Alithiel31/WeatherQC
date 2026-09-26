@@ -9,6 +9,8 @@
   import RechercheCodePostal from './lib/RechercheCodePostal.svelte';
   import SelecteurVille from './lib/SelecteurVille.svelte';
   import AlertesMeteo from './lib/AlertesMeteo.svelte';
+  import BandeauAlerte from './lib/BandeauAlerte.svelte';
+  import Favoris from './lib/Favoris.svelte';
   import BottomNav from './lib/BottomNav.svelte';
   import { familleMeteo, heureMinute, libelleUniteTemp } from './lib/meteo.ts';
   import {
@@ -20,7 +22,7 @@
     ErreurApi,
   } from './lib/api.ts';
   import { creerPreferences } from './lib/preferences.svelte.ts';
-  import type { ReponseMeteo, VilleDisponible } from './lib/types.ts';
+  import type { ReponseMeteo, VilleDisponible, Favori } from './lib/types.ts';
 
   const prefs = creerPreferences();
 
@@ -42,27 +44,61 @@
   // précédente si le chargement échoue. Dérivé, le libellé annonçait alors une
   // ville dont on affichait les prévisions d'une autre.
   let nomLieu   = $state('');
-  // Même raisonnement, pour le sous-titre affiché sous le nom du lieu : "Canada"
-  // pour une ville du sélecteur (aucune ville de `CITIES` n'est hors Québec pour
-  // l'instant, mais rien ne le garantit côté frontend, d'où la formule neutre),
-  // "‹province›, Canada" pour un lieu géocodé par code postal — la province vient
-  // alors de `LieuCP`, aucune nouvelle donnée n'est nécessaire.
-  let sousTitreLieu = $state('');
 
   // Pas d'abonnement par code postal (décision produit) : le nom n'est dérivé
   // que pour une ville du sélecteur, jamais pour `prefs.lieuCP`.
   let nomVilleActive = $derived(villes.find((v) => v.id === prefs.selection)?.nom ?? '');
 
-  // Section affichée par la nav basse au chargement — purement visuel, aucune
-  // ancre réelle vers un autre écran (l'app reste une page unique).
-  let sectionActive = $state<'accueil' | 'carte'>('accueil');
+  // Le lieu actuellement sélectionné, sous la forme que persiste `prefs.favoris`
+  // — `null` si rien n'est encore résolu (ville du repli pas encore confirmée,
+  // par exemple). Dérivé des préférences (pas figé comme `nomLieu`) : l'étoile
+  // doit refléter la sélection en cours, y compris pendant un chargement.
+  let favoriCibleActuel = $derived<Favori | null>(
+    prefs.selection === 'cp' && prefs.lieuCP
+      ? { type: 'cp', lieu: prefs.lieuCP }
+      : prefs.selection !== 'cp' && nomVilleActive
+        ? { type: 'ville', id: prefs.selection, nom: nomVilleActive }
+        : null
+  );
+  let estFavoriActuel = $derived(favoriCibleActuel ? prefs.estFavori(favoriCibleActuel) : false);
+
+  function basculerFavoriActuel(): void {
+    if (favoriCibleActuel) prefs.basculerFavori(favoriCibleActuel);
+  }
+
+  /** Bascule vers un favori choisi dans l'écran Favoris, puis revient à l'accueil. */
+  function choisirFavori(favori: Favori): void {
+    if (favori.type === 'ville') {
+      choisirVille(favori.id);
+    } else {
+      // Déjà géocodé (c'est un favori) : inutile de regéocoder le RTA. `rta`
+      // sert de saisie de repli — le code postal complet d'origine n'est pas
+      // conservé dans le favori, seul le lieu géocodé l'est.
+      prefs.retenirLieu(favori.lieu, favori.lieu.rta);
+      charger();
+    }
+    allerA('accueil');
+  }
+
+  type Section = 'accueil' | 'carte' | 'favoris' | 'reglages';
+
+  // Section mise en avant par la nav basse — purement visuel, aucune ancre
+  // réelle vers un autre écran (l'app reste une page unique).
+  let sectionActive = $state<Section>('accueil');
   let reduireMouvement =
     typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function allerA(section: 'accueil' | 'carte'): void {
+  const idSection: Record<Section, string> = {
+    accueil: 'section-accueil',
+    carte: 'section-carte',
+    favoris: 'section-favoris',
+    reglages: 'section-reglages',
+  };
+
+  function allerA(section: Section): void {
     sectionActive = section;
     document
-      .getElementById(section === 'accueil' ? 'section-accueil' : 'section-carte')
+      .getElementById(idSection[section])
       ?.scrollIntoView({ behavior: reduireMouvement ? 'auto' : 'smooth', block: 'start' });
   }
 
@@ -83,7 +119,6 @@
     const etiquette = lieu
       ? `${lieu.nom} (${lieu.rta})`
       : (villes.find((v) => v.id === prefs.selection)?.nom ?? '');
-    const sousTitre = lieu ? `${lieu.province}, Canada` : 'Canada';
 
     chargement = true;
     erreur = null;
@@ -92,7 +127,6 @@
         ? await previsionsCoordonnees(lieu, controleur.signal)
         : await previsionsVille(prefs.selection, controleur.signal);
       nomLieu = etiquette;
-      sousTitreLieu = sousTitre;
     } catch (e) {
       // Remplacée par une requête plus récente : ni erreur, ni fin de chargement
       // — celle qui l'a supplantée s'en charge.
@@ -168,7 +202,7 @@
 <main class={classeCiel}>
   <header id="section-accueil">
     <div class="ligne-titre">
-      <h1 class="eyebrow">Prévisions · Canada</h1>
+      <h1 class="eyebrow">Prévisions · Québec</h1>
       <button
         class="bascule-unite"
         onclick={() => prefs.basculerUnite()}
@@ -192,10 +226,6 @@
       />
     </div>
   </header>
-
-  {#if prefs.selection !== 'cp' && nomVilleActive}
-    <AlertesMeteo villeId={prefs.selection} villeNom={nomVilleActive} />
-  {/if}
 
   <!--
     Les erreurs étaient bien annoncées — `role="alert"` plus bas crée une région
@@ -250,9 +280,13 @@
     <ConditionsActuelles
       actuel={donnees.actuel}
       lieu={nomLieu}
-      sousTitre={sousTitreLieu}
+      sousTitre="Québec"
       unite={prefs.unite}
+      estFavori={estFavoriActuel}
+      onbasculerFavori={basculerFavoriActuel}
     />
+
+    <BandeauAlerte alertes={donnees.alertes} />
 
     <Horaire heures={donnees.horaire} unite={prefs.unite} />
 
@@ -269,6 +303,36 @@
       </div>
     {/if}
   {/if}
+
+  <!--
+    Favoris et Réglages ne dépendent d'aucune prévision : contrairement à
+    `ConditionsActuelles`/`Horaire`/etc., ils restent hors du bloc conditionnel
+    ci-dessus et donc atteignables pendant un chargement ou un écran d'erreur —
+    même raisonnement que le pied de page juste en dessous.
+  -->
+  <div id="section-favoris">
+    <Favoris
+      favoris={prefs.favoris}
+      unite={prefs.unite}
+      onchoisir={choisirFavori}
+      onretirer={(f) => prefs.retirerFavori(f)}
+    />
+  </div>
+
+  <div id="section-reglages" class="reglages carte-verre">
+    <h2>Réglages</h2>
+    <div class="ligne-reglage">
+      <span>Unités</span>
+      <button
+        class="bascule-unite-large"
+        onclick={() => prefs.basculerUnite()}
+        aria-pressed={prefs.unite === 'imperial'}
+      >°{libelleUniteTemp(prefs.unite)}</button>
+    </div>
+    {#if prefs.selection !== 'cp' && nomVilleActive}
+      <AlertesMeteo villeId={prefs.selection} villeNom={nomVilleActive} />
+    {/if}
+  </div>
 
   <!--
     Le pied est hors du bloc conditionnel : il portait uniquement l'heure de
@@ -306,9 +370,7 @@
     </nav>
   </footer>
 
-  {#if donnees && !horsLigne}
-    <BottomNav actif={sectionActive} onnaviguer={allerA} />
-  {/if}
+  <BottomNav actif={sectionActive} onnaviguer={allerA} />
 </main>
 
 <style>
@@ -530,4 +592,35 @@
   }
   /* Cible tactile : les liens sont petits et voisins. */
   .legal a { padding: 0.15rem 0; }
+
+  .reglages {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1.1rem;
+    margin-top: 0.9rem;
+  }
+  .reglages h2 {
+    margin: 0 0 0.7rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    opacity: 0.75;
+  }
+  .ligne-reglage {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0;
+  }
+  .bascule-unite-large {
+    border: 1px solid var(--verre-bordure, rgba(112, 170, 255, 0.22));
+    background: rgba(0, 0, 0, 0.25);
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .bascule-unite-large:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 </style>
