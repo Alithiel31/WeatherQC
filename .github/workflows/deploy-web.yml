@@ -46,12 +46,13 @@ jobs:
       # ou si le frontend ne démarre pas derrière son `service_healthy` : un
       # démarrage cassé arrête le déploiement ici, avec un run rouge visible,
       # pas en silence sur le Pi.
+      # npm plutôt que le script d'install officiel (curl | sudo bash + apt-get) :
+      # ce dernier échoue sur un runner sans TTY ("sudo: a password is required"),
+      # alors que `npm install -g` ne demande pas sudo tant que Node tourne en
+      # espace utilisateur — déjà le cas ici puisque le runner exécute les
+      # scripts npm du projet.
       - name: Installer Infisical CLI (si absent)
-        run: |
-          command -v infisical >/dev/null 2>&1 || {
-            curl -1sLf 'https://artifacts-cli.infisical.com/setup.deb.sh' | sudo -E bash
-            sudo apt-get install -y infisical
-          }
+        run: command -v infisical >/dev/null 2>&1 || npm install -g @infisical/cli
 
       - name: Build & redémarrage
         env:
