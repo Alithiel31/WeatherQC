@@ -92,6 +92,15 @@ export async function geocoder(codePostal: string, signal?: AbortSignal): Promis
   return (await res.json()) as LieuCP;
 }
 
+/** Même contrat que `geocoder`, pour une recherche par nom de ville plutôt que par code postal. */
+export async function geocoderVille(nom: string, signal?: AbortSignal): Promise<LieuCP> {
+  const res = await fetch(`/api/geocode-ville/${encodeURIComponent(nom)}`, {
+    signal: signalRequete(signal),
+  });
+  if (!res.ok) throw new ErreurApi(await messageErreur(res, 'Ville introuvable.'));
+  return (await res.json()) as LieuCP;
+}
+
 /**
  * Index des images satellite et radar, servi par le backend.
  *

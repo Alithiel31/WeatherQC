@@ -45,7 +45,11 @@ function estFavoriValide(valeur: unknown): valeur is Favori {
  * comme clé du cache de résumés météo par favori.
  */
 export function cleFavori(f: Favori): string {
-  return f.type === 'ville' ? `ville:${f.id}` : `cp:${f.lieu.rta}`;
+  if (f.type === 'ville') return `ville:${f.id}`;
+  // `rta` est vide pour un lieu trouvé par nom de ville — les coordonnées le
+  // remplacent comme identifiant, sans quoi deux villes distinctes partageraient
+  // la même clé `cp:` et se substitueraient l'une à l'autre dans les favoris.
+  return `cp:${f.lieu.rta || `${f.lieu.latitude},${f.lieu.longitude}`}`;
 }
 
 /**

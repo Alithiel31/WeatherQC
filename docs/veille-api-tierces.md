@@ -4,7 +4,7 @@
 
 [Retour au README](../README.md)
 
-Le backend et le frontend s'appuient sur cinq services externes **gratuits, sans contrat
+Le backend et le frontend s'appuient sur six services externes **gratuits, sans contrat
 formel ni SLA**. Un fournisseur peut changer ses conditions, son quota ou le format de ses
 réponses sans préavis — c'est déjà arrivé : le fond de carte CARTO affiche un filigrane
 « API KEY REQUIRED » depuis fin août 2026, sans annonce préalable repérée avant que l'app
@@ -20,13 +20,14 @@ Cette page centralise ce qu'il faut surveiller, où, et à quelle fréquence.
 |---|---|---|---|
 | [Open-Meteo](https://open-meteo.com) | Prévisions horaires/quotidiennes, sans clé API | [Conditions d'utilisation](https://open-meteo.com/en/terms) · [Tarifs](https://open-meteo.com/en/pricing) | ✅ `contract.yml` (nocturne) |
 | [Zippopotam.us](https://www.zippopotam.us) | Géocodage des codes postaux (RTA québécoise) | [Page d'accueil](https://www.zippopotam.us) (pas de page CGU dédiée connue — vérifier la disponibilité du service et la stabilité du format de réponse) | ✅ `contract.yml` (nocturne) |
+| [Open-Meteo Geocoding](https://open-meteo.com/en/docs/geocoding-api) | Géocodage par nom de ville | [Conditions d'utilisation](https://open-meteo.com/en/terms) · [Documentation](https://open-meteo.com/en/docs/geocoding-api) | ✅ `contract.yml` (nocturne) |
 | [RainViewer](https://www.rainviewer.com) | Tuiles radar de précipitations | [Documentation API](https://www.rainviewer.com/api.html) | ✅ `contract.yml` (nocturne) |
 | [OpenWeatherMap](https://openweathermap.org) | Repli sur la couverture nuageuse quand RainViewer n'a pas d'image satellite | [Tarifs](https://openweathermap.org/price) · [Conditions](https://openweathermap.org/terms) | ❌ aucun test de contrat |
 | [CARTO](https://carto.com) | Fond de carte de l'onglet « Nuages » (`VITE_CARTO_API_KEY`) | [Mentions légales](https://carto.com/legal/) · [Page clé API](https://carto.com/basemaps/apikey/) | ❌ aucun test de contrat |
 
 `contract.yml` (voir [docs/developpement.md](./developpement.md)) interroge les vraies APIs
 chaque nuit et ouvre automatiquement une issue `derive-contrat` en cas de dérive de schéma —
-mais seulement pour Open-Meteo, Zippopotam et RainViewer. **OpenWeatherMap et CARTO n'ont
+mais seulement pour Open-Meteo, Open-Meteo Geocoding, Zippopotam et RainViewer. **OpenWeatherMap et CARTO n'ont
 aucun filet automatisé** : un changement chez ces deux fournisseurs (clé désormais
 obligatoire, quota réduit, tarification introduite) ne sera visible qu'en vérifiant
 manuellement, ou en le découvrant en production comme pour le filigrane CARTO.
@@ -35,7 +36,7 @@ manuellement, ou en le découvrant en production comme pour le filigrane CARTO.
 
 ## Ce qu'il faut regarder à chaque vérification
 
-Pour chacun des cinq fournisseurs :
+Pour chacun des six fournisseurs :
 
 1. **Le service répond-il toujours sans clé/avec le plan gratuit actuel ?** (tester une requête
    réelle si le doute existe, plutôt que de se fier à la seule documentation)
@@ -50,7 +51,7 @@ Pour chacun des cinq fournisseurs :
 
 ## Fréquence recommandée
 
-- **Open-Meteo, Zippopotam, RainViewer** : couverts par `contract.yml` — une lecture de
+- **Open-Meteo, Open-Meteo Geocoding, Zippopotam, RainViewer** : couverts par `contract.yml` — une lecture de
   l'issue `derive-contrat` (si elle existe) suffit, pas besoin de vérification manuelle
   périodique.
 - **OpenWeatherMap et CARTO** : vérification manuelle **trimestrielle**, ou immédiatement après
@@ -60,7 +61,7 @@ Pour chacun des cinq fournisseurs :
 
 ## Journal de vérification
 
-À compléter à chaque passage sur OpenWeatherMap et/ou CARTO (les trois autres fournisseurs sont
+À compléter à chaque passage sur OpenWeatherMap et/ou CARTO (les quatre autres fournisseurs sont
 couverts par `contract.yml`, inutile de les journaliser ici).
 
 | Date | Fournisseur | Résultat | Action prise |
@@ -71,7 +72,7 @@ couverts par `contract.yml`, inutile de les journaliser ici).
 
 ## En cas de dérive constatée
 
-- **Open-Meteo / Zippopotam / RainViewer** : voir l'issue `derive-contrat` ouverte
+- **Open-Meteo / Open-Meteo Geocoding / Zippopotam / RainViewer** : voir l'issue `derive-contrat` ouverte
   automatiquement, corriger le schéma Zod concerné dans `backend/src/schemas/`.
 - **OpenWeatherMap / CARTO** : mettre à jour ce document (tableau ci-dessus), puis évaluer si le
   repli existant (message d'indisponibilité, filigrane visible) reste acceptable ou si un
