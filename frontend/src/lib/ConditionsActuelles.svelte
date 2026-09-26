@@ -43,6 +43,11 @@
   // puisque le nouveau `photoSrc` ne correspond plus à celui qui a échoué.
   let photoSrcEnErreur = $state<string | null>(null);
   let photoOk = $derived(photoSrc !== null && photoSrc !== photoSrcEnErreur);
+
+  // Même principe que `photoSrcEnErreur` : mémorise la source déjà chargée
+  // plutôt qu'un booléen, pour que le fondu reparte de zéro automatiquement
+  // à chaque changement de ville ou de moment, sans effet à réinitialiser.
+  let photoSrcChargee = $state<string | null>(null);
 </script>
 
 <section class="actuel" class:avec-photo={photoOk} aria-label="Conditions actuelles">
@@ -74,9 +79,12 @@
     {#if photoOk}
       <img
         class="photo"
+        class:chargee={photoSrc === photoSrcChargee}
         src={photoSrc}
         alt=""
         aria-hidden="true"
+        fetchpriority="high"
+        onload={() => (photoSrcChargee = photoSrc)}
         onerror={() => (photoSrcEnErreur = photoSrc)}
       />
       <!-- Voile de contraste, pas la couleur du ciel : pleinement opaque côté
@@ -201,6 +209,12 @@
     position: absolute; inset: 0;
     width: 100%; height: 100%;
     object-fit: cover; object-position: 78% 45%;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .photo.chargee { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .photo { transition: none; }
   }
   .voile-photo {
     position: absolute; inset: 0;
