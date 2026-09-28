@@ -1,6 +1,6 @@
 # Sécurité
 
-🇬🇧 [English version](./SECURITY.en.md)
+🇬🇧 [English version](./docs/en/SECURITY.md)
 
 ## Signaler une vulnérabilité
 

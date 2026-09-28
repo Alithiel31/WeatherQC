@@ -1,6 +1,6 @@
 # Code of Conduct
 
-🇫🇷 [Version française](./CODE_OF_CONDUCT.md) — this is the canonical version of this document.
+🇫🇷 [Version française](../../CODE_OF_CONDUCT.md) — this is the canonical version of this document.
 
 ## Our pledge
 

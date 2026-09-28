@@ -1,6 +1,6 @@
 # Security
 
-🇫🇷 [Version française](./SECURITY.md) — this is the canonical version of this document.
+🇫🇷 [Version française](../../SECURITY.md) — this is the canonical version of this document.
 
 ## Reporting a vulnerability
 

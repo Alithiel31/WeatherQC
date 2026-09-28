@@ -1,6 +1,6 @@
 # Contribuer
 
-🇬🇧 [English version](./CONTRIBUTING.en.md)
+🇬🇧 [English version](./docs/en/CONTRIBUTING.md)
 
 Merci de ton intérêt pour ce projet. QcWeather est une application de prévisions météo (API Express/TypeScript + PWA Svelte 5) ; toute contribution qui corrige un bug, améliore l'accessibilité ou la résilience, ou complète la documentation est bienvenue.
 
