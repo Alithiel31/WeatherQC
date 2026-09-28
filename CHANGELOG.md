@@ -72,6 +72,12 @@
 - Le vérificateur d'alertes météo lance désormais un premier cycle deux minutes après le
   démarrage du backend : avec un simple `setInterval`, chaque redéploiement repoussait la
   vérification suivante d'une heure pleine
+- GitHub affichait `CODE_OF_CONDUCT.en.md` au lieu de `CODE_OF_CONDUCT.md` sur la page du dépôt :
+  la détection des fichiers de santé communautaire (`CODE_OF_CONDUCT`, `CONTRIBUTING`, `SECURITY`,
+  `SUPPORT`) semble faire correspondre le préfixe du nom plutôt que le nom exact comme pour le
+  README, et `.en.md` précède alphabétiquement `.md`. Les quatre traductions anglaises déplacées
+  vers `docs/en/`, hors des dossiers scannés par GitHub pour ces fichiers (racine, `.github/`,
+  `docs/`), pour garantir que la version française reste celle affichée
 
 ## [3.2.0] - 2026-09-23
 

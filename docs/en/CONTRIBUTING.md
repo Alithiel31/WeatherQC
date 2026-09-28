@@ -1,6 +1,6 @@
 # Contributing
 
-🇫🇷 [Version française](./CONTRIBUTING.md) — this is the canonical version of this document.
+🇫🇷 [Version française](../../CONTRIBUTING.md) — this is the canonical version of this document.
 
 Thanks for your interest in this project. QcWeather is a weather forecast app (Express/TypeScript API + Svelte 5 PWA); any contribution that fixes a bug, improves accessibility or resilience, or completes the documentation is welcome.
 

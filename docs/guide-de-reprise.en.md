@@ -22,7 +22,7 @@ rather than duplicating it, and lists what one needs *access to* in order to act
 5. [docs/android.en.md](./android.en.md) — TWA / Google Play pipeline
 6. [docs/notifications.en.md](./notifications.en.md) — weather push alerts
 7. [docs/veille-api-tierces.en.md](./veille-api-tierces.en.md) — dependency on free APIs
-8. [CONTRIBUTING.en.md](../CONTRIBUTING.en.md), [SECURITY.en.md](../SECURITY.en.md), [TROUBLESHOOTING.en.md](../TROUBLESHOOTING.en.md)
+8. [CONTRIBUTING.md](./en/CONTRIBUTING.md), [SECURITY.md](./en/SECURITY.md), [TROUBLESHOOTING.en.md](../TROUBLESHOOTING.en.md)
 9. [CHANGELOG.md](../CHANGELOG.md) — detailed history of decisions
 
 ---
@@ -44,7 +44,7 @@ rather than duplicating it, and lists what one needs *access to* in order to act
 ## 3. Secrets and access needed to act
 
 No real secret is stored in this repository (see `.gitignore` and
-[SECURITY.en.md](../SECURITY.en.md)). To actually take over the project, the following need to
+[SECURITY.md](./en/SECURITY.md)). To actually take over the project, the following need to
 be obtained — **to be filled in by the current maintainer** (password manager used, or any
 other secure transmission method):
 
@@ -55,7 +55,7 @@ other secure transmission method):
 - **Real `backend/.env` and `frontend/.env`** (or the values needed to rebuild them from `backend/.env.example` / `frontend/.env.example`) — in particular the VAPID keys (`VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`, regenerable with `npx web-push generate-vapid-keys` but doing so invalidates every existing push subscription), and the OpenWeatherMap / CARTO API keys (free, see [docs/veille-api-tierces.en.md](./veille-api-tierces.en.md))
 - **Android signing keystore** (`twa-qcweather/android.keystore`, git-ignored) and its password — without it, a signed update of the same existing app can't be published to the Play Store
 - **Google Play Console account** + **service account** used by `deploy-twa.yml` (see [docs/android.en.md](./android.en.md))
-- **`contact@alithiel31.dev` mailbox** (fallback security-reporting channel, see [SECURITY.en.md](../SECURITY.en.md))
+- **`contact@alithiel31.dev` mailbox** (fallback security-reporting channel, see [SECURITY.md](./en/SECURITY.md))
 
 > Without the Android keystore and its password, the app **cannot** be replaced with a new
 > build: Google Play rejects an APK signed by a different key. Its loss is irreversible for the

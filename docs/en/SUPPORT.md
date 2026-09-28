@@ -1,6 +1,6 @@
 # Getting Help
 
-🇫🇷 [Version française](./SUPPORT.md) — this is the canonical version of this document.
+🇫🇷 [Version française](../../SUPPORT.md) — this is the canonical version of this document.
 
 QcWeather is a personal project, maintained by a single person in their spare time: there is no commercial support and no response-time guarantee.
 

@@ -202,7 +202,7 @@ rather than in this repository.
 
 ## Contributing
 
-Development environment, reproducing CI locally, commit convention: see [CONTRIBUTING.en.md](./CONTRIBUTING.en.md).
+Development environment, reproducing CI locally, commit convention: see [CONTRIBUTING.md](./docs/en/CONTRIBUTING.md).
 
 ## Troubleshooting
 
@@ -210,7 +210,7 @@ Known cases (nginx config, network calibration, CI): see [TROUBLESHOOTING.en.md]
 
 ## Security
 
-To report a vulnerability, see [SECURITY.en.md](./SECURITY.en.md) — no public issues.
+To report a vulnerability, see [SECURITY.md](./docs/en/SECURITY.md) — no public issues.
 
 ## License
 
