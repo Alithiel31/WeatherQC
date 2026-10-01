@@ -101,6 +101,12 @@ The CI's `docker` job no longer just builds the images: it starts the stack with
 `/api/sante`, `/api/villes`, and the app shell through nginx. An invalid environment variable,
 a broken healthcheck, or a faulty nginx config now fail in CI rather than at deployment.
 
+The deployment to the Pi (`deploy-web.yml`) no longer fires on `push`: it chains onto the end of
+the `CI` workflow on `main` (`workflow_run`) and only runs if that succeeded, on the exact commit
+it validated. A commit that touches none of `backend/`, `frontend/` or `docker-compose.yml` is
+skipped. A manual run is still possible, from `main` only; `scripts/deploy-web.sh` remains the
+fallback if the Pi's runner is offline.
+
 > An isolated `nginx -t` in a container doesn't work here: `proxy_pass http://backend:3005`
 > requires resolving the `backend` host, which only exists inside the compose network. The
 > real startup is what serves as the test.

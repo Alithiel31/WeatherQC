@@ -57,6 +57,14 @@
   atmosphérique existant, y compris pour tout lieu trouvé par code postal (pas de photo possible
   pour une adresse quelconque)
 
+### Changed
+
+- `deploy-web.yml` ne se déclenche plus au `push` sur `main` mais à la fin du workflow `CI`
+  (`workflow_run`), uniquement si elle a réussi et sur le commit qu'elle a validé : jusqu'ici le
+  déploiement courait en parallèle de la CI et partait même quand elle échouait. Les commits sans
+  effet sur `backend/`, `frontend/` ou `docker-compose.yml` restent ignorés, le lancement manuel
+  est limité à `main`, et le délai entre un commit et la production s'allonge de la durée de la CI
+
 ### Fixed
 
 - La recherche par code postal (`GET /api/geocode/:codePostal`) acceptait n'importe quel FSA
