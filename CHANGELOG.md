@@ -4,6 +4,9 @@
 
 ### Added
 
+- `docs/mesures-performance.md` : base de référence chiffrée avant la V2 (tests et couverture,
+  poids du bundle, Lighthouse mobile en laboratoire) — LCP ≈ 3,7 s dû à la photo héro, CLS instable
+  causé par `#section-reglages`, Leaflet dans le bundle principal
 - Recherche par nom de ville en plus du code postal (`RechercheCodePostal.svelte`) : un nom sans
   forme de code postal part vers `GET /api/geocode-ville/:nom`, qui géocode via Open-Meteo
   Geocoding et ne retient que la ville québécoise la plus peuplée en cas d'homonymie — pas

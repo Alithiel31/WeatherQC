@@ -197,6 +197,7 @@ rather than in this repository.
 - [Local development](./docs/developpement.en.md)
 - [Weather alerts (notifications)](./docs/notifications.en.md)
 - [Third-party API watch](./docs/veille-api-tierces.en.md)
+- [Performance measurements (V2 baseline)](./docs/mesures-performance.en.md)
 - [Handover guide](./docs/guide-de-reprise.en.md)
 - [Accessibility](./docs/accessibilite.en.md)
 

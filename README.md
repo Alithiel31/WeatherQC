@@ -197,6 +197,7 @@ se tient à jour dans la console et non dans ce dépôt.
 - [Développement local](./docs/developpement.md)
 - [Notifications d'alertes météo](./docs/notifications.md)
 - [Veille des APIs tierces](./docs/veille-api-tierces.md)
+- [Mesures de performance (base V2)](./docs/mesures-performance.md)
 - [Guide de reprise](./docs/guide-de-reprise.md)
 - [Accessibilité](./docs/accessibilite.md)
 
