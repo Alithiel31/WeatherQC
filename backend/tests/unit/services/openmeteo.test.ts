@@ -36,7 +36,131 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
+// Même réponse, enrichie des séries ajoutées pour le tableau de bord.
+// `time` compte trois heures : le slice démarre à l'index 1 (14:00).
+const mockRawEnrichie = {
+  ...mockRawResponse,
+  current: { ...mockRawResponse.current, wind_direction_10m: 250, wind_gusts_10m: 38.2 },
+  hourly: {
+    ...mockRawResponse.hourly,
+    apparent_temperature: [-9, -10, -11],
+    relative_humidity_2m: [70, 80, 85],
+    wind_speed_10m: [15, 20, 25],
+    wind_direction_10m: [240, 250, 260],
+    precipitation: [0, 0.4, 1.2],
+    uv_index: [0.2, 0.6, 0.3],
+    snowfall: [0, 0.5, 1.4],
+  },
+  daily: {
+    ...mockRawResponse.daily,
+    uv_index_max: [0.9],
+    precipitation_sum: [6.4],
+    wind_speed_10m_max: [28.1],
+    wind_gusts_10m_max: [47],
+    snowfall_sum: [5.2],
+  },
+};
+
 describe('fetchForecast', () => {
+  describe('Champs ajoutés pour le tableau de bord', () => {
+    it('mappe les conditions actuelles enrichies, UV lu dans la série horaire', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({ ok: true, json: async () => mockRawEnrichie })
+      );
+
+      const { actuel } = await fetchForecast({ latitude: 45.5, longitude: -73.6 });
+
+      expect(actuel.directionVent).toBe(250);
+      expect(actuel.rafales).toBe(38.2);
+      expect(actuel.uv).toBe(0.6); // heure courante (14:00) = index 1 de la série
+    });
+
+    it('mappe les séries horaires en les décalant comme les champs existants', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({ ok: true, json: async () => mockRawEnrichie })
+      );
+
+      const { horaire } = await fetchForecast({ latitude: 45.5, longitude: -73.6 });
+
+      expect(horaire[0]).toMatchObject({
+        heure: '2024-01-15T14:00',
+        ressenti: -10,
+        humidite: 80,
+        vent: 20,
+        directionVent: 250,
+        precipitationMm: 0.4,
+        uv: 0.6,
+        neigeCm: 0.5,
+      });
+      expect(horaire[1].precipitationMm).toBe(1.2);
+      expect(horaire[1].neigeCm).toBe(1.4);
+    });
+
+    it('mappe les cumuls et maximums quotidiens', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({ ok: true, json: async () => mockRawEnrichie })
+      );
+
+      const { quotidien } = await fetchForecast({ latitude: 45.5, longitude: -73.6 });
+
+      expect(quotidien[0]).toMatchObject({
+        uvMax: 0.9,
+        precipitationMm: 6.4,
+        ventMax: 28.1,
+        rafalesMax: 47,
+        neigeCm: 5.2,
+      });
+    });
+
+    it("renvoie null — sans échouer — quand Open-Meteo n'envoie pas ces séries", async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({ ok: true, json: async () => mockRawResponse })
+      );
+
+      const { actuel, horaire, quotidien } = await fetchForecast({
+        latitude: 45.5,
+        longitude: -73.6,
+      });
+
+      expect(actuel).toMatchObject({ directionVent: null, rafales: null, uv: null });
+      expect(horaire[0]).toMatchObject({
+        ressenti: null,
+        humidite: null,
+        vent: null,
+        directionVent: null,
+        precipitationMm: null,
+        uv: null,
+        neigeCm: null,
+      });
+      expect(quotidien[0]).toMatchObject({
+        neigeCm: null,
+        uvMax: null,
+        precipitationMm: null,
+        ventMax: null,
+        rafalesMax: null,
+      });
+    });
+
+    it('demande à Open-Meteo les variables correspondantes', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => mockRawEnrichie });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await fetchForecast({ latitude: 45.5, longitude: -73.6 });
+
+      const url = new URL(String(fetchMock.mock.calls[0][0]));
+      expect(url.searchParams.get('current')).toContain('wind_direction_10m');
+      expect(url.searchParams.get('hourly')).toContain('uv_index');
+      expect(url.searchParams.get('hourly')).toContain('precipitation,');
+      expect(url.searchParams.get('daily')).toContain('precipitation_sum');
+      expect(url.searchParams.get('hourly')).toContain('snowfall');
+      expect(url.searchParams.get('daily')).toContain('snowfall_sum');
+    });
+  });
+
   describe('Mapping de la réponse', () => {
     it('mappe correctement les données actuelles', async () => {
       vi.stubGlobal(

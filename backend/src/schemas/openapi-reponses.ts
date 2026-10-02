@@ -24,13 +24,30 @@ const conditionsActuellesSchema = z.object({
   vent: z.number(),
   code: z.number(),
   jour: z.boolean(),
+  // Les champs ci-dessous peuvent être `null` (donnée absente chez Open-Meteo)
+  // ou manquer d'une réponse mise en cache avant leur introduction.
+  directionVent: z.number().nullable().optional().describe("Degrés d'où vient le vent (0 = nord)"),
+  rafales: z.number().nullable().optional().describe('km/h'),
+  uv: z.number().nullable().optional().describe("Indice UV de l'heure courante"),
 });
 
 const previsionsHorairesSchema = z.object({
   heure: z.string(),
   temperature: z.number().nullable(),
   code: z.number().nullable(),
-  precipitation: z.number().nullable(),
+  precipitation: z.number().nullable().describe('Probabilité de précipitation, en %'),
+  rafales: z.number().nullable().optional().describe('km/h'),
+  ressenti: z.number().nullable().optional(),
+  humidite: z.number().nullable().optional().describe('%'),
+  vent: z.number().nullable().optional().describe('km/h'),
+  directionVent: z.number().nullable().optional().describe('Degrés (0 = nord)'),
+  precipitationMm: z.number().nullable().optional().describe('Quantité de précipitation, en mm'),
+  uv: z.number().nullable().optional(),
+  neigeCm: z
+    .number()
+    .nullable()
+    .optional()
+    .describe("Neige en cm d'épaisseur — déjà comptée, en équivalent eau, dans precipitationMm"),
 });
 
 const previsionsQuotidiennesSchema = z.object({
@@ -38,9 +55,14 @@ const previsionsQuotidiennesSchema = z.object({
   code: z.number().nullable(),
   max: z.number().nullable(),
   min: z.number().nullable(),
-  precipitation: z.number().nullable(),
+  precipitation: z.number().nullable().describe('Probabilité maximale de précipitation, en %'),
   lever: z.string(),
   coucher: z.string(),
+  uvMax: z.number().nullable().optional(),
+  precipitationMm: z.number().nullable().optional().describe('Cumul de la journée, en mm'),
+  ventMax: z.number().nullable().optional().describe('km/h'),
+  rafalesMax: z.number().nullable().optional().describe('km/h'),
+  neigeCm: z.number().nullable().optional().describe('Cumul de neige de la journée, en cm'),
 });
 
 const alerteSchema = z.object({
