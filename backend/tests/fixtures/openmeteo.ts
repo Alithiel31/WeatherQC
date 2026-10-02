@@ -34,6 +34,8 @@ export const reponseOpenMeteo = {
     weather_code: 73,
     wind_speed_10m: 21.4,
     is_day: 1,
+    wind_direction_10m: 250,
+    wind_gusts_10m: 38.2,
   },
   hourly_units: {
     time: 'iso8601',
@@ -253,6 +255,15 @@ export const reponseOpenMeteo = {
       33, 36, 39, 42, 45, 48, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 80, 83, 50, 53, 21, 24, 27,
       30, 33, 36, 39, 42, 45, 48,
     ],
+    // Séries ajoutées pour le tableau de bord, générées plutôt qu'écrites : 168 valeurs
+    // chacune. Valeurs lisibles à l'index 14 (« maintenant ») : ressenti -11,
+    // humidité 74, vent 24, direction 210, 0,4 mm, UV 0,6.
+    apparent_temperature: Array.from({ length: 168 }, (_, i) => -10 - (i % 12) / 2),
+    relative_humidity_2m: Array.from({ length: 168 }, (_, i) => 60 + (i % 30)),
+    wind_speed_10m: Array.from({ length: 168 }, (_, i) => 10 + (i % 20)),
+    wind_direction_10m: Array.from({ length: 168 }, (_, i) => (i * 15) % 360),
+    precipitation: Array.from({ length: 168 }, (_, i) => (i % 7 === 0 ? 0.4 : 0)),
+    uv_index: Array.from({ length: 168 }, (_, i) => (i % 24 >= 9 && i % 24 <= 15 ? 0.6 : 0)),
   },
   daily_units: {
     time: 'iso8601',
@@ -286,6 +297,10 @@ export const reponseOpenMeteo = {
       '2026-01-20T07:25',
       '2026-01-21T07:26',
     ],
+    uv_index_max: [0.9, 1, 1.1, 0.8, 0.9, 1, 1.2],
+    precipitation_sum: [6.4, 0, 0, 3.1, 1.2, 0, 0],
+    wind_speed_10m_max: [28.1, 22, 18.4, 30, 25, 20, 16],
+    wind_gusts_10m_max: [47, 38, 30, 52, 44, 35, 27],
     sunset: [
       '2026-01-15T16:30',
       '2026-01-16T16:31',

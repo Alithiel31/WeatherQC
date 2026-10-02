@@ -4,6 +4,14 @@
 
 ### Added
 
+- `GET /api/previsions/*` expose de nouvelles données météo, toutes additives (aucun champ renommé
+  ni retiré) et nullables : direction du vent, rafales et UV dans `actuel` ; ressenti, humidité,
+  vent, direction, `precipitationMm` et UV par heure ; UV max, cumul de pluie en mm, vent et
+  rafales maximums par jour. Elles préparent le tableau de bord, « Ma journée » et l'indice de
+  confort — aucun écran ne les affiche encore. `precipitationMm` (quantité) est distinct de
+  `precipitation` (probabilité en %), conservé tel quel pour ne pas casser les réponses déjà
+  en cache dans les service workers. Une série absente chez Open-Meteo donne `null`, pas un 502 ;
+  `horaire[].rafales`, déjà servi mais jamais documenté, apparaît enfin dans l'OpenAPI
 - Recherche par nom de ville en plus du code postal (`RechercheCodePostal.svelte`) : un nom sans
   forme de code postal part vers `GET /api/geocode-ville/:nom`, qui géocode via Open-Meteo
   Geocoding et ne retient que la ville québécoise la plus peuplée en cas d'homonymie — pas

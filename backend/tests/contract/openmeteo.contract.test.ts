@@ -15,6 +15,22 @@ describe('Contrat Open-Meteo (réseau réel)', () => {
     }
     expect(typeof previsions.actuel.jour).toBe('boolean');
 
+    // Champs ajoutés pour le tableau de bord : nullables par conception, mais une
+    // série entièrement absente signale que le nom de variable a dérivé chez Open-Meteo.
+    const nombreOuNull = (v: unknown) => typeof v === 'number' || v === null;
+    expect(nombreOuNull(previsions.actuel.directionVent)).toBe(true);
+    expect(nombreOuNull(previsions.actuel.rafales)).toBe(true);
+    expect(previsions.horaire.some((h) => typeof h.uv === 'number')).toBe(true);
+    expect(previsions.horaire.some((h) => typeof h.humidite === 'number')).toBe(true);
+    expect(previsions.horaire.some((h) => typeof h.vent === 'number')).toBe(true);
+    expect(previsions.horaire.some((h) => typeof h.directionVent === 'number')).toBe(true);
+    expect(previsions.horaire.some((h) => typeof h.ressenti === 'number')).toBe(true);
+    expect(previsions.horaire.some((h) => typeof h.precipitationMm === 'number')).toBe(true);
+    expect(previsions.quotidien.some((j) => typeof j.uvMax === 'number')).toBe(true);
+    expect(previsions.quotidien.some((j) => typeof j.precipitationMm === 'number')).toBe(true);
+    expect(previsions.quotidien.some((j) => typeof j.ventMax === 'number')).toBe(true);
+    expect(previsions.quotidien.some((j) => typeof j.rafalesMax === 'number')).toBe(true);
+
     expect(previsions.horaire).toHaveLength(48);
     for (const heure of previsions.horaire) {
       expect(heure.heure).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/);

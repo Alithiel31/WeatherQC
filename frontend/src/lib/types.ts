@@ -18,6 +18,17 @@ export interface ConditionsActuelles {
   vent: number;
   code: number;
   jour: boolean;
+  /**
+   * Champs ajoutés pour le tableau de bord — optionnels, car une réponse mise en
+   * cache par le service worker avant leur introduction (jusqu'à 6 h) ne les a pas,
+   * et `null` quand Open-Meteo n'a pas de valeur.
+   */
+  /** Degrés d'où vient le vent (0 = nord). */
+  directionVent?: number | null;
+  /** km/h. */
+  rafales?: number | null;
+  /** Indice UV de l'heure courante. */
+  uv?: number | null;
 }
 
 /**
@@ -33,7 +44,17 @@ export interface PrevisionsHoraires {
   heure: string;
   temperature: number | null;
   code: number | null;
+  /** Probabilité de précipitation, en %. Voir `precipitationMm` pour la quantité. */
   precipitation: number | null;
+  // Optionnels : voir `ConditionsActuelles` — absents des réponses antérieures au changement.
+  rafales?: number | null;
+  ressenti?: number | null;
+  humidite?: number | null;
+  vent?: number | null;
+  directionVent?: number | null;
+  /** Quantité de précipitation, en mm. */
+  precipitationMm?: number | null;
+  uv?: number | null;
 }
 
 export interface PrevisionsQuotidiennes {
@@ -44,6 +65,11 @@ export interface PrevisionsQuotidiennes {
   precipitation: number | null;
   lever: string;
   coucher: string;
+  uvMax?: number | null;
+  /** Cumul de la journée, en mm. */
+  precipitationMm?: number | null;
+  ventMax?: number | null;
+  rafalesMax?: number | null;
 }
 
 /**
