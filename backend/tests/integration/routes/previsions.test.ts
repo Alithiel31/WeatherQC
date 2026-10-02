@@ -41,6 +41,7 @@ describe('Routes Prévisions', () => {
         directionVent: 210,
         precipitationMm: 0.4,
         uv: 0.6,
+        neigeCm: 0.5,
         // `precipitation` reste la probabilité en % : le nouveau champ ne la remplace pas.
         precipitation: 20,
       });
@@ -49,6 +50,7 @@ describe('Routes Prévisions', () => {
         precipitationMm: 6.4,
         ventMax: 28.1,
         rafalesMax: 47,
+        neigeCm: 5.2,
       });
     });
 

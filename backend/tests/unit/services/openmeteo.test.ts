@@ -49,6 +49,7 @@ const mockRawEnrichie = {
     wind_direction_10m: [240, 250, 260],
     precipitation: [0, 0.4, 1.2],
     uv_index: [0.2, 0.6, 0.3],
+    snowfall: [0, 0.5, 1.4],
   },
   daily: {
     ...mockRawResponse.daily,
@@ -56,6 +57,7 @@ const mockRawEnrichie = {
     precipitation_sum: [6.4],
     wind_speed_10m_max: [28.1],
     wind_gusts_10m_max: [47],
+    snowfall_sum: [5.2],
   },
 };
 
@@ -90,8 +92,10 @@ describe('fetchForecast', () => {
         directionVent: 250,
         precipitationMm: 0.4,
         uv: 0.6,
+        neigeCm: 0.5,
       });
       expect(horaire[1].precipitationMm).toBe(1.2);
+      expect(horaire[1].neigeCm).toBe(1.4);
     });
 
     it('mappe les cumuls et maximums quotidiens', async () => {
@@ -107,6 +111,7 @@ describe('fetchForecast', () => {
         precipitationMm: 6.4,
         ventMax: 28.1,
         rafalesMax: 47,
+        neigeCm: 5.2,
       });
     });
 
@@ -129,8 +134,10 @@ describe('fetchForecast', () => {
         directionVent: null,
         precipitationMm: null,
         uv: null,
+        neigeCm: null,
       });
       expect(quotidien[0]).toMatchObject({
+        neigeCm: null,
         uvMax: null,
         precipitationMm: null,
         ventMax: null,
@@ -149,6 +156,8 @@ describe('fetchForecast', () => {
       expect(url.searchParams.get('hourly')).toContain('uv_index');
       expect(url.searchParams.get('hourly')).toContain('precipitation,');
       expect(url.searchParams.get('daily')).toContain('precipitation_sum');
+      expect(url.searchParams.get('hourly')).toContain('snowfall');
+      expect(url.searchParams.get('daily')).toContain('snowfall_sum');
     });
   });
 

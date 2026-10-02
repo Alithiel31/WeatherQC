@@ -43,6 +43,11 @@ const previsionsHorairesSchema = z.object({
   directionVent: z.number().nullable().optional().describe('Degrés (0 = nord)'),
   precipitationMm: z.number().nullable().optional().describe('Quantité de précipitation, en mm'),
   uv: z.number().nullable().optional(),
+  neigeCm: z
+    .number()
+    .nullable()
+    .optional()
+    .describe("Neige en cm d'épaisseur — déjà comptée, en équivalent eau, dans precipitationMm"),
 });
 
 const previsionsQuotidiennesSchema = z.object({
@@ -57,6 +62,7 @@ const previsionsQuotidiennesSchema = z.object({
   precipitationMm: z.number().nullable().optional().describe('Cumul de la journée, en mm'),
   ventMax: z.number().nullable().optional().describe('km/h'),
   rafalesMax: z.number().nullable().optional().describe('km/h'),
+  neigeCm: z.number().nullable().optional().describe('Cumul de neige de la journée, en cm'),
 });
 
 const alerteSchema = z.object({

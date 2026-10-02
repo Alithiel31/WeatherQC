@@ -55,6 +55,8 @@ export interface PrevisionsHoraires {
   /** Quantité de précipitation, en mm. */
   precipitationMm?: number | null;
   uv?: number | null;
+  /** Neige en cm d'épaisseur — déjà comptée, en équivalent eau, dans `precipitationMm` : ne pas les additionner. */
+  neigeCm?: number | null;
 }
 
 export interface PrevisionsQuotidiennes {
@@ -70,6 +72,8 @@ export interface PrevisionsQuotidiennes {
   precipitationMm?: number | null;
   ventMax?: number | null;
   rafalesMax?: number | null;
+  /** Cumul de neige de la journée, en cm. */
+  neigeCm?: number | null;
 }
 
 /**

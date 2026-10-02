@@ -7,7 +7,9 @@
 - `GET /api/previsions/*` expose de nouvelles données météo, toutes additives (aucun champ renommé
   ni retiré) et nullables : direction du vent, rafales et UV dans `actuel` ; ressenti, humidité,
   vent, direction, `precipitationMm` et UV par heure ; UV max, cumul de pluie en mm, vent et
-  rafales maximums par jour. Elles préparent le tableau de bord, « Ma journée » et l'indice de
+  rafales maximums par jour ; plus la neige en cm (`neigeCm`, par heure et cumul quotidien, à ne
+  pas additionner avec `precipitationMm` qui l'inclut en équivalent eau). Elles préparent le
+  tableau de bord, « Ma journée » et l'indice de
   confort — aucun écran ne les affiche encore. `precipitationMm` (quantité) est distinct de
   `precipitation` (probabilité en %), conservé tel quel pour ne pas casser les réponses déjà
   en cache dans les service workers. Une série absente chez Open-Meteo donne `null`, pas un 502 ;

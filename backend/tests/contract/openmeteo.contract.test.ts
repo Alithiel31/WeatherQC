@@ -26,6 +26,9 @@ describe('Contrat Open-Meteo (réseau réel)', () => {
     expect(previsions.horaire.some((h) => typeof h.directionVent === 'number')).toBe(true);
     expect(previsions.horaire.some((h) => typeof h.ressenti === 'number')).toBe(true);
     expect(previsions.horaire.some((h) => typeof h.precipitationMm === 'number')).toBe(true);
+    // Neige : la série existe toute l'année, nulle l'été — un nombre suffit, pas de la neige réelle.
+    expect(previsions.horaire.some((h) => typeof h.neigeCm === 'number')).toBe(true);
+    expect(previsions.quotidien.some((j) => typeof j.neigeCm === 'number')).toBe(true);
     expect(previsions.quotidien.some((j) => typeof j.uvMax === 'number')).toBe(true);
     expect(previsions.quotidien.some((j) => typeof j.precipitationMm === 'number')).toBe(true);
     expect(previsions.quotidien.some((j) => typeof j.ventMax === 'number')).toBe(true);

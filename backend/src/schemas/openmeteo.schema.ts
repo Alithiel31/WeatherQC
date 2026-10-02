@@ -49,6 +49,7 @@ export const previsionsOpenMeteoSchema = z.object({
     wind_direction_10m: serieFacultative,
     precipitation: serieFacultative,
     uv_index: serieFacultative,
+    snowfall: serieFacultative,
   }),
   daily: z.object({
     time: z.array(z.string()),
@@ -62,6 +63,7 @@ export const previsionsOpenMeteoSchema = z.object({
     precipitation_sum: serieFacultative,
     wind_speed_10m_max: serieFacultative,
     wind_gusts_10m_max: serieFacultative,
+    snowfall_sum: serieFacultative,
   }),
 });
 

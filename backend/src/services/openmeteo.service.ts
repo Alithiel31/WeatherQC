@@ -39,6 +39,11 @@ export interface Previsions {
      */
     precipitationMm: number | null;
     uv: number | null;
+    /**
+     * Neige en cm d'épaisseur. À ne pas additionner avec `precipitationMm` : la
+     * neige y est déjà comptée, en équivalent eau.
+     */
+    neigeCm: number | null;
   }[];
   quotidien: {
     date: string;
@@ -53,6 +58,8 @@ export interface Previsions {
     precipitationMm: number | null;
     ventMax: number | null;
     rafalesMax: number | null;
+    /** Cumul de la journée en cm (voir `horaire[].neigeCm`). */
+    neigeCm: number | null;
   }[];
 }
 
@@ -97,6 +104,7 @@ export async function fetchForecast({
       'wind_direction_10m',
       'precipitation',
       'uv_index',
+      'snowfall',
     ].join(','),
     daily: [
       'weather_code',
@@ -109,6 +117,7 @@ export async function fetchForecast({
       'precipitation_sum',
       'wind_speed_10m_max',
       'wind_gusts_10m_max',
+      'snowfall_sum',
     ].join(','),
     forecast_days: '7',
   });
@@ -157,6 +166,7 @@ export async function fetchForecast({
       directionVent: valeur(raw.hourly.wind_direction_10m, start + i),
       precipitationMm: valeur(raw.hourly.precipitation, start + i),
       uv: valeur(raw.hourly.uv_index, start + i),
+      neigeCm: valeur(raw.hourly.snowfall, start + i),
     })),
     quotidien: raw.daily.time.map((t, i) => ({
       date: t,
@@ -170,6 +180,7 @@ export async function fetchForecast({
       precipitationMm: valeur(raw.daily.precipitation_sum, i),
       ventMax: valeur(raw.daily.wind_speed_10m_max, i),
       rafalesMax: valeur(raw.daily.wind_gusts_10m_max, i),
+      neigeCm: valeur(raw.daily.snowfall_sum, i),
     })),
   };
 }
