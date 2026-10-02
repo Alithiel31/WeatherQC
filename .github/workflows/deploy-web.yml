@@ -4,15 +4,16 @@ name: Deploy Web to Raspberry Pi
 # workflow tourne sur le Pi lui-même : c'est le runner self-hosted qui va
 # chercher le job en se connectant vers GitHub — aucun port entrant à ouvrir
 # sur le Pi, aucune clé SSH à stocker en secret.
+#
+# Le déploiement ne part qu'une fois la CI terminée et verte sur `main` : même
+# patron que `deploy-twa.yml`, qui s'enchaîne sur `build-twa.yml`. Déclenché sur
+# `push`, il courait en parallèle de la CI et partait même quand elle échouait.
 on:
   workflow_dispatch:
-  push:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
     branches: [main]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'docker-compose.yml'
-      - '.github/workflows/deploy-web.yml'
 
 permissions:
   contents: read
@@ -31,6 +32,15 @@ jobs:
     # erreur d'un job qui déchiffre ou touche à la prod du Pi.
     runs-on: [self-hosted, raspberry-pi]
     timeout-minutes: 20
+    # Jamais de déploiement si la CI a échoué ; un lancement manuel reste
+    # possible, mais seulement depuis `main`. `event == 'push'` écarte une CI de
+    # pull request dont la branche source s'appellerait aussi `main` (fork) : le
+    # filtre `branches` du déclencheur porte sur le nom de la branche, pas sur
+    # le dépôt d'origine.
+    if: >-
+      ${{ (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') }}
 
     steps:
       # `clean: false` est le point critique ici. Le comportement par défaut de
@@ -41,6 +51,30 @@ jobs:
       - uses: actions/checkout@v7
         with:
           clean: false
+          # Le commit que la CI a validé, pas la tête de `main` : entre la CI et
+          # ici, `main` a pu avancer. `fetch-depth: 2` pour comparer au parent.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 2
+
+      # `workflow_run` ne sait pas filtrer par chemin (l'ancien `push` le
+      # faisait) : sans cette étape, un commit qui ne touche que `docs/`
+      # reconstruirait les images sur le Pi pour rien. Le parent de `HEAD` est la
+      # bonne base, y compris pour un commit de fusion (premier parent = `main`
+      # avant la fusion).
+      - name: Ignorer les commits sans effet sur l'application
+        id: portee
+        env:
+          EVENEMENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENEMENT" = "workflow_dispatch" ] \
+             || git diff --name-only HEAD~1 HEAD \
+                | grep -qE '^(backend/|frontend/|docker-compose\.yml$|\.github/workflows/deploy-web\.yml$)'; then
+            echo "deployer=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deployer=false" >> "$GITHUB_OUTPUT"
+            echo "Aucun fichier de l'application modifié — déploiement ignoré."
+          fi
 
       # `--wait` fait échouer le job si le healthcheck du backend ne passe pas
       # ou si le frontend ne démarre pas derrière son `service_healthy` : un
@@ -52,9 +86,11 @@ jobs:
       # espace utilisateur — déjà le cas ici puisque le runner exécute les
       # scripts npm du projet.
       - name: Installer Infisical CLI (si absent)
+        if: steps.portee.outputs.deployer == 'true'
         run: command -v infisical >/dev/null 2>&1 || npm install -g @infisical/cli
 
       - name: Build & redémarrage
+        if: steps.portee.outputs.deployer == 'true'
         env:
           INFISICAL_UNIVERSAL_AUTH_CLIENT_ID: ${{ secrets.INFISICAL_CLIENT_ID }}
           INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET: ${{ secrets.INFISICAL_CLIENT_SECRET }}

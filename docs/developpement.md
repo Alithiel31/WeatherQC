@@ -106,6 +106,12 @@ puis interroge `/api/sante`, `/api/villes` et la coquille applicative à travers
 variable d'environnement invalide, un healthcheck cassé ou une config nginx fautive échouent
 désormais en CI plutôt qu'au déploiement.
 
+Le déploiement sur le Pi (`deploy-web.yml`) ne part plus au `push` : il s'enchaîne sur la fin du
+workflow `CI` de `main` (`workflow_run`) et ne s'exécute que si elle a réussi, sur le commit
+exact qu'elle a validé. Un commit qui ne touche ni `backend/`, `frontend/` ni
+`docker-compose.yml` est ignoré. Un lancement manuel reste possible, depuis `main` seulement ;
+`scripts/deploy-web.sh` reste le repli si le runner du Pi est hors ligne.
+
 > `nginx -t` dans un conteneur isolé ne convient pas ici : `proxy_pass http://backend:3005`
 > exige de résoudre l'hôte `backend`, qui n'existe que dans le réseau du compose. C'est le
 > démarrage réel qui fait office de test.
