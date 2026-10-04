@@ -2,6 +2,12 @@
 
 ## [Non publié]
 
+### Changed
+
+- Le frontend est servi par Traefik (réseau externe `traefik-net`, routage sur `qcweather.alithiel31.dev`) au lieu
+  d'un port 80 publié sur l'hôte ; `TRUST_PROXY_HOPS` passe de 2 à 3 (cloudflared + Traefik + nginx). La CI crée
+  `traefik-net` et republie le port 80 par un fichier de surcharge généré à la volée
+
 ### Added
 
 - Recherche par nom de ville en plus du code postal (`RechercheCodePostal.svelte`) : un nom sans

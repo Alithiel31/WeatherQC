@@ -64,8 +64,10 @@ Une variable d'environnement invalide (`PORT=abc`, quota vide) fait échouer le 
 nommant, au lieu de laisser tourner le serveur avec un `NaN`.
 
 > **Calibrage de `TRUST_PROXY_HOPS`** — la limitation de débit s'applique par IP cliente.
-> Derrière cloudflared puis nginx, il faut remonter 2 sauts pour retrouver le vrai client ;
-> mal réglé, tous les visiteurs partagent le même compteur. Après un changement d'infra,
+> Derrière cloudflared, Traefik puis nginx, il faut remonter 3 sauts pour retrouver le vrai client
+> (2 sans Traefik) ; mal réglé, tous les visiteurs partagent le même compteur. Traefik écrase
+> `X-Forwarded-For` sauf pour les IP déclarées de confiance : il doit avoir
+> `forwardedHeaders.trustedIPs` sur la passerelle de `traefik-net`. Après un changement d'infra,
 > vérifier avec `curl -s https://qcweather.alithiel31.dev/api/villes -D - | grep -i ratelimit`
 > depuis deux réseaux différents : les compteurs doivent être indépendants.
 

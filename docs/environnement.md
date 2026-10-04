@@ -10,6 +10,8 @@
 | `NODE_ENV` | ❌ | `development` | Environnement (`production` en prod) |
 | `TAILSCALE_IP` | ❌ | — | IP Tailscale pour l'accès réseau distant |
 | `PUBLIC_ORIGINS` | ❌ | — | Origines CORS autorisées en plus du poste local et de Tailscale, séparées par des virgules |
+| `FETCH_TIMEOUT_MS` | ❌ | `5000` | Délai maximal d'un appel à Open-Meteo / Zippopotam |
+| `TRUST_PROXY_HOPS` | ❌ | `2` | Nombre de proxies devant l'API (cloudflared + Traefik + nginx = 3 en prod ; défaut du code : 2) |
 | `FETCH_TIMEOUT_MS` | ❌ | `5000` | Délai maximal d'un appel à Open-Meteo / Zippopotam / Open-Meteo Geocoding |
 | `TRUST_PROXY_HOPS` | ❌ | `2` | Nombre de proxies devant l'API (cloudflared + nginx) |
 | `RATE_LIMIT_WINDOW_MS` | ❌ | `60000` | Fenêtre de la limitation de débit |

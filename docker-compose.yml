@@ -11,6 +11,8 @@ services:
     build:
       context: ./backend
       target: production
+    labels:
+      - 'homelab.tier=app'
     env_file:
       - ./backend/.env
     environment:
@@ -55,8 +57,17 @@ services:
         # `docker compose` sur ce fichier (voir README.md).
         VITE_OPENWEATHERMAP_KEY: ${VITE_OPENWEATHERMAP_KEY}
         VITE_CARTO_API_KEY: ${VITE_CARTO_API_KEY}
-    ports:
-      - '80:80'
+    # Aucun port publié sur l'hôte : le frontend est servi par Traefik (réseau
+    # traefik-net, routage par nom d'hôte), derrière le tunnel Cloudflare.
+    networks:
+      - default
+      - traefik-net
+    labels:
+      - 'homelab.tier=app'
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.qcweather.rule=Host(`qcweather.alithiel31.dev`)'
+      - 'traefik.http.routers.qcweather.entrypoints=web'
+      - 'traefik.http.services.qcweather.loadbalancer.server.port=80'
     depends_on:
       backend:
         condition: service_healthy
@@ -67,6 +78,11 @@ services:
         limits:
           # Nginx ne sert que des fichiers statiques et relaie /api/.
           memory: 128M
+
+networks:
+  # Réseau partagé avec Traefik, créé côté Caesura (voir README).
+  traefik-net:
+    external: true
 
 volumes:
   backend-data:

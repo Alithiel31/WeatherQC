@@ -63,9 +63,11 @@ Three mechanisms, all visible in `/api/sante`:
 An invalid environment variable (`PORT=abc`, empty quota) fails startup while naming it,
 instead of letting the server run with a `NaN`.
 
-> **Calibrating `TRUST_PROXY_HOPS`** — rate limiting applies per client IP. Behind cloudflared
-> then nginx, you need to walk back 2 hops to recover the real client; misconfigured, all
-> visitors share the same counter. After an infrastructure change, verify with
+> **Calibrating `TRUST_PROXY_HOPS`** — rate limiting applies per client IP. Behind cloudflared,
+> Traefik then nginx, you need to walk back 3 hops to recover the real client (2 without
+> Traefik); misconfigured, all visitors share the same counter. Traefik overwrites
+> `X-Forwarded-For` unless the sender is a trusted IP: it needs `forwardedHeaders.trustedIPs`
+> set to the `traefik-net` gateway. After an infrastructure change, verify with
 > `curl -s https://qcweather.alithiel31.dev/api/villes -D - | grep -i ratelimit` from two
 > different networks: the counters must be independent.
 
