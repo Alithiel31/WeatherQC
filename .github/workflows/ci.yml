@@ -252,6 +252,15 @@ jobs:
         run: |
           cp backend/.env.example backend/.env
           cp frontend/.env.example frontend/.env
+          # En prod, le compose ne publie aucun port et rejoint le réseau externe
+          # `traefik-net` (Traefik route par nom d'hôte). Ici il n'y a pas de Traefik :
+          # on crée le réseau, et on republie le port 80 par un fichier de surcharge
+          # généré à la volée (non versionné), pour que les `curl localhost` ci-dessous
+          # testent bien le frontend. COMPOSE_FILE vaut pour toutes les étapes
+          # suivantes (up, logs, down).
+          docker network create traefik-net
+          printf "services:\n  frontend:\n    ports:\n      - '80:80'\n" > docker-compose.ci.yml
+          echo "COMPOSE_FILE=docker-compose.yml:docker-compose.ci.yml" >> "$GITHUB_ENV"
 
       # Pas de `nginx -t` isolé : `proxy_pass http://backend:3005` exige de
       # résoudre l'hôte `backend`, qui n'existe que dans le réseau du compose.

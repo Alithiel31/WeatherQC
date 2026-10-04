@@ -11,7 +11,7 @@
 | `TAILSCALE_IP` | ❌ | — | Tailscale IP for remote network access |
 | `PUBLIC_ORIGINS` | ❌ | — | CORS origins allowed in addition to the local machine and Tailscale, comma-separated |
 | `FETCH_TIMEOUT_MS` | ❌ | `5000` | Max delay of a call to Open-Meteo / Zippopotam |
-| `TRUST_PROXY_HOPS` | ❌ | `2` | Number of proxies in front of the API (cloudflared + nginx) |
+| `TRUST_PROXY_HOPS` | ❌ | `2` | Number of proxies in front of the API (cloudflared + Traefik + nginx = 3 in prod; code default: 2) |
 | `RATE_LIMIT_WINDOW_MS` | ❌ | `60000` | Rate limiting window |
 | `RATE_LIMIT_MAX` | ❌ | `100` | Requests/window/IP on `/api` |
 | `RATE_LIMIT_GEOCODE_MAX` | ❌ | `20` | Requests/window/IP on `/api/geocode` |

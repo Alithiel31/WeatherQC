@@ -44,7 +44,7 @@ Diagramme complet, résilience des amonts (mutualisation, cache dégradé, disjo
 
 ## Déploiement (Docker)
 
-C'est la méthode recommandée. Le `docker-compose.yml` lance le backend (port **3005**) et le frontend Nginx (port **80**).
+C'est la méthode recommandée. Le `docker-compose.yml` lance le backend (port **3005**, interne) et le frontend Nginx (port **80**, interne au conteneur : aucun port n'est publié sur l'hôte, le frontend est servi par Traefik).
 
 **1. Configurer l'environnement**
 
@@ -68,6 +68,19 @@ cp frontend/.env.example frontend/.env
 docker compose --env-file frontend/.env --env-file backend/.env up --build -d
 ```
 
+> **Prérequis** : le compose rejoint le réseau externe `traefik-net` (celui de Traefik sur Caesura).
+> Hors Caesura, crée-le une fois avec `docker network create traefik-net`. Comme aucun port n'est
+> publié, un test local sans Traefik demande de republier le port 80 :
+>
+> ```bash
+> docker compose --env-file frontend/.env --env-file backend/.env \
+>   -f docker-compose.yml -f - up --build -d <<'EOF'
+> services:
+>   frontend:
+>     ports: ['80:80']
+> EOF
+> ```
+
 Nginx pose les en-têtes de sécurité du document — CSP, `X-Content-Type-Options`,
 `Referrer-Policy`, `Permissions-Policy`, HSTS. `helmet` ne couvre que les réponses JSON de
 `/api/` : le HTML qui exécute le JavaScript est servi par nginx, pas par Express.
@@ -80,6 +93,7 @@ Nginx pose les en-têtes de sécurité du document — CSP, `X-Content-Type-Opti
 L'application tourne sur un **Raspberry Pi** et est exposée publiquement via un **tunnel Cloudflare** (aucun port à ouvrir sur le routeur).
 Nginx fait office de reverse proxy à l'intérieur du conteneur frontend : il sert les fichiers statiques et redirige les appels `/api/` vers le backend.
 Le tunnel Cloudflare gère le **HTTPS** et le nom de domaine `qcweather.alithiel31.dev` — aucun certificat à gérer manuellement.
+Il envoie le trafic à **Traefik** (`localhost:8000` sur le Pi), qui route par nom d'hôte vers le conteneur frontend via le réseau `traefik-net`. La chaîne devant l'API compte donc trois proxies (cloudflared, Traefik, nginx) : `TRUST_PROXY_HOPS=3` dans le `backend/.env` de prod, et Traefik doit faire confiance à l'en-tête `X-Forwarded-For` de cloudflared (option `forwardedHeaders.trustedIPs` côté Traefik), sinon tous les visiteurs partagent la même IP pour la limitation de débit.
 
 > **Ne jamais lancer `docker compose up` à la main depuis un poste de dev pointant (via
 > contexte Docker distant) sur Caesura pour un déploiement de prod.** Docker Compose nomme le
