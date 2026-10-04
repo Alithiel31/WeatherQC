@@ -1,4 +1,5 @@
 <script lang="ts">
+  import './styles/verre.css';
   import type { VilleDisponible, LieuCP } from './types.ts';
 
   interface Props {
@@ -21,9 +22,11 @@
   // Remplace l'ancien ruban à défilement horizontal : le bouton n'affiche plus
   // que la ville active, la liste complète vit dans un panneau qui ne s'ouvre
   // qu'à la demande.
+  // `rta` est vide pour un lieu trouvé par nom de ville — le nom sert alors
+  // lui-même d'étiquette, comme pour une ville du sélecteur.
   let libelleActif = $derived(
     selection === 'cp' && lieuCP
-      ? lieuCP.rta
+      ? lieuCP.rta || lieuCP.nom
       : (villes.find((v) => v.id === selection)?.nom ?? '')
   );
 
@@ -93,7 +96,7 @@
   <div class="zone-declencheur">
     <button
       type="button"
-      class="declencheur"
+      class="declencheur pressable"
       bind:this={declencheur}
       aria-haspopup="true"
       aria-expanded={ouvert}
@@ -117,6 +120,7 @@
             <button
               type="button"
               role="menuitem"
+              class="pressable"
               class:active={v.id === selection}
               aria-current={v.id === selection}
               onclick={() => choisir(v.id)}
@@ -128,10 +132,11 @@
             <button
               type="button"
               role="menuitem"
+              class="pressable"
               class:active={selection === 'cp'}
               aria-current={selection === 'cp'}
               onclick={() => choisir('cp')}
-            >{lieuCP.rta}</button>
+            >{lieuCP.rta || lieuCP.nom}</button>
           </li>
         {/if}
       </ul>
@@ -166,9 +171,10 @@
      dans App.svelte. */
   .declencheur {
     display: flex; align-items: center; gap: 0.4rem;
-    border: 0; background: rgba(0,0,0,0.25); color: #fff; font: inherit;
+    border: 1px solid var(--verre-bordure, rgba(112,170,255,0.22));
+    background: rgba(0,0,0,0.25); color: #fff; font: inherit;
     font-weight: 600; padding: 0.45rem 1.1rem; border-radius: 999px; cursor: pointer;
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(10px);
   }
   .declencheur:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
@@ -183,8 +189,10 @@
     display: flex; flex-direction: column; gap: 0.15rem;
     margin: 0; padding: 0.35rem;
     min-width: 12rem; max-width: min(85vw, 16rem);
-    background: #16314d; border-radius: 0.9rem;
-    box-shadow: 0 1rem 2.5rem rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.08);
+    background: #0d1c30; border-radius: 0.9rem;
+    border: 1px solid var(--verre-bordure-vive, rgba(112,170,255,0.42));
+    box-shadow: 0 1rem 2.5rem rgba(0,0,0,0.5);
+    backdrop-filter: blur(16px);
     list-style: none;
   }
   .panneau li { margin: 0; }
@@ -194,6 +202,7 @@
     padding: 0.55rem 0.8rem; border-radius: 0.6rem; cursor: pointer;
   }
   .panneau button:hover { background: rgba(255,255,255,0.1); }
-  .panneau button.active { background: #fff; color: #16314d; }
+  /* Fond clair + texte marine : cf. le même choix dans `RechercheCodePostal.svelte`. */
+  .panneau button.active { background: var(--accent-doux, #a9d3ff); color: #0d1c30; }
   .panneau button:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
 </style>

@@ -28,6 +28,7 @@ export function previsions(nom = 'Montréal', temperature = 21.4, code = 2) {
       lever: '2026-08-03T05:30',
       coucher: '2026-08-03T20:15',
     })),
+    alertes: [],
     depuisCache: false,
   };
 }

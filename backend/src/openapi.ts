@@ -3,6 +3,7 @@ import {
   previsionsParVilleSchema,
   previsionsCoordonneesSchema,
   geocodeSchema,
+  rechercheVilleSchema,
   abonnementSchema,
   desabonnementSchema,
 } from './schemas/validation.js';
@@ -131,6 +132,18 @@ export const openapiDocument = {
           '200': reponseJson('Lieu géocodé', lieuGeocodeSchema),
           '400': reponseErreur('Format de code postal invalide'),
           '404': reponseErreur('Code postal introuvable'),
+          default: AMONT_INDISPONIBLE,
+        },
+      },
+    },
+    '/api/geocode-ville/{nom}': {
+      get: {
+        summary: 'Géocode une ville québécoise par son nom',
+        parameters: parametres(rechercheVilleSchema, 'path'),
+        responses: {
+          '200': reponseJson('Lieu géocodé', lieuGeocodeSchema),
+          '400': reponseErreur('Nom de ville invalide (longueur)'),
+          '404': reponseErreur('Aucune ville québécoise trouvée pour ce nom'),
           default: AMONT_INDISPONIBLE,
         },
       },

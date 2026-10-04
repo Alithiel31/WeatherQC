@@ -21,8 +21,10 @@ export const limiteurApi = rateLimit({
 });
 
 /**
- * Quota du géocodage : chaque appel non caché part chez Zippopotam, un tiers
- * gratuit qu'on ne veut pas marteler depuis notre IP.
+ * Quota du géocodage : chaque appel non caché part chez Zippopotam ou
+ * Open-Meteo Geocoding, deux tiers gratuits qu'on ne veut pas marteler depuis
+ * notre IP. Partagé entre `/api/geocode` (code postal) et `/api/geocode-ville`
+ * (nom de ville).
  */
 export const limiteurGeocode = rateLimit({
   ...communs,

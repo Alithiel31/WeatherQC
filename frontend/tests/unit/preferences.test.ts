@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { creerPreferences } from '../../src/lib/preferences.svelte.ts';
-import type { LieuCP } from '../../src/lib/types.ts';
+import type { LieuCP, Favori } from '../../src/lib/types.ts';
 
 const lieu: LieuCP = {
   rta: 'H2X',
@@ -171,5 +171,90 @@ describe('creerPreferences — unité', () => {
 
     expect(prefs.unite).toBe('metrique');
     expect(localStorage.getItem('unite')).toBe('metrique');
+  });
+});
+
+describe('creerPreferences — favoris', () => {
+  const villeFavorite: Favori = { type: 'ville', id: 'quebec', nom: 'Québec' };
+  const cpFavori: Favori = { type: 'cp', lieu };
+
+  it('ne mémorise aucun favori par défaut', () => {
+    expect(creerPreferences().favoris).toEqual([]);
+  });
+
+  it('ajoute puis retire une ville favorite', () => {
+    const prefs = creerPreferences();
+
+    prefs.basculerFavori(villeFavorite);
+    expect(prefs.favoris).toEqual([villeFavorite]);
+    expect(prefs.estFavori(villeFavorite)).toBe(true);
+    expect(JSON.parse(localStorage.getItem('favoris')!)).toEqual([villeFavorite]);
+
+    prefs.basculerFavori(villeFavorite);
+    expect(prefs.favoris).toEqual([]);
+    expect(prefs.estFavori(villeFavorite)).toBe(false);
+  });
+
+  it('ajoute un lieu géocodé par code postal comme favori', () => {
+    const prefs = creerPreferences();
+
+    prefs.basculerFavori(cpFavori);
+
+    expect(prefs.favoris).toEqual([cpFavori]);
+    expect(prefs.estFavori(cpFavori)).toBe(true);
+  });
+
+  it('distingue deux favoris de types différents portant le même nom', () => {
+    const prefs = creerPreferences();
+    const villeMontreal: Favori = { type: 'ville', id: 'montreal', nom: 'Montréal' };
+    const cpMontreal: Favori = { type: 'cp', lieu: { ...lieu, rta: 'H9X' } };
+
+    prefs.basculerFavori(villeMontreal);
+    prefs.basculerFavori(cpMontreal);
+
+    expect(prefs.favoris).toHaveLength(2);
+    expect(prefs.estFavori(villeMontreal)).toBe(true);
+    expect(prefs.estFavori(cpMontreal)).toBe(true);
+  });
+
+  it('retire un favori explicitement, sans dépendre de son état actuel', () => {
+    const prefs = creerPreferences();
+    prefs.basculerFavori(villeFavorite);
+
+    prefs.retirerFavori(villeFavorite);
+
+    expect(prefs.favoris).toEqual([]);
+    expect(JSON.parse(localStorage.getItem('favoris')!)).toEqual([]);
+  });
+
+  it('conserve l’ordre d’ajout', () => {
+    const prefs = creerPreferences();
+    const gatineau: Favori = { type: 'ville', id: 'gatineau', nom: 'Gatineau' };
+
+    prefs.basculerFavori(villeFavorite);
+    prefs.basculerFavori(gatineau);
+
+    expect(prefs.favoris).toEqual([villeFavorite, gatineau]);
+  });
+
+  // Même raisonnement que pour `lieuCP` : une entrée corrompue est écartée au
+  // démarrage plutôt que de faire planter l'application.
+  it.each([
+    ['un objet sans type reconnu', { type: 'autre', id: 'x' }],
+    ['une ville sans nom', { type: 'ville', id: 'quebec' }],
+    ['un cp sans lieu valide', { type: 'cp', lieu: { a: 1 } }],
+    ['une valeur qui n’est pas un objet', 'quebec'],
+  ])('écarte %s au chargement', (_cas, valeur) => {
+    localStorage.setItem('favoris', JSON.stringify([valeur, villeFavorite]));
+
+    const prefs = creerPreferences();
+
+    expect(prefs.favoris).toEqual([villeFavorite]);
+  });
+
+  it('démarre avec une liste vide si le stockage des favoris est illisible', () => {
+    localStorage.setItem('favoris', '{cassé');
+
+    expect(creerPreferences().favoris).toEqual([]);
   });
 });

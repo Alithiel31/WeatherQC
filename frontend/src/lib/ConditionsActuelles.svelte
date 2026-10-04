@@ -1,4 +1,5 @@
 <script lang="ts">
+  import './styles/verre.css';
   import {
     descriptionMeteo,
     iconeMeteo,
@@ -8,45 +9,275 @@
     libelleUniteTemp,
     libelleUniteVent,
   } from './meteo.ts';
+  import { photoVille } from './villesPhotos.ts';
   import type { Unite } from './meteo.ts';
   import type { ConditionsActuelles } from './types.ts';
 
   interface Props {
     actuel: ConditionsActuelles;
     lieu: string;
+    /** "Canada" ou "‹province›, Canada" — figé au même moment que `lieu`, voir App.svelte. */
+    sousTitre?: string;
     unite?: Unite;
+    /** Absents en dehors d'`App.svelte` (tests, aperçu isolé) : l'étoile ne s'affiche pas. */
+    estFavori?: boolean;
+    onbasculerFavori?: () => void;
+    /** `prefs.selection`, sauf pour un lieu par code postal — voir `villesPhotos.ts`. */
+    villeId?: string | null;
   }
 
-  const { actuel, lieu, unite = 'metrique' }: Props = $props();
+  const {
+    actuel,
+    lieu,
+    sousTitre = '',
+    unite = 'metrique',
+    estFavori = false,
+    onbasculerFavori,
+    villeId = null,
+  }: Props = $props();
+
+  let photoSrc = $derived(photoVille(villeId, !actuel.jour));
+
+  // Mémorise le dernier `photoSrc` en échec (404, etc.), pas un simple
+  // booléen : un changement de ville ou de moment retente automatiquement,
+  // puisque le nouveau `photoSrc` ne correspond plus à celui qui a échoué.
+  let photoSrcEnErreur = $state<string | null>(null);
+  let photoOk = $derived(photoSrc !== null && photoSrc !== photoSrcEnErreur);
+
+  // Même principe que `photoSrcEnErreur` : mémorise la source déjà chargée
+  // plutôt qu'un booléen, pour que le fondu reparte de zéro automatiquement
+  // à chaque changement de ville ou de moment, sans effet à réinitialiser.
+  let photoSrcChargee = $state<string | null>(null);
 </script>
 
-<section class="actuel" aria-label="Conditions actuelles">
-  <p class="lieu">{lieu}</p>
-  <span class="icone" aria-hidden="true">{iconeMeteo(actuel.code, actuel.jour)}</span>
-  <p class="temperature">{temperatureArrondie(actuel.temperature, unite)}<sup>°{libelleUniteTemp(unite)}</sup></p>
-  <p class="condition">{descriptionMeteo(actuel.code)}</p>
-  <dl class="details">
-    <div><dt>Ressenti</dt><dd>{degres(actuel.ressenti, unite)}</dd></div>
-    <div><dt>Vent</dt><dd>{vitesseVent(actuel.vent, unite)} {libelleUniteVent(unite)}</dd></div>
-    <div><dt>Humidité</dt><dd>{actuel.humidite} %</dd></div>
-  </dl>
+<section class="actuel" class:avec-photo={photoOk} aria-label="Conditions actuelles">
+  <header class="lieu-entete">
+    <svg class="pin" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21Z" />
+      <circle cx="12" cy="9.5" r="2.4" />
+    </svg>
+    <div class="lieu-texte">
+      <p class="lieu">{lieu}</p>
+      {#if sousTitre}<p class="sous-lieu">{sousTitre}</p>{/if}
+    </div>
+    {#if onbasculerFavori}
+      <button
+        type="button"
+        class="favori pressable"
+        aria-pressed={estFavori}
+        aria-label={estFavori ? `Retirer ${lieu} des favoris` : `Ajouter ${lieu} aux favoris`}
+        onclick={onbasculerFavori}
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill={estFavori ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+          <path d="M12 3.5 14.7 9l6 .9-4.35 4.15L17.4 20 12 17l-5.4 3 1.05-5.95L3.3 9.9l6-.9 2.7-5.5Z" />
+        </svg>
+      </button>
+    {/if}
+  </header>
+
+  <div class="bande-hero">
+    {#if photoOk}
+      <img
+        class="photo"
+        class:chargee={photoSrc === photoSrcChargee}
+        src={photoSrc}
+        alt=""
+        aria-hidden="true"
+        fetchpriority="high"
+        onload={() => (photoSrcChargee = photoSrc)}
+        onerror={() => (photoSrcEnErreur = photoSrc)}
+      />
+      <!-- Voile de contraste, pas la couleur du ciel : pleinement opaque côté
+           texte (aucun pixel de la photo, quelle qu'en soit la clarté, ne
+           doit y transparaître), il s'efface ensuite vers la droite où la
+           photo n'a plus de texte à porter. Composé à .88 sur du blanc pur
+           (le pire cas possible), le résultat reste sous #26303c — largement
+           sous le seuil 4.5:1 avec du texte blanc par-dessus. Pas de calcul
+           automatisé possible ici (photo, pas un littéral CSS) : cf.
+           `tests/unit/contraste.test.ts`, qui ne couvre que les dégradés de
+           secours d'App.svelte. -->
+      <div class="voile-photo" aria-hidden="true"></div>
+    {/if}
+    <div class="hero">
+      <span class="icone" aria-hidden="true">{iconeMeteo(actuel.code, actuel.jour)}</span>
+      <div class="hero-texte">
+        <p class="condition">{descriptionMeteo(actuel.code)}</p>
+        <p class="temperature">{temperatureArrondie(actuel.temperature, unite)}<sup>°{libelleUniteTemp(unite)}</sup></p>
+        <p class="ressenti">Ressenti <span>{degres(actuel.ressenti, unite)}</span></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="details carte-verre">
+    <div class="stat">
+      <svg class="stat-icone" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M3 8h11a3 3 0 1 0-2.5-4.7" />
+        <path d="M3 12.5h15a3 3 0 1 1-2.5 4.7" />
+        <path d="M3 17h8" />
+      </svg>
+      <div class="stat-texte">
+        <p class="stat-label">Vent</p>
+        <p class="stat-valeur">{vitesseVent(actuel.vent, unite)} {libelleUniteVent(unite)}</p>
+      </div>
+    </div>
+    <div class="stat">
+      <svg class="stat-icone" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3.5s6 7 6 11.2a6 6 0 1 1-12 0C6 10.5 12 3.5 12 3.5Z" />
+      </svg>
+      <div class="stat-texte">
+        <p class="stat-label">Humidité</p>
+        <p class="stat-valeur">{actuel.humidite} %</p>
+      </div>
+    </div>
+  </div>
 </section>
 
 <style>
-  .actuel { text-align: center; padding: 1.75rem 0 1.5rem; }
-  /* Bloc posé à nu sur le ciel : cf. le commentaire de contraste dans `App.svelte`.
-     Aucune `opacity` réduite ici, elle ferait retomber sous 4.5:1. */
-  .lieu { margin: 0 0 0.4rem; font-size: 1rem; font-weight: 600; }
-  .icone { font-size: 3.25rem; line-height: 1; }
+  /*
+    Deux mises en page cohabitent, choisies par la présence réelle d'une
+    photo (`.avec-photo`, posée sur `photoOk` — pas seulement sur
+    `villeId` : une ville retenue dont le fichier n'est pas encore livré doit
+    recevoir la même mise en page que le repli, pas une version à moitié
+    alignée à gauche sans rien à son bord droit). La base ci-dessous est
+    l'ancienne mise en page centrée, qui reste donc le comportement par
+    défaut pour tout lieu sans photo (code postal, ville hors des six
+    retenues, ou photo pas encore livrée) ; `.avec-photo` la réécrit plus
+    bas pour les cas où une image s'affiche réellement.
+  */
+  .actuel { text-align: center; padding: 1.5rem 0 1.75rem; }
+  .actuel.avec-photo { text-align: left; }
+
+  /*
+    Bloc posé à nu sur le ciel (dégradé + voile de page, pas de voile de carte
+    propre) : cf. le commentaire de contraste dans `App.svelte`. Aucune
+    `opacity` réduite sur le texte ici, elle ferait retomber sous 4.5:1 — la
+    hiérarchie tient par la taille, la graisse et l'interlettrage, jamais par
+    la transparence.
+  */
+  .lieu-entete {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+  .avec-photo .lieu-entete { display: flex; }
+  .pin { flex-shrink: 0; margin-top: 0.1rem; }
+  .lieu-texte { text-align: left; }
+  /* `flex-grow` pousse l'étoile au bord droit — seulement pertinent quand
+     `.lieu-entete` occupe toute la largeur (`.avec-photo`) ; sans effet
+     sinon, et sans effet non plus quand l'étoile est absente. */
+  .avec-photo .lieu-texte { flex-grow: 1; }
+  .favori {
+    flex-shrink: 0; margin-left: 0.15rem;
+    border: 0; background: transparent; color: #fff; padding: 0.2rem;
+    cursor: pointer; line-height: 0;
+  }
+  .favori svg { color: var(--accent-doux, #a9d3ff); }
+  .favori:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 0.3rem; }
+
+  /*
+    Le rebond ne joue qu'à l'ajout (attribut passant à "true"), jamais au
+    retrait : `animation-name` change de `none` à `pop` uniquement quand ce
+    sélecteur se met à matcher, ce qui suffit à déclencher l'animation sans
+    JS ni état supplémentaire.
+  */
+  @keyframes pop { 0% { transform: scale(1); } 45% { transform: scale(1.35); } 100% { transform: scale(1); } }
+  .favori[aria-pressed="true"] svg { animation: pop 0.35s ease; }
+  @media (prefers-reduced-motion: reduce) {
+    .favori[aria-pressed="true"] svg { animation: none; }
+  }
+  .lieu { margin: 0; font-size: 1.2rem; font-weight: 700; }
+  .sous-lieu {
+    margin: 0.1rem 0 0; font-size: 0.7rem; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+  }
+
+  /*
+    Sans photo, `.bande-hero` ne porte rien de visuel — c'est `.hero` seul
+    qui fixe l'espacement (comme avant l'introduction de la photo). Le bleed
+    jusqu'au bord de l'écran (marges négatives = le padding horizontal de
+    `main`, cf. App.svelte) n'a de sens que sous `.avec-photo`, seul cas où
+    quelque chose déborde réellement.
+  */
+  .bande-hero { position: relative; }
+  .avec-photo .bande-hero {
+    margin: 0.65rem -1.25rem 0;
+    padding: 0 1.25rem;
+    overflow: hidden;
+  }
+  @media (min-width: 640px) {
+    .avec-photo .bande-hero { margin-inline: -2rem; padding-inline: 2rem; }
+  }
+  .photo {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: 78% 45%;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .photo.chargee { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .photo { transition: none; }
+  }
+  .voile-photo {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(
+      100deg,
+      rgba(6, 14, 26, 0.88) 0%,
+      rgba(6, 14, 26, 0.88) 34%,
+      rgba(6, 14, 26, 0.5) 62%,
+      rgba(6, 14, 26, 0) 84%
+    );
+  }
+
+  .hero {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    gap: 1rem; margin-top: 1.1rem;
+  }
+  .avec-photo .hero {
+    flex-direction: column; align-items: flex-start; justify-content: flex-start;
+    gap: 0.15rem; margin-top: 0; padding: 1.1rem 0 1.35rem;
+  }
+  .icone { font-size: 4.25rem; line-height: 1; flex-shrink: 0; }
+  .avec-photo .icone { font-size: 3.4rem; flex-shrink: initial; }
+  .hero-texte { text-align: left; }
+  .condition { margin: 0; font-size: 1.05rem; font-weight: 600; }
+  .avec-photo .condition { margin: 0.3rem 0 0; }
   .temperature {
-    margin: 0.35rem 0 0;
-    font-size: clamp(4.5rem, 22vw, 6.5rem); font-weight: 200;
+    margin: 0.1rem 0 0;
+    font-size: clamp(4rem, 19vw, 6rem); font-weight: 200;
     line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
   }
-  .temperature sup { font-size: 0.35em; font-weight: 400; vertical-align: super; }
-  .condition { margin: 0.4rem 0 0; font-size: 1.15rem; font-weight: 500; }
+  .temperature sup { font-size: 0.32em; font-weight: 400; vertical-align: super; }
+  .ressenti { margin: 0.2rem 0 0; font-size: 0.95rem; font-weight: 500; }
 
-  .details { display: flex; justify-content: center; gap: 2rem; margin: 1.5rem 0 0; }
-  .details dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; }
-  .details dd { margin: 0.2rem 0 0; font-size: 1.1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  /*
+    `.carte-verre` (bordure, ombre, flou) plutôt que les redéclarer ici — même
+    habillage que Horaire/Quotidien/CarteNuages/BandeauAlerte, cf. `verre.css`.
+    Seul le fond reste déclaré en toutes lettres, comme dans chaque carte : cf.
+    le commentaire de `verre.css` sur `tests/unit/contraste.test.ts`. Fond
+    propre plutôt que du texte posé à nu sur le ciel comme avant — la
+    lisibilité ne dépend donc plus du dégradé du moment.
+
+    `margin-top` diffère de la version `.avec-photo` : sans photo, rien
+    d'autre n'apporte d'espace avant cette carte (la bande héro ne porte pas
+    de padding bas dans ce cas) ; avec photo, `.hero` en ajoute déjà via son
+    `padding-bottom` — d'où une valeur plus faible ici pour un espacement visuel
+    équivalent dans les deux mises en page.
+  */
+  .details {
+    display: flex;
+    background: rgba(0, 0, 0, 0.22);
+    margin: 1.85rem 0 0;
+  }
+  .avec-photo .details { margin-top: 1.5rem; }
+  .stat {
+    flex: 1;
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.85rem 1.1rem;
+    text-align: left;
+  }
+  .stat:first-child { border-right: 1px solid var(--verre-bordure, rgba(112, 170, 255, 0.22)); }
+  .stat-icone { flex-shrink: 0; color: var(--accent-doux, #a9d3ff); }
+  .stat-texte { min-width: 0; }
+  .stat-label { margin: 0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.85; }
+  .stat-valeur { margin: 0.15rem 0 0; font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 </style>

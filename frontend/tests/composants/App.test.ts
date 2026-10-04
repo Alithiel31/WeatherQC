@@ -10,14 +10,21 @@ vi.mock('../../src/lib/CarteNuages.svelte', async () => {
   return { default: Vide };
 });
 
-const { previsionsVille, previsionsCoordonnees, geocoder, villesDisponibles, ErreurApi } =
-  vi.hoisted(() => ({
-    previsionsVille: vi.fn(),
-    previsionsCoordonnees: vi.fn(),
-    geocoder: vi.fn(),
-    villesDisponibles: vi.fn(),
-    ErreurApi: class ErreurApi extends Error {},
-  }));
+const {
+  previsionsVille,
+  previsionsCoordonnees,
+  geocoder,
+  geocoderVille,
+  villesDisponibles,
+  ErreurApi,
+} = vi.hoisted(() => ({
+  previsionsVille: vi.fn(),
+  previsionsCoordonnees: vi.fn(),
+  geocoder: vi.fn(),
+  geocoderVille: vi.fn(),
+  villesDisponibles: vi.fn(),
+  ErreurApi: class ErreurApi extends Error {},
+}));
 
 const VILLES_REPLI = [
   { id: 'montreal', nom: 'Montréal' },
@@ -28,6 +35,7 @@ vi.mock('../../src/lib/api.ts', () => ({
   previsionsVille,
   previsionsCoordonnees,
   geocoder,
+  geocoderVille,
   villesDisponibles,
   VILLES_REPLI,
   ErreurApi,
@@ -51,6 +59,7 @@ const montreal: ReponseMeteo = {
       coucher: '2026-08-03T20:15',
     },
   ],
+  alertes: [],
   depuisCache: false,
 };
 
@@ -324,7 +333,7 @@ describe('App — recherche par code postal', () => {
     render(App);
     await screen.findByText('Partiellement nuageux');
 
-    await user.type(screen.getByLabelText('Code postal canadien'), 'H2X 1Y4');
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'H2X 1Y4');
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
 
     await waitFor(() =>
@@ -348,14 +357,14 @@ describe('App — recherche par code postal', () => {
 
   it('affiche le message du backend quand le code postal est refusé', async () => {
     const user = userEvent.setup();
-    geocoder.mockRejectedValue(new ErreurApi('Code postal introuvable : ZZZ'));
+    geocoder.mockRejectedValue(new ErreurApi('Code postal introuvable : Z9Z'));
     render(App);
     await screen.findByText('Partiellement nuageux');
 
-    await user.type(screen.getByLabelText('Code postal canadien'), 'ZZZ');
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'Z9Z');
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
 
-    expect(await screen.findByText('Code postal introuvable : ZZZ')).toBeTruthy();
+    expect(await screen.findByText('Code postal introuvable : Z9Z')).toBeTruthy();
   });
 
   it('affiche un message générique sur une panne réseau', async () => {
@@ -364,7 +373,7 @@ describe('App — recherche par code postal', () => {
     render(App);
     await screen.findByText('Partiellement nuageux');
 
-    await user.type(screen.getByLabelText('Code postal canadien'), 'H2X');
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'H2X');
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
 
     expect(await screen.findByText('Recherche impossible. Vérifiez la connexion.')).toBeTruthy();
@@ -381,7 +390,7 @@ describe('App — recherche par code postal', () => {
     const { unmount } = render(App);
     await screen.findByText('Partiellement nuageux');
 
-    await user.type(screen.getByLabelText('Code postal canadien'), 'H2X');
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'H2X');
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
     await screen.findByRole('button', { name: 'Recherche…' });
 
@@ -398,7 +407,7 @@ describe('App — recherche par code postal', () => {
     render(App);
     await screen.findByText('Partiellement nuageux');
 
-    await user.type(screen.getByLabelText('Code postal canadien'), 'H2X');
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'H2X');
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
 
     // Jusqu'à 10 s peuvent s'écouler avant la réponse : sans retour visuel,
@@ -409,17 +418,53 @@ describe('App — recherche par code postal', () => {
 
   it('efface l’erreur de code postal quand on change de ville', async () => {
     const user = userEvent.setup();
-    geocoder.mockRejectedValue(new ErreurApi('Code postal introuvable : ZZZ'));
+    geocoder.mockRejectedValue(new ErreurApi('Code postal introuvable : Z9Z'));
     render(App);
     await screen.findByText('Partiellement nuageux');
 
-    await user.type(screen.getByLabelText('Code postal canadien'), 'ZZZ');
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'Z9Z');
     await user.click(screen.getByRole('button', { name: 'Rechercher' }));
-    await screen.findByText('Code postal introuvable : ZZZ');
+    await screen.findByText('Code postal introuvable : Z9Z');
 
     await choisirVille(user, 'Québec');
 
-    await waitFor(() => expect(screen.queryByText('Code postal introuvable : ZZZ')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Code postal introuvable : Z9Z')).toBeNull());
+  });
+});
+
+describe('App — recherche par nom de ville', () => {
+  it('bascule sur les coordonnées géocodées par nom plutôt que par code postal', async () => {
+    const user = userEvent.setup();
+    const lieuVille: LieuCP = { ...lieu, rta: '' };
+    geocoderVille.mockResolvedValue(lieuVille);
+    previsionsCoordonnees.mockResolvedValue(montreal);
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'Montréal');
+    await user.click(screen.getByRole('button', { name: 'Rechercher' }));
+
+    await waitFor(() =>
+      expect(previsionsCoordonnees).toHaveBeenCalledWith(lieuVille, expect.any(AbortSignal))
+    );
+    expect(geocoderVille).toHaveBeenCalledWith('Montréal', expect.any(AbortSignal));
+    expect(geocoder).not.toHaveBeenCalled();
+  });
+
+  it('affiche le message du backend quand la ville est introuvable', async () => {
+    const user = userEvent.setup();
+    geocoderVille.mockRejectedValue(
+      new ErreurApi('Aucune ville québécoise trouvée pour « Nulle-Part ».')
+    );
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    await user.type(screen.getByLabelText('Code postal ou nom de ville'), 'Nulle-Part');
+    await user.click(screen.getByRole('button', { name: 'Rechercher' }));
+
+    expect(
+      await screen.findByText('Aucune ville québécoise trouvée pour « Nulle-Part ».')
+    ).toBeTruthy();
   });
 });
 
@@ -471,5 +516,66 @@ describe('App — une erreur ne doit pas effacer les données affichées', () =>
       expect.stringContaining('Open-Meteo injoignable')
     );
     expect(screen.queryByText('Partiellement nuageux')).toBeNull();
+  });
+});
+
+// Régression : l'application affichait un sous-titre générique « Canada »,
+// incohérent avec un positionnement 100 % québécois (titre PWA, description,
+// domaine, liste de villes). Voir aussi la restriction FSA côté backend.
+describe('App — positionnement Québec', () => {
+  it('affiche « Québec » dans l’eyebrow et sous le nom du lieu', async () => {
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    expect(screen.getByText('Prévisions · Québec')).toBeTruthy();
+    expect(screen.getByText('Québec')).toBeTruthy();
+  });
+});
+
+describe('App — favoris', () => {
+  it('affiche la section Favoris vide par défaut', async () => {
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    expect(screen.getByText(/Aucun favori/)).toBeTruthy();
+  });
+
+  it('ajoute le lieu affiché aux favoris via l’étoile, et le retrouve dans la section Favoris', async () => {
+    const user = userEvent.setup();
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    await user.click(screen.getByRole('button', { name: 'Ajouter Montréal aux favoris' }));
+
+    expect(JSON.parse(localStorage.getItem('favoris')!)).toEqual([
+      { type: 'ville', id: 'montreal', nom: 'Montréal' },
+    ]);
+    expect(screen.queryByText(/Aucun favori/)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Retirer Montréal des favoris' })).toBeTruthy();
+  });
+
+  it('retire un favori en rebasculant l’étoile', async () => {
+    const user = userEvent.setup();
+    render(App);
+    await screen.findByText('Partiellement nuageux');
+
+    await user.click(screen.getByRole('button', { name: 'Ajouter Montréal aux favoris' }));
+    await user.click(screen.getByRole('button', { name: 'Retirer Montréal des favoris' }));
+
+    expect(JSON.parse(localStorage.getItem('favoris')!)).toEqual([]);
+    expect(screen.getByText(/Aucun favori/)).toBeTruthy();
+  });
+});
+
+describe('App — navigation basse', () => {
+  it('affiche les quatre onglets, atteignables même en écran d’erreur', async () => {
+    previsionsVille.mockRejectedValue(new ErreurApi('Open-Meteo injoignable'));
+
+    render(App);
+    await screen.findByRole('alert');
+
+    for (const nom of ['Accueil', 'Carte', 'Favoris', 'Réglages']) {
+      expect(screen.getByRole('button', { name: nom })).toBeTruthy();
+    }
   });
 });

@@ -19,6 +19,7 @@ Available routes:
 | `GET /api/previsions/:ville` | Forecast by city (`montreal`, `quebec`, `gatineau`, `sherbrooke`, `trois-rivieres`, `saguenay`) |
 | `GET /api/previsions-coordonnees?lat=&lon=&nom=` | Forecast for a GPS point |
 | `GET /api/geocode/:codePostal` | Geocodes a Quebec FSA (e.g. `H2X`) |
+| `GET /api/geocode-ville/:nom` | Geocodes a Quebec city by name |
 | `GET /api/rainviewer` | Index of satellite and radar images for the animated map |
 | `GET /api/sante` | Service health check |
 | `GET /api/openapi.json` | OpenAPI 3.1 document for the API |
@@ -99,6 +100,12 @@ The CI's `docker` job no longer just builds the images: it starts the stack with
 `depends_on: service_healthy`, and the nginx configuration on its real network — then queries
 `/api/sante`, `/api/villes`, and the app shell through nginx. An invalid environment variable,
 a broken healthcheck, or a faulty nginx config now fail in CI rather than at deployment.
+
+The deployment to the Pi (`deploy-web.yml`) no longer fires on `push`: it chains onto the end of
+the `CI` workflow on `main` (`workflow_run`) and only runs if that succeeded, on the exact commit
+it validated. A commit that touches none of `backend/`, `frontend/` or `docker-compose.yml` is
+skipped. A manual run is still possible, from `main` only; `scripts/deploy-web.sh` remains the
+fallback if the Pi's runner is offline.
 
 > An isolated `nginx -t` in a container doesn't work here: `proxy_pass http://backend:3005`
 > requires resolving the `backend` host, which only exists inside the compose network. The

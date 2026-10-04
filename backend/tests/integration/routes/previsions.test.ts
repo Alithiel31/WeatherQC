@@ -28,6 +28,37 @@ describe('Routes Prévisions', () => {
       expect(response.body.quotidien).toHaveLength(7);
     });
 
+    // Le fixture par défaut ne franchit aucun seuil de `detecteur-alertes.ts` :
+    // il neige déjà (le code actuel est déjà une précipitation), aucune chute de
+    // température, vent ou code verglas/orage dans les 6 prochaines heures.
+    it('ne renvoie aucune alerte quand rien ne franchit les seuils', async () => {
+      stubFetchJson(reponseOpenMeteo);
+
+      const response = await request(app).get('/api/previsions/montreal').expect(200);
+
+      expect(response.body.alertes).toEqual([]);
+    });
+
+    // Régression : la détection d'alertes (`detecteur-alertes.ts`) n'était
+    // utilisée que par le cron de notifications push — jamais exposée pour un
+    // affichage à l'écran. Un code WMO de verglas dans les prochaines heures
+    // doit désormais ressortir dans la réponse elle-même.
+    it('expose une alerte réelle quand un code WMO de verglas approche', async () => {
+      const fixtureAvecVerglas = structuredClone(reponseOpenMeteo);
+      fixtureAvecVerglas.hourly.weather_code[14] = 56; // première heure à venir
+      stubFetchJson(fixtureAvecVerglas);
+
+      const response = await request(app).get('/api/previsions/montreal').expect(200);
+
+      expect(response.body.alertes).toHaveLength(1);
+      expect(response.body.alertes[0]).toMatchObject({
+        type: 'verglas',
+        importante: true,
+      });
+      expect(response.body.alertes[0].titre).toContain('verglas');
+      expect(response.body.alertes[0].titre).toContain('Montréal');
+    });
+
     it('doit servir la deuxième requête depuis le cache', async () => {
       const fetchMock = stubFetchJson(reponseOpenMeteo);
 

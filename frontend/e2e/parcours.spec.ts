@@ -45,7 +45,7 @@ test.describe('Parcours nominal', () => {
     await page.goto('/');
     await expect(page.getByText('Partiellement nuageux')).toBeVisible();
 
-    await page.getByLabel('Code postal canadien').fill('H2X 1Y4');
+    await page.getByLabel('Code postal ou nom de ville').fill('H2X 1Y4');
     await page.getByRole('button', { name: 'Rechercher' }).click();
 
     await expect(

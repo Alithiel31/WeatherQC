@@ -1,6 +1,6 @@
 # Code de conduite
 
-🇬🇧 [English version](./CODE_OF_CONDUCT.en.md)
+🇬🇧 [English version](./docs/en/CODE_OF_CONDUCT.md)
 
 ## Engagement
 

@@ -3,6 +3,7 @@ import {
   previsionsVille,
   previsionsCoordonnees,
   geocoder,
+  geocoderVille,
   framesRainViewer,
   villesDisponibles,
   ErreurApi,
@@ -162,6 +163,35 @@ describe('geocoder', () => {
     stubFetchErreurReseau();
 
     await expect(geocoder('H2X')).rejects.not.toThrow(ErreurApi);
+  });
+});
+
+describe('geocoderVille', () => {
+  it('retourne le lieu et encode le nom dans l’URL', async () => {
+    const mock = stubFetchJson({ ...lieu, rta: '' });
+
+    await expect(geocoderVille('Trois-Rivières')).resolves.toEqual({ ...lieu, rta: '' });
+    expect(mock).toHaveBeenCalledWith('/api/geocode-ville/Trois-Rivi%C3%A8res', {
+      signal: expect.any(AbortSignal),
+    });
+  });
+
+  it('lève une ErreurApi portant le message du backend sur un 404', async () => {
+    stubFetchJson(
+      { status: 404, error: 'Aucune ville québécoise trouvée pour « Nulle-Part ».' },
+      404
+    );
+
+    await expect(geocoderVille('Nulle-Part')).rejects.toThrow(ErreurApi);
+    await expect(geocoderVille('Nulle-Part')).rejects.toThrow(
+      'Aucune ville québécoise trouvée pour « Nulle-Part ».'
+    );
+  });
+
+  it('retombe sur un message par défaut si le backend n’en fournit pas', async () => {
+    stubFetchJson({}, 500);
+
+    await expect(geocoderVille('Montréal')).rejects.toThrow('Ville introuvable.');
   });
 });
 

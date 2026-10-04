@@ -10,6 +10,31 @@
 
 ### Added
 
+- Recherche par nom de ville en plus du code postal (`RechercheCodePostal.svelte`) : un nom sans
+  forme de code postal part vers `GET /api/geocode-ville/:nom`, qui géocode via Open-Meteo
+  Geocoding et ne retient que la ville québécoise la plus peuplée en cas d'homonymie — pas
+  d'écran de désambiguïsation, comme pour la recherche par code postal existante
+- Refonte visuelle de l'interface (`frontend/src/App.svelte` et l'ensemble des composants de
+  `frontend/src/lib/`) : direction « dark navy premium », cartes translucides à bordure bleutée,
+  hiérarchie visuelle renforcée sur la température actuelle, fond « ciel » enrichi d'une couche
+  atmosphérique procédurale selon la condition météo (étoiles la nuit, halo au dégagé, stries de
+  pluie/neige) — repli conservé pour tout lieu sans photo dédiée (voir ci-dessous), l'application
+  desservant n'importe quelle adresse québécoise
+- Alertes météo affichées directement à l'écran (`BandeauAlerte.svelte`) : `GET /api/previsions/*`
+  expose désormais un champ `alertes`, calculé à la demande à partir des mêmes fonctions pures que
+  le cron de notifications push (`detecterAlertes`/`redigerNotification` dans
+  `backend/src/services/detecteur-alertes.ts`) — jusqu'ici cette détection ne servait qu'à décider
+  quand notifier, sans jamais être visible pour qui regarde l'écran
+- Favoris : une étoile sur le lieu affiché (`ConditionsActuelles.svelte`) ajoute ou retire un
+  favori — ville du sélecteur ou lieu géocodé par code postal —, persisté côté client
+  (`preferences.svelte.ts`). Nouvel écran `Favoris.svelte` listant chaque favori avec un résumé
+  météo à jour
+- Écran Réglages regroupant l'unité de mesure et l'activation des notifications, jusqu'ici
+  dispersées dans l'en-tête et juste sous celui-ci
+- Navigation basse à quatre onglets (Accueil / Carte / Favoris / Réglages), ancrée sur les
+  sections de l'unique page — rendue de façon inconditionnelle pour rester atteignable pendant un
+  chargement ou un écran d'erreur (les liens légaux, désormais dans l'écran Réglages, doivent
+  rester accessibles précisément quand l'application ne fonctionne pas)
 - `docs/veille-api-tierces.md` : liste des cinq fournisseurs externes gratuits (Open-Meteo,
   Zippopotam, RainViewer, OpenWeatherMap, CARTO), lesquels sont déjà couverts par les tests de
   contrat nocturnes (`contract.yml`) et lesquels ne le sont pas (OpenWeatherMap, CARTO — d'où le
@@ -32,9 +57,27 @@
   axe, clavier, reflow, taille des cibles), de ce qui a été ajouté (résumé texte de la carte), de
   ce qui reste hors de portée des outils automatisés, et un script de vérification manuelle avec
   un lecteur d'écran
+- Photo jour/nuit en fond de la carte météo actuelle (`ConditionsActuelles.svelte`) pour les six
+  villes du sélecteur (`villesPhotos.ts`) : lue dans `frontend/public/villes/<id>-{jour,nuit}.jpg`,
+  absente du dépôt à ce stade — tant qu'un fichier manque, repli silencieux sur le dégradé
+  atmosphérique existant, y compris pour tout lieu trouvé par code postal (pas de photo possible
+  pour une adresse quelconque)
+
+### Changed
+
+- `deploy-web.yml` ne se déclenche plus au `push` sur `main` mais à la fin du workflow `CI`
+  (`workflow_run`), uniquement si elle a réussi et sur le commit qu'elle a validé : jusqu'ici le
+  déploiement courait en parallèle de la CI et partait même quand elle échouait. Les commits sans
+  effet sur `backend/`, `frontend/` ou `docker-compose.yml` restent ignorés, le lancement manuel
+  est limité à `main`, et le délai entre un commit et la production s'allonge de la durée de la CI
 
 ### Fixed
 
+- La recherche par code postal (`GET /api/geocode/:codePostal`) acceptait n'importe quel FSA
+  canadien bien formé : Zippopotam ne filtre par aucune province, si bien qu'un code postal de
+  Toronto ou Vancouver renvoyait de vraies prévisions — incohérent avec le positionnement 100 %
+  québécois de l'application (titre, description, domaine, liste de villes). Restreint aux FSA
+  dont la première lettre est `G`, `H` ou `J`, les seules attribuées au Québec
 - Le bouton d'activation des alertes météo (`AlertesMeteo.svelte`) débordait de 2px du cadre de
   l'application à 320px de large (iPhone SE) : `flex-shrink: 0` l'empêchait de rétrécir sous sa
   largeur de texte intrinsèque, provoquant un défilement horizontal de toute la page — détecté par
@@ -43,6 +86,12 @@
 - Le vérificateur d'alertes météo lance désormais un premier cycle deux minutes après le
   démarrage du backend : avec un simple `setInterval`, chaque redéploiement repoussait la
   vérification suivante d'une heure pleine
+- GitHub affichait `CODE_OF_CONDUCT.en.md` au lieu de `CODE_OF_CONDUCT.md` sur la page du dépôt :
+  la détection des fichiers de santé communautaire (`CODE_OF_CONDUCT`, `CONTRIBUTING`, `SECURITY`,
+  `SUPPORT`) semble faire correspondre le préfixe du nom plutôt que le nom exact comme pour le
+  README, et `.en.md` précède alphabétiquement `.md`. Les quatre traductions anglaises déplacées
+  vers `docs/en/`, hors des dossiers scannés par GitHub pour ces fichiers (racine, `.github/`,
+  `docs/`), pour garantir que la version française reste celle affichée
 
 ## [3.2.0] - 2026-09-23
 

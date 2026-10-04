@@ -43,12 +43,22 @@ const previsionsQuotidiennesSchema = z.object({
   coucher: z.string(),
 });
 
+const alerteSchema = z.object({
+  type: z.enum(['precipitation', 'chute-temperature', 'vent', 'verglas', 'orage']),
+  importante: z.boolean(),
+  titre: z.string(),
+  corps: z.string(),
+});
+
 export const reponseMeteoSchema = z.object({
   ville: villeSchema,
   misAJour: z.string(),
   actuel: conditionsActuellesSchema,
   horaire: z.array(previsionsHorairesSchema),
   quotidien: z.array(previsionsQuotidiennesSchema),
+  // Dérivées des mêmes seuils que les notifications push
+  // (`services/detecteur-alertes.ts`), calculées à la demande — pas persistées.
+  alertes: z.array(alerteSchema),
   depuisCache: z.boolean(),
   // Vrai uniquement quand l'amont vient d'échouer et qu'une entrée périmée a
   // pris le relais — voir « Résilience des amonts » dans le README.

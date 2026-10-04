@@ -1,6 +1,6 @@
 # Obtenir de l'aide
 
-🇬🇧 [English version](./SUPPORT.en.md)
+🇬🇧 [English version](./docs/en/SUPPORT.md)
 
 QcWeather est un projet personnel, maintenu par une seule personne sur son temps libre : il n'y a pas de support commercial ni de garantie de délai de réponse.
 
