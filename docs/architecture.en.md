@@ -53,7 +53,7 @@ Three mechanisms, all visible in `/api/sante`:
   only if the upstream just failed. The response then carries `obsolete: true`, which the app
   displays: a twenty-minute-old forecast beats an error screen. On the service worker side, a
   Workbox plugin treats a 5xx as a network failure — otherwise `NetworkFirst` would never fall
-  back to the cache, a 502 being a *resolved* response.
+  back to the cache, a 502 being a _resolved_ response.
 - **Circuit breaker** — past `BREAKER_SEUIL_ECHECS` consecutive failures, calls to that
   upstream are suspended for `BREAKER_REPOS_MS` and respond **503** immediately, then a single
   request tests whether the service is back. Without it, a dead upstream would tie up ~10 s of

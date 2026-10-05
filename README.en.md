@@ -19,18 +19,18 @@ Data provided by [Open-Meteo](https://open-meteo.com) — free, no API key.
 
 ## Features
 
-| Feature | Detail |
-|---|---|
-| 🌡️ Current conditions | Temperature, feels-like, wind, humidity |
-| 🕐 Hourly forecast | Hour by hour over 48 h |
-| 📅 Daily forecast | 7 days with min–max bars and sunrise/sunset times |
-| 🛰️ Animated map | Cloud satellite (infrared) + precipitation radar via RainViewer + Leaflet |
-| 📮 Postal code or city search | Geocoding of the Quebec FSA (G, H, J) via Zippopotam, or a city name via Open-Meteo Geocoding |
-| 🏙️ City selection | 6 cities available (Montréal, Québec, Gatineau, Sherbrooke, Trois-Rivières, Saguenay), choice remembered across sessions |
-| 🌅 Dynamic sky | Background gradient based on conditions and day/night |
-| 📱 Installable PWA | Works offline — latest forecast cached |
-| 🔔 Weather alerts | Optional push notifications, per city, on sudden weather changes (precipitation, temperature drop, wind, freezing rain, thunderstorm) — see the dedicated section below |
-| ⚡ Server-side cache | Configurable via `.env` to limit calls to Open-Meteo |
+| Feature                       | Detail                                                                                                                                                                  |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🌡️ Current conditions         | Temperature, feels-like, wind, humidity                                                                                                                                 |
+| 🕐 Hourly forecast            | Hour by hour over 48 h                                                                                                                                                  |
+| 📅 Daily forecast             | 7 days with min–max bars and sunrise/sunset times                                                                                                                       |
+| 🛰️ Animated map               | Cloud satellite (infrared) + precipitation radar via RainViewer + Leaflet                                                                                               |
+| 📮 Postal code or city search | Geocoding of the Quebec FSA (G, H, J) via Zippopotam, or a city name via Open-Meteo Geocoding                                                                           |
+| 🏙️ City selection             | 6 cities available (Montréal, Québec, Gatineau, Sherbrooke, Trois-Rivières, Saguenay), choice remembered across sessions                                                |
+| 🌅 Dynamic sky                | Background gradient based on conditions and day/night                                                                                                                   |
+| 📱 Installable PWA            | Works offline — latest forecast cached                                                                                                                                  |
+| 🔔 Weather alerts             | Optional push notifications, per city, on sudden weather changes (precipitation, temperature drop, wind, freezing rain, thunderstorm) — see the dedicated section below |
+| ⚡ Server-side cache          | Configurable via `.env` to limit calls to Open-Meteo                                                                                                                    |
 
 ---
 
@@ -153,11 +153,11 @@ Three static pages, served from `frontend/public/` and linked from the applicati
 the official version — the service is offered to the public in Québec — and the English versions are
 courtesy translations.
 
-| Document | Français | English |
-|---|---|---|
+| Document       | Français                                                                       | English                                                                              |
+| -------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | Privacy policy | [`/privacy-policy.html`](https://qcweather.alithiel31.dev/privacy-policy.html) | [`/privacy-policy.en.html`](https://qcweather.alithiel31.dev/privacy-policy.en.html) |
-| Terms of use | [`/terms.html`](https://qcweather.alithiel31.dev/terms.html) | [`/terms.en.html`](https://qcweather.alithiel31.dev/terms.en.html) |
-| Legal notice | [`/legal.html`](https://qcweather.alithiel31.dev/legal.html) | [`/legal.en.html`](https://qcweather.alithiel31.dev/legal.en.html) |
+| Terms of use   | [`/terms.html`](https://qcweather.alithiel31.dev/terms.html)                   | [`/terms.en.html`](https://qcweather.alithiel31.dev/terms.en.html)                   |
+| Legal notice   | [`/legal.html`](https://qcweather.alithiel31.dev/legal.html)                   | [`/legal.en.html`](https://qcweather.alithiel31.dev/legal.en.html)                   |
 
 > ⚠️ **`privacy-policy.html` must not be renamed.** That exact URL is declared in the Play Console;
 > moving it breaks the app listing, and the failure only surfaces at Google's next review.
@@ -169,7 +169,7 @@ them readable offline. **The precache is not cosmetic**: without it, the service
 `navigateFallback` would serve the application shell in their place.
 
 The content describes what the code actually does — `localStorage` keys, third parties called by the
-browser *and* by the backend, logs, per-IP rate limiting. Any change to data handling must be
+browser _and_ by the backend, logs, per-IP rate limiting. Any change to data handling must be
 reflected there, and in the Play Console **Data Safety** form, which is maintained in the console
 rather than in this repository.
 
@@ -177,17 +177,17 @@ rather than in this repository.
 
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| Backend | Express 5 · Node.js 22+ · TypeScript 5.6 |
-| Frontend | Svelte 5 · TypeScript · Vite 8 |
-| PWA | vite-plugin-pwa · Service Worker (network-first) |
-| Map | Leaflet · RainViewer |
-| Infra | Docker · Nginx |
-| Network access | Tailscale |
-| External APIs | Open-Meteo · Open-Meteo Geocoding · Zippopotam.us · CARTO / OpenStreetMap |
-| Android | TWA · Bubblewrap · Google Play Store |
-| CI/CD | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml` · `deploy-web.yml` · `codeql.yml` · `secrets.yml` · `contract.yml`) |
+| Layer          | Technology                                                                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend        | Express 5 · Node.js 22+ · TypeScript 5.6                                                                                                          |
+| Frontend       | Svelte 5 · TypeScript · Vite 8                                                                                                                    |
+| PWA            | vite-plugin-pwa · Service Worker (network-first)                                                                                                  |
+| Map            | Leaflet · RainViewer                                                                                                                              |
+| Infra          | Docker · Nginx                                                                                                                                    |
+| Network access | Tailscale                                                                                                                                         |
+| External APIs  | Open-Meteo · Open-Meteo Geocoding · Zippopotam.us · CARTO / OpenStreetMap                                                                         |
+| Android        | TWA · Bubblewrap · Google Play Store                                                                                                              |
+| CI/CD          | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml` · `deploy-web.yml` · `codeql.yml` · `secrets.yml` · `contract.yml`) |
 
 ## Further documentation
 

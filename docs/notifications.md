@@ -21,7 +21,7 @@ Sans `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` configurées (voir
 l'abonnement plutôt que de faire disparaître le reste de l'application.
 
 **En prod**, ces deux clés ne vivent plus dans `backend/.env` sur le Pi : elles sont gérées dans
-Infisical (projet *Shared Keys*, environnement `prod`) et injectées au déploiement par
+Infisical (projet _Shared Keys_, environnement `prod`) et injectées au déploiement par
 `deploy-web.yml` via `infisical run` (Machine Identity `qcweather-deploy`, rôle lecture seule).
 `docker-compose.yml` les récupère via `${VAPID_PUBLIC_KEY}`/`${VAPID_PRIVATE_KEY}` dans le bloc
 `environment:` du service `backend` — substitution résolue depuis le shell (Infisical) en prod,

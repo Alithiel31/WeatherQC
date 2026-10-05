@@ -13,19 +13,19 @@ npm run dev        # auto-reload (tsx --watch)
 
 Available routes:
 
-| Route | Description |
-|---|---|
-| `GET /api/villes` | List of available cities |
-| `GET /api/previsions/:ville` | Forecast by city (`montreal`, `quebec`, `gatineau`, `sherbrooke`, `trois-rivieres`, `saguenay`) |
-| `GET /api/previsions-coordonnees?lat=&lon=&nom=` | Forecast for a GPS point |
-| `GET /api/geocode/:codePostal` | Geocodes a Quebec FSA (e.g. `H2X`) |
-| `GET /api/geocode-ville/:nom` | Geocodes a Quebec city by name |
-| `GET /api/rainviewer` | Index of satellite and radar images for the animated map |
-| `GET /api/sante` | Service health check |
-| `GET /api/openapi.json` | OpenAPI 3.1 document for the API |
-| `GET /api/notifications/cle-publique` | Public VAPID key, needed by the browser to subscribe to weather alerts |
-| `POST /api/notifications/abonnement` | Registers the browser's `PushManager` subscription for a city |
-| `DELETE /api/notifications/abonnement` | Removes a subscription (idempotent) |
+| Route                                            | Description                                                                                     |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `GET /api/villes`                                | List of available cities                                                                        |
+| `GET /api/previsions/:ville`                     | Forecast by city (`montreal`, `quebec`, `gatineau`, `sherbrooke`, `trois-rivieres`, `saguenay`) |
+| `GET /api/previsions-coordonnees?lat=&lon=&nom=` | Forecast for a GPS point                                                                        |
+| `GET /api/geocode/:codePostal`                   | Geocodes a Quebec FSA (e.g. `H2X`)                                                              |
+| `GET /api/geocode-ville/:nom`                    | Geocodes a Quebec city by name                                                                  |
+| `GET /api/rainviewer`                            | Index of satellite and radar images for the animated map                                        |
+| `GET /api/sante`                                 | Service health check                                                                            |
+| `GET /api/openapi.json`                          | OpenAPI 3.1 document for the API                                                                |
+| `GET /api/notifications/cle-publique`            | Public VAPID key, needed by the browser to subscribe to weather alerts                          |
+| `POST /api/notifications/abonnement`             | Registers the browser's `PushManager` subscription for a city                                   |
+| `DELETE /api/notifications/abonnement`           | Removes a subscription (idempotent)                                                             |
 
 `openapi.json` is generated at startup from the same Zod schemas that actually validate
 requests (`backend/src/schemas/validation.ts`) — not a hand-written spec that drifts from the
@@ -80,12 +80,12 @@ Network resilience mechanisms (request coalescing, degraded service, circuit bre
 
 ## Tests (backend)
 
-| Command | Scope | Network |
-|---|---|---|
-| `npm run test:run` | Unit + integration — run by the `pre-push` hook | ❌ no network call |
-| `npm run test:unit` | Unit only | ❌ no network call |
-| `npm run test:coverage` | Same + coverage report — **this is what CI runs** | ❌ no network call |
-| `npm run test:contract` | Verifies the real contract of Open-Meteo, Zippopotam and RainViewer | ✅ real calls |
+| Command                 | Scope                                                               | Network            |
+| ----------------------- | ------------------------------------------------------------------- | ------------------ |
+| `npm run test:run`      | Unit + integration — run by the `pre-push` hook                     | ❌ no network call |
+| `npm run test:unit`     | Unit only                                                           | ❌ no network call |
+| `npm run test:coverage` | Same + coverage report — **this is what CI runs**                   | ❌ no network call |
+| `npm run test:contract` | Verifies the real contract of Open-Meteo, Zippopotam and RainViewer | ✅ real calls      |
 
 Integration tests rely on the fixtures in `backend/tests/fixtures/`: an external API outage can
 no longer fail a PR. `tests/setup.ts` explicitly fails any unmocked network call.
@@ -131,14 +131,14 @@ frontend, which lets it be stubbed in one block in tests.
 
 ## Tests (frontend)
 
-| Command | Scope |
-|---|---|
-| `npm run test` | Watch mode during development |
-| `npm run test:run` | A single full pass |
-| `npm run test:coverage` | Same + coverage report |
-| `npm run test:ci` | Same + `rapport-tests.json` — **this is what CI runs** |
-| `npm run test:pwa` | PWA checks only (manifest + service worker) |
-| `npm run test:e2e` | End-to-end run in Chromium (Playwright) |
+| Command                 | Scope                                                  |
+| ----------------------- | ------------------------------------------------------ |
+| `npm run test`          | Watch mode during development                          |
+| `npm run test:run`      | A single full pass                                     |
+| `npm run test:coverage` | Same + coverage report                                 |
+| `npm run test:ci`       | Same + `rapport-tests.json` — **this is what CI runs** |
+| `npm run test:pwa`      | PWA checks only (manifest + service worker)            |
+| `npm run test:e2e`      | End-to-end run in Chromium (Playwright)                |
 
 CI publishes `frontend/coverage/` and `frontend/rapport-tests.json` as an artifact
 (`frontend-rapports`, kept 14 days), including when the job fails — that's when the report is

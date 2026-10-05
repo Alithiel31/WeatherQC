@@ -104,6 +104,7 @@ Les tests d'intégration tournent sur des fixtures figées et ne peuvent pas dé
 2. Aligner le schéma correspondant dans `backend/src/schemas/` (`openmeteo.schema.ts`, `zippopotam.schema.ts` ou `rainviewer.schema.ts`).
 3. Relancer localement : `cd backend && npm run test:contract` (appels réseau réels).
 4. Une fois le schéma réaligné et le workflow repassé au vert, refermer l'issue manuellement — elle sera réutilisée tant qu'elle reste ouverte, pour éviter d'en empiler une par nuit.
+
 ---
 
 ## 6. Le déploiement CI reste bloqué en `Queued`/`Pending` indéfiniment
@@ -153,6 +154,6 @@ si l'enregistrement a bien été supprimé côté serveur.
    ```
 3. **Point de vigilance** : reconfigurer le runner repart d'un `_work` propre.
    `frontend/.env` et `backend/.env` (non versionnés, jamais régénérés par le CI — `clean:
-   false` les préserve d'un run à l'autre mais ne les recrée pas) doivent être redéposés à la
+false` les préserve d'un run à l'autre mais ne les recrée pas) doivent être redéposés à la
    main dans `_work/WeatherQC/WeatherQC/{frontend,backend}/.env` après toute réinstallation du
    runner, sinon le job suivant échoue avec `couldn't find env file`.
