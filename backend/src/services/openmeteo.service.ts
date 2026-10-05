@@ -12,6 +12,12 @@ export interface Previsions {
     vent: number;
     code: number;
     jour: boolean;
+    /** Direction d'où vient le vent, en degrés (0 = nord). */
+    directionVent: number | null;
+    /** Rafales à 10 m, en km/h. */
+    rafales: number | null;
+    /** Indice UV de l'heure courante — lu dans la série horaire. */
+    uv: number | null;
   };
   // `null` là où Open-Meteo n'a pas de valeur — au-delà de la portée d'un modèle,
   // typiquement pour les probabilités de précipitation les plus lointaines.
@@ -22,6 +28,22 @@ export interface Previsions {
     precipitation: number | null;
     /** Rafales à 10 m, en km/h — utilisées par le détecteur d'alertes météo. */
     rafales: number | null;
+    ressenti: number | null;
+    humidite: number | null;
+    vent: number | null;
+    directionVent: number | null;
+    /**
+     * Quantité de précipitation en mm. À ne pas confondre avec `precipitation`,
+     * qui est une **probabilité** en % : le renommer aurait cassé les réponses
+     * déjà en cache dans les service workers.
+     */
+    precipitationMm: number | null;
+    uv: number | null;
+    /**
+     * Neige en cm d'épaisseur. À ne pas additionner avec `precipitationMm` : la
+     * neige y est déjà comptée, en équivalent eau.
+     */
+    neigeCm: number | null;
   }[];
   quotidien: {
     date: string;
@@ -31,7 +53,19 @@ export interface Previsions {
     precipitation: number | null;
     lever: string;
     coucher: string;
+    uvMax: number | null;
+    /** Cumul de la journée en mm (voir `horaire[].precipitationMm`). */
+    precipitationMm: number | null;
+    ventMax: number | null;
+    rafalesMax: number | null;
+    /** Cumul de la journée en cm (voir `horaire[].neigeCm`). */
+    neigeCm: number | null;
   }[];
+}
+
+/** Valeur d'une série facultative : `null` si la série ou la case est absente. */
+function valeur(serie: (number | null)[] | undefined, index: number): number | null {
+  return serie?.[index] ?? null;
 }
 
 interface FetchForecastParams {
@@ -56,10 +90,22 @@ export async function fetchForecast({
       'weather_code',
       'wind_speed_10m',
       'is_day',
+      'wind_direction_10m',
+      'wind_gusts_10m',
     ].join(','),
-    hourly: ['temperature_2m', 'weather_code', 'precipitation_probability', 'wind_gusts_10m'].join(
-      ','
-    ),
+    hourly: [
+      'temperature_2m',
+      'weather_code',
+      'precipitation_probability',
+      'wind_gusts_10m',
+      'apparent_temperature',
+      'relative_humidity_2m',
+      'wind_speed_10m',
+      'wind_direction_10m',
+      'precipitation',
+      'uv_index',
+      'snowfall',
+    ].join(','),
     daily: [
       'weather_code',
       'temperature_2m_max',
@@ -67,6 +113,11 @@ export async function fetchForecast({
       'precipitation_probability_max',
       'sunrise',
       'sunset',
+      'uv_index_max',
+      'precipitation_sum',
+      'wind_speed_10m_max',
+      'wind_gusts_10m_max',
+      'snowfall_sum',
     ].join(','),
     forecast_days: '7',
   });
@@ -99,6 +150,9 @@ export async function fetchForecast({
       vent: raw.current.wind_speed_10m,
       code: raw.current.weather_code,
       jour: raw.current.is_day === 1,
+      directionVent: raw.current.wind_direction_10m ?? null,
+      rafales: raw.current.wind_gusts_10m ?? null,
+      uv: valeur(raw.hourly.uv_index, start),
     },
     horaire: raw.hourly.time.slice(start, start + 48).map((t, i) => ({
       heure: t,
@@ -106,6 +160,13 @@ export async function fetchForecast({
       code: raw.hourly.weather_code[start + i],
       precipitation: raw.hourly.precipitation_probability[start + i],
       rafales: raw.hourly.wind_gusts_10m[start + i],
+      ressenti: valeur(raw.hourly.apparent_temperature, start + i),
+      humidite: valeur(raw.hourly.relative_humidity_2m, start + i),
+      vent: valeur(raw.hourly.wind_speed_10m, start + i),
+      directionVent: valeur(raw.hourly.wind_direction_10m, start + i),
+      precipitationMm: valeur(raw.hourly.precipitation, start + i),
+      uv: valeur(raw.hourly.uv_index, start + i),
+      neigeCm: valeur(raw.hourly.snowfall, start + i),
     })),
     quotidien: raw.daily.time.map((t, i) => ({
       date: t,
@@ -115,6 +176,11 @@ export async function fetchForecast({
       precipitation: raw.daily.precipitation_probability_max[i],
       lever: raw.daily.sunrise[i],
       coucher: raw.daily.sunset[i],
+      uvMax: valeur(raw.daily.uv_index_max, i),
+      precipitationMm: valeur(raw.daily.precipitation_sum, i),
+      ventMax: valeur(raw.daily.wind_speed_10m_max, i),
+      rafalesMax: valeur(raw.daily.wind_gusts_10m_max, i),
+      neigeCm: valeur(raw.daily.snowfall_sum, i),
     })),
   };
 }

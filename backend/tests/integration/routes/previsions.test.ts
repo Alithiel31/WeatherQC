@@ -28,6 +28,32 @@ describe('Routes Prévisions', () => {
       expect(response.body.quotidien).toHaveLength(7);
     });
 
+    it('expose les champs ajoutés pour le tableau de bord', async () => {
+      stubFetchJson(reponseOpenMeteo);
+
+      const response = await request(app).get('/api/previsions/montreal').expect(200);
+
+      expect(response.body.actuel).toMatchObject({ directionVent: 250, rafales: 38.2, uv: 0.6 });
+      expect(response.body.horaire[0]).toMatchObject({
+        ressenti: -11,
+        humidite: 74,
+        vent: 24,
+        directionVent: 210,
+        precipitationMm: 0.4,
+        uv: 0.6,
+        neigeCm: 0.5,
+        // `precipitation` reste la probabilité en % : le nouveau champ ne la remplace pas.
+        precipitation: 20,
+      });
+      expect(response.body.quotidien[0]).toMatchObject({
+        uvMax: 0.9,
+        precipitationMm: 6.4,
+        ventMax: 28.1,
+        rafalesMax: 47,
+        neigeCm: 5.2,
+      });
+    });
+
     // Le fixture par défaut ne franchit aucun seuil de `detecteur-alertes.ts` :
     // il neige déjà (le code actuel est déjà une précipitation), aucune chute de
     // température, vent ou code verglas/orage dans les 6 prochaines heures.
