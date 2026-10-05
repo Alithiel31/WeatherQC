@@ -13,14 +13,14 @@ pas à réinvestiguer tout ça de zéro.
 
 ## Ce qui est déjà vérifié automatiquement
 
-| Quoi | Où | Comment |
-|---|---|---|
-| Contraste WCAG AA (4.5:1) | `frontend/tests/unit/contraste.test.ts` | Calcul numérique sur les constantes CSS — axe ne sait pas mesurer un fond en dégradé |
-| Rôles, noms accessibles, structure | `frontend/e2e/accessibilite.spec.ts` | `@axe-core/playwright`, tags WCAG 2.0/2.1 A+AA, sur les 9 familles de ciel et les 6 pages légales FR/EN |
-| Navigation clavier | idem + `SelecteurVille.svelte`, `Horaire.svelte` | Bande horaire focusable, menu ville avec flèches/Home/End/Échap |
-| `prefers-reduced-motion` | `App.svelte`, `CarteNuages.svelte` | CSS et `matchMedia` |
-| Reflow à 320px (WCAG 1.4.10) | `frontend/e2e/accessibilite.spec.ts` | Aucun défilement horizontal du document à la largeur d'un iPhone SE |
-| Taille des cibles tactiles ≥ 24×24px (WCAG 2.5.8) | `frontend/e2e/accessibilite.spec.ts` | Hors liens en ligne dans du texte et balisage propre à Leaflet — voir le commentaire du test |
+| Quoi                                              | Où                                               | Comment                                                                                                 |
+| ------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Contraste WCAG AA (4.5:1)                         | `frontend/tests/unit/contraste.test.ts`          | Calcul numérique sur les constantes CSS — axe ne sait pas mesurer un fond en dégradé                    |
+| Rôles, noms accessibles, structure                | `frontend/e2e/accessibilite.spec.ts`             | `@axe-core/playwright`, tags WCAG 2.0/2.1 A+AA, sur les 9 familles de ciel et les 6 pages légales FR/EN |
+| Navigation clavier                                | idem + `SelecteurVille.svelte`, `Horaire.svelte` | Bande horaire focusable, menu ville avec flèches/Home/End/Échap                                         |
+| `prefers-reduced-motion`                          | `App.svelte`, `CarteNuages.svelte`               | CSS et `matchMedia`                                                                                     |
+| Reflow à 320px (WCAG 1.4.10)                      | `frontend/e2e/accessibilite.spec.ts`             | Aucun défilement horizontal du document à la largeur d'un iPhone SE                                     |
+| Taille des cibles tactiles ≥ 24×24px (WCAG 2.5.8) | `frontend/e2e/accessibilite.spec.ts`             | Hors liens en ligne dans du texte et balisage propre à Leaflet — voir le commentaire du test            |
 
 ## Ce qui a été ajouté : l'alternative texte à la carte
 
@@ -31,7 +31,7 @@ de ce qu'elle montre.
 
 `resumeCarte()` (`frontend/src/lib/meteo.ts`) résume la même donnée de probabilité de
 précipitation que la bande horaire (`Horaire.svelte`), pas les tuiles elles-mêmes, et rend une
-phrase du type *« Pluie en cours ou imminente, probabilité de 45 %. »* — affichée en texte
+phrase du type _« Pluie en cours ou imminente, probabilité de 45 %. »_ — affichée en texte
 visible juste avant la carte, pas seulement pour les lecteurs d'écran. Le seuil de 20 % reprend
 celui déjà utilisé par `Horaire.svelte` pour afficher son propre badge de pluie, plutôt que
 d'introduire un second seuil arbitraire.
@@ -62,7 +62,7 @@ remplace ce parcours :
 5. Atteindre la bande horaire (48h) au clavier, vérifier que chaque heure annonce l'heure, la
    condition météo (pas seulement la température) et, le cas échéant, la probabilité de pluie.
 6. Atteindre la carte animée — vérifier que le résumé texte introduit ci-dessus est bien lu
-   *avant* que le lecteur d'écran n'entre dans la carte elle-même.
+   _avant_ que le lecteur d'écran n'entre dans la carte elle-même.
 7. Activer/désactiver les alertes météo pour la ville courante — vérifier que le message de
    confirmation ou d'erreur est annoncé.
 8. Atteindre le pied de page et les liens légaux — vérifier qu'ils sont annoncés comme des liens

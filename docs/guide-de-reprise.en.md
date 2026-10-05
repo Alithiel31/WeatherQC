@@ -8,8 +8,8 @@ Météo Québec has a single real maintainer (**Jacques Duchamplecheval**, GitHu
 `Alithiel31`). This document exists so that another person — or Jacques himself after a long
 break — can pick the project back up without having to rebuild alone what is documented
 elsewhere, scattered, or known only to the maintainer. It points to existing documentation
-rather than duplicating it, and lists what one needs *access to* in order to act, not just to
-*understand*.
+rather than duplicating it, and lists what one needs _access to_ in order to act, not just to
+_understand_.
 
 ---
 
@@ -29,15 +29,15 @@ rather than duplicating it, and lists what one needs *access to* in order to act
 
 ## 2. What's running, and where
 
-| Component | Where | How to access it |
-|---|---|---|
-| Production app | `qcweather.alithiel31.dev` | Public domain, HTTPS via Cloudflare tunnel |
-| Hosting | A physical **Raspberry Pi** (hostname `Caesura` in scripts/CI) | Network access via **Tailscale** — see `TAILSCALE_IP` in [docs/environnement.en.md](./environnement.en.md) |
-| Containers | `docker-compose.yml` at the repo root (backend + frontend nginx) | `docker compose ps` on the Pi |
-| Continuous deployment | Workflow `.github/workflows/deploy-web.yml` | Triggers on push to `main`, or via `npm run deploy:web` (see `scripts/gh-deploy.sh`) — runs on a **GitHub Actions self-hosted runner installed on the Pi itself** (the Pi reaches out for the job, no inbound port to open) |
-| Domain name | `alithiel31.dev` | Registrar — **to be filled in by the maintainer** (registrar name, credentials) |
-| Cloudflare tunnel | Cloudflare account tied to the domain | **To be filled in** (Cloudflare account credentials) |
-| Android app | Package `dev.alithiel31.qcweather`, Google Play internal testing | See [docs/android.en.md](./android.en.md) for the `android.yml` / `build-twa.yml` / `deploy-twa.yml` workflows |
+| Component             | Where                                                            | How to access it                                                                                                                                                                                                            |
+| --------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Production app        | `qcweather.alithiel31.dev`                                       | Public domain, HTTPS via Cloudflare tunnel                                                                                                                                                                                  |
+| Hosting               | A physical **Raspberry Pi** (hostname `Caesura` in scripts/CI)   | Network access via **Tailscale** — see `TAILSCALE_IP` in [docs/environnement.en.md](./environnement.en.md)                                                                                                                  |
+| Containers            | `docker-compose.yml` at the repo root (backend + frontend nginx) | `docker compose ps` on the Pi                                                                                                                                                                                               |
+| Continuous deployment | Workflow `.github/workflows/deploy-web.yml`                      | Triggers on push to `main`, or via `npm run deploy:web` (see `scripts/gh-deploy.sh`) — runs on a **GitHub Actions self-hosted runner installed on the Pi itself** (the Pi reaches out for the job, no inbound port to open) |
+| Domain name           | `alithiel31.dev`                                                 | Registrar — **to be filled in by the maintainer** (registrar name, credentials)                                                                                                                                             |
+| Cloudflare tunnel     | Cloudflare account tied to the domain                            | **To be filled in** (Cloudflare account credentials)                                                                                                                                                                        |
+| Android app           | Package `dev.alithiel31.qcweather`, Google Play internal testing | See [docs/android.en.md](./android.en.md) for the `android.yml` / `build-twa.yml` / `deploy-twa.yml` workflows                                                                                                              |
 
 ---
 

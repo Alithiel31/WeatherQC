@@ -13,19 +13,19 @@ npm run dev        # rechargement auto (tsx --watch)
 
 Routes disponibles :
 
-| Route | Description |
-|---|---|
-| `GET /api/villes` | Liste des villes disponibles |
-| `GET /api/previsions/:ville` | Prévisions par ville (`montreal`, `quebec`, `gatineau`, `sherbrooke`, `trois-rivieres`, `saguenay`) |
-| `GET /api/previsions-coordonnees?lat=&lon=&nom=` | Prévisions pour un point GPS |
-| `GET /api/geocode/:codePostal` | Géocode une RTA québécoise (ex. `H2X`) |
-| `GET /api/geocode-ville/:nom` | Géocode une ville québécoise par son nom |
-| `GET /api/rainviewer` | Index des images satellite et radar pour la carte animée |
-| `GET /api/sante` | Vérification de l'état du service |
-| `GET /api/openapi.json` | Document OpenAPI 3.1 de l'API |
-| `GET /api/notifications/cle-publique` | Clé VAPID publique, nécessaire au navigateur pour s'abonner aux alertes météo |
-| `POST /api/notifications/abonnement` | Enregistre l'abonnement `PushManager` du navigateur pour une ville |
-| `DELETE /api/notifications/abonnement` | Retire un abonnement (idempotent) |
+| Route                                            | Description                                                                                         |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `GET /api/villes`                                | Liste des villes disponibles                                                                        |
+| `GET /api/previsions/:ville`                     | Prévisions par ville (`montreal`, `quebec`, `gatineau`, `sherbrooke`, `trois-rivieres`, `saguenay`) |
+| `GET /api/previsions-coordonnees?lat=&lon=&nom=` | Prévisions pour un point GPS                                                                        |
+| `GET /api/geocode/:codePostal`                   | Géocode une RTA québécoise (ex. `H2X`)                                                              |
+| `GET /api/geocode-ville/:nom`                    | Géocode une ville québécoise par son nom                                                            |
+| `GET /api/rainviewer`                            | Index des images satellite et radar pour la carte animée                                            |
+| `GET /api/sante`                                 | Vérification de l'état du service                                                                   |
+| `GET /api/openapi.json`                          | Document OpenAPI 3.1 de l'API                                                                       |
+| `GET /api/notifications/cle-publique`            | Clé VAPID publique, nécessaire au navigateur pour s'abonner aux alertes météo                       |
+| `POST /api/notifications/abonnement`             | Enregistre l'abonnement `PushManager` du navigateur pour une ville                                  |
+| `DELETE /api/notifications/abonnement`           | Retire un abonnement (idempotent)                                                                   |
 
 `openapi.json` est généré au démarrage depuis les mêmes schémas Zod que ceux qui valident
 réellement les requêtes (`backend/src/schemas/validation.ts`) — pas une spec écrite à la main
@@ -83,12 +83,12 @@ Mécanismes de résilience réseau (mutualisation des requêtes, cache dégradé
 
 ## Tests (backend)
 
-| Commande | Portée | Réseau |
-|---|---|---|
-| `npm run test:run` | Unitaires + intégration — lancé par le hook `pre-push` | ❌ aucun appel réseau |
-| `npm run test:unit` | Unitaires seuls | ❌ aucun appel réseau |
-| `npm run test:coverage` | Idem + rapport de couverture — **c'est ce que lance la CI** | ❌ aucun appel réseau |
-| `npm run test:contract` | Vérifie le contrat réel d'Open-Meteo, de Zippopotam et de RainViewer | ✅ appels réels |
+| Commande                | Portée                                                               | Réseau                |
+| ----------------------- | -------------------------------------------------------------------- | --------------------- |
+| `npm run test:run`      | Unitaires + intégration — lancé par le hook `pre-push`               | ❌ aucun appel réseau |
+| `npm run test:unit`     | Unitaires seuls                                                      | ❌ aucun appel réseau |
+| `npm run test:coverage` | Idem + rapport de couverture — **c'est ce que lance la CI**          | ❌ aucun appel réseau |
+| `npm run test:contract` | Vérifie le contrat réel d'Open-Meteo, de Zippopotam et de RainViewer | ✅ appels réels       |
 
 Les tests d'intégration s'appuient sur les fixtures de `backend/tests/fixtures/` : une panne
 d'API externe ne peut plus faire échouer une PR. `tests/setup.ts` fait échouer explicitement
@@ -136,14 +136,14 @@ est appelé côté frontend, ce qui permet de le stubber d'un bloc dans les test
 
 ## Tests (frontend)
 
-| Commande | Portée |
-|---|---|
-| `npm run test` | Mode watch pendant le développement |
-| `npm run test:run` | Une passe complète |
-| `npm run test:coverage` | Idem + rapport de couverture |
-| `npm run test:ci` | Idem + `rapport-tests.json` — **c'est ce que lance la CI** |
-| `npm run test:pwa` | Uniquement les vérifications PWA (manifeste + service worker) |
-| `npm run test:e2e` | Parcours de bout en bout dans Chromium (Playwright) |
+| Commande                | Portée                                                        |
+| ----------------------- | ------------------------------------------------------------- |
+| `npm run test`          | Mode watch pendant le développement                           |
+| `npm run test:run`      | Une passe complète                                            |
+| `npm run test:coverage` | Idem + rapport de couverture                                  |
+| `npm run test:ci`       | Idem + `rapport-tests.json` — **c'est ce que lance la CI**    |
+| `npm run test:pwa`      | Uniquement les vérifications PWA (manifeste + service worker) |
+| `npm run test:e2e`      | Parcours de bout en bout dans Chromium (Playwright)           |
 
 La CI publie `frontend/coverage/` et `frontend/rapport-tests.json` en artefact
 (`frontend-rapports`, conservé 14 jours), y compris quand le job échoue — c'est là que le

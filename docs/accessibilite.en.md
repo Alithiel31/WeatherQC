@@ -13,14 +13,14 @@ re-investigate all of this from scratch.
 
 ## What's already checked automatically
 
-| What | Where | How |
-|---|---|---|
-| WCAG AA contrast (4.5:1) | `frontend/tests/unit/contraste.test.ts` | Numeric calculation on CSS constants — axe can't measure a gradient background |
-| Roles, accessible names, structure | `frontend/e2e/accessibilite.spec.ts` | `@axe-core/playwright`, WCAG 2.0/2.1 A+AA tags, across all 9 sky families and the 6 FR/EN legal pages |
-| Keyboard navigation | same, plus `SelecteurVille.svelte`, `Horaire.svelte` | Focusable hourly band, city menu with arrows/Home/End/Escape |
-| `prefers-reduced-motion` | `App.svelte`, `CarteNuages.svelte` | CSS and `matchMedia` |
-| Reflow at 320px (WCAG 1.4.10) | `frontend/e2e/accessibilite.spec.ts` | No horizontal document scroll at iPhone SE width |
-| Touch target size ≥ 24×24px (WCAG 2.5.8) | `frontend/e2e/accessibilite.spec.ts` | Excludes inline text links and Leaflet's own markup — see the test's comment |
+| What                                     | Where                                                | How                                                                                                   |
+| ---------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| WCAG AA contrast (4.5:1)                 | `frontend/tests/unit/contraste.test.ts`              | Numeric calculation on CSS constants — axe can't measure a gradient background                        |
+| Roles, accessible names, structure       | `frontend/e2e/accessibilite.spec.ts`                 | `@axe-core/playwright`, WCAG 2.0/2.1 A+AA tags, across all 9 sky families and the 6 FR/EN legal pages |
+| Keyboard navigation                      | same, plus `SelecteurVille.svelte`, `Horaire.svelte` | Focusable hourly band, city menu with arrows/Home/End/Escape                                          |
+| `prefers-reduced-motion`                 | `App.svelte`, `CarteNuages.svelte`                   | CSS and `matchMedia`                                                                                  |
+| Reflow at 320px (WCAG 1.4.10)            | `frontend/e2e/accessibilite.spec.ts`                 | No horizontal document scroll at iPhone SE width                                                      |
+| Touch target size ≥ 24×24px (WCAG 2.5.8) | `frontend/e2e/accessibilite.spec.ts`                 | Excludes inline text links and Leaflet's own markup — see the test's comment                          |
 
 ## What was added: a text alternative to the map
 
@@ -31,7 +31,7 @@ shows.
 
 `resumeCarte()` (`frontend/src/lib/meteo.ts`) summarizes the same hourly precipitation
 probability data used by the hourly band (`Horaire.svelte`), not the tiles themselves, into a
-sentence like *"Rain is imminent or already falling, 45% probability."* — shown as visible text
+sentence like _"Rain is imminent or already falling, 45% probability."_ — shown as visible text
 right before the map, not only for screen readers. The 20% threshold reuses the one
 `Horaire.svelte` already uses for its own rain badge, rather than introducing a second arbitrary
 threshold.
@@ -61,7 +61,7 @@ walkthrough:
 4. Search an invalid postal code — the error should be announced immediately.
 5. Reach the 48h hourly band by keyboard, check that each hour announces the time, the weather
    condition (not just the temperature), and, when relevant, the rain probability.
-6. Reach the animated map — check that the text summary introduced above is read *before* the
+6. Reach the animated map — check that the text summary introduced above is read _before_ the
    screen reader enters the map itself.
 7. Toggle weather alerts for the current city on/off — check that the confirmation or error
    message is announced.

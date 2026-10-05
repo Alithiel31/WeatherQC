@@ -1,0 +1,46 @@
+name: Format de la documentation
+
+# Les fichiers Markdown (README, guides de `docs/`, fichiers communautaires) ne
+# passent par aucun des jobs de CI des sous-projets : leur mise en forme dérivait
+# sans que rien ne le signale. Prettier est déjà l'outil du dépôt (même
+# configuration, `.prettierrc.json`), on l'applique ici aux seuls `.md`.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.md'
+      - '.prettierrc.json'
+      - '.prettierignore'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    paths:
+      - '**.md'
+      - '.prettierrc.json'
+      - '.prettierignore'
+      - '.github/workflows/docs.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  format-docs:
+    name: Prettier — fichiers Markdown
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # Version épinglée, alignée sur celle des sous-projets : une autre version
+      # de Prettier formaterait différemment et ferait échouer ce contrôle sur
+      # des fichiers que les hooks husky ont déjà formatés.
+      - name: Vérifier le format
+        run: npx --yes prettier@3.9.9 --check "**/*.md" '!**/node_modules/**' '!twa-qcweather/**/build/**'

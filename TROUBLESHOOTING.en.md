@@ -104,6 +104,7 @@ Integration tests run against frozen fixtures and can't detect a schema change a
 2. Align the corresponding schema in `backend/src/schemas/` (`openmeteo.schema.ts`, `zippopotam.schema.ts`, or `rainviewer.schema.ts`).
 3. Re-run locally: `cd backend && npm run test:contract` (real network calls).
 4. Once the schema is realigned and the workflow is green again, close the issue manually — it will be reused while it stays open, to avoid stacking one per night.
+
 ---
 
 ## 6. CI deployment stays stuck in `Queued`/`Pending` forever

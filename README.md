@@ -19,18 +19,18 @@ Données fournies par [Open-Meteo](https://open-meteo.com) — gratuit, sans cl�
 
 ## Fonctionnalités
 
-| Fonctionnalité | Détail |
-|---|---|
-| 🌡️ Conditions actuelles | Température, ressenti, vent, humidité |
-| 🕐 Prévisions horaires | Heure par heure sur 48 h |
-| 📅 Prévisions quotidiennes | 7 jours avec barres min–max et heures de lever/coucher |
-| 🛰️ Carte animée | Satellite nuages (infrarouge) + radar précipitations via RainViewer + Leaflet, avec repli sur la couverture nuageuse OpenWeatherMap quand RainViewer n'a pas d'image satellite |
-| 📮 Recherche par code postal ou ville | Géocodage de la RTA québécoise (G, H, J) via Zippopotam, ou d'un nom de ville via Open-Meteo Geocoding |
-| 🏙️ Sélection de ville | 6 villes disponibles (Montréal, Québec, Gatineau, Sherbrooke, Trois-Rivières, Saguenay), choix mémorisé entre les sessions |
-| 🌅 Ciel dynamique | Dégradé d'arrière-plan selon les conditions et le jour/nuit |
-| 📱 PWA installable | Fonctionne hors ligne — dernières prévisions en cache |
-| 🔔 Alertes météo | Notifications push facultatives, par ville, sur changement brusque (précipitation, chute de température, vent, verglas, orage) — voir la section dédiée plus bas |
-| ⚡ Cache serveur | Configurable via `.env` pour limiter les appels à Open-Meteo |
+| Fonctionnalité                        | Détail                                                                                                                                                                         |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 🌡️ Conditions actuelles               | Température, ressenti, vent, humidité                                                                                                                                          |
+| 🕐 Prévisions horaires                | Heure par heure sur 48 h                                                                                                                                                       |
+| 📅 Prévisions quotidiennes            | 7 jours avec barres min–max et heures de lever/coucher                                                                                                                         |
+| 🛰️ Carte animée                       | Satellite nuages (infrarouge) + radar précipitations via RainViewer + Leaflet, avec repli sur la couverture nuageuse OpenWeatherMap quand RainViewer n'a pas d'image satellite |
+| 📮 Recherche par code postal ou ville | Géocodage de la RTA québécoise (G, H, J) via Zippopotam, ou d'un nom de ville via Open-Meteo Geocoding                                                                         |
+| 🏙️ Sélection de ville                 | 6 villes disponibles (Montréal, Québec, Gatineau, Sherbrooke, Trois-Rivières, Saguenay), choix mémorisé entre les sessions                                                     |
+| 🌅 Ciel dynamique                     | Dégradé d'arrière-plan selon les conditions et le jour/nuit                                                                                                                    |
+| 📱 PWA installable                    | Fonctionne hors ligne — dernières prévisions en cache                                                                                                                          |
+| 🔔 Alertes météo                      | Notifications push facultatives, par ville, sur changement brusque (précipitation, chute de température, vent, verglas, orage) — voir la section dédiée plus bas               |
+| ⚡ Cache serveur                      | Configurable via `.env` pour limiter les appels à Open-Meteo                                                                                                                   |
 
 ---
 
@@ -167,11 +167,11 @@ Ajouter une entrée dans `backend/src/data/cities.ts`.
 
 Trois pages statiques, servies depuis `frontend/public/` et liées depuis le pied de l'application. Le français est la version officielle — le service est offert au public au Québec — et les versions anglaises sont des traductions de courtoisie.
 
-| Document | Français | English |
-|---|---|---|
+| Document                     | Français                                                                       | English                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | Politique de confidentialité | [`/privacy-policy.html`](https://qcweather.alithiel31.dev/privacy-policy.html) | [`/privacy-policy.en.html`](https://qcweather.alithiel31.dev/privacy-policy.en.html) |
-| Conditions d'utilisation | [`/terms.html`](https://qcweather.alithiel31.dev/terms.html) | [`/terms.en.html`](https://qcweather.alithiel31.dev/terms.en.html) |
-| Mentions légales | [`/legal.html`](https://qcweather.alithiel31.dev/legal.html) | [`/legal.en.html`](https://qcweather.alithiel31.dev/legal.en.html) |
+| Conditions d'utilisation     | [`/terms.html`](https://qcweather.alithiel31.dev/terms.html)                   | [`/terms.en.html`](https://qcweather.alithiel31.dev/terms.en.html)                   |
+| Mentions légales             | [`/legal.html`](https://qcweather.alithiel31.dev/legal.html)                   | [`/legal.en.html`](https://qcweather.alithiel31.dev/legal.en.html)                   |
 
 > ⚠️ **`privacy-policy.html` ne doit pas être renommée.** Cette URL exacte est déclarée dans la Play
 > Console ; la déplacer casse la fiche de l'application, et l'échec n'apparaît qu'à la prochaine
@@ -183,7 +183,7 @@ consultation possible hors ligne. **Le précache n'est pas décoratif** : sans l
 `navigateFallback` du service worker rendrait la coquille de l'application à leur place.
 
 Le contenu décrit ce que le code fait réellement — clés de `localStorage`, tiers appelés par le
-navigateur *et* par le backend, journaux, limitation par IP. Toute modification du traitement des
+navigateur _et_ par le backend, journaux, limitation par IP. Toute modification du traitement des
 données doit s'y répercuter, ainsi que dans le formulaire **Data Safety** de la Play Console, qui
 se tient à jour dans la console et non dans ce dépôt.
 
@@ -191,17 +191,17 @@ se tient à jour dans la console et non dans ce dépôt.
 
 ## Stack
 
-| Couche | Technologie |
-|---|---|
-| Backend | Express 5 · Node.js 22+ · TypeScript 5.6 |
-| Frontend | Svelte 5 · TypeScript · Vite 8 |
-| PWA | vite-plugin-pwa · Service Worker (network-first) |
-| Carte | Leaflet · RainViewer |
-| Infra | Docker · Nginx |
-| Accès réseau | Tailscale |
-| APIs externes | Open-Meteo · Open-Meteo Geocoding · Zippopotam.us · CARTO / OpenStreetMap · RainViewer · OpenWeatherMap |
-| Android | TWA · Bubblewrap · Google Play Store |
-| CI/CD | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml` · `deploy-web.yml` · `codeql.yml` · `secrets.yml` · `contract.yml`) |
+| Couche        | Technologie                                                                                                                                       |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend       | Express 5 · Node.js 22+ · TypeScript 5.6                                                                                                          |
+| Frontend      | Svelte 5 · TypeScript · Vite 8                                                                                                                    |
+| PWA           | vite-plugin-pwa · Service Worker (network-first)                                                                                                  |
+| Carte         | Leaflet · RainViewer                                                                                                                              |
+| Infra         | Docker · Nginx                                                                                                                                    |
+| Accès réseau  | Tailscale                                                                                                                                         |
+| APIs externes | Open-Meteo · Open-Meteo Geocoding · Zippopotam.us · CARTO / OpenStreetMap · RainViewer · OpenWeatherMap                                           |
+| Android       | TWA · Bubblewrap · Google Play Store                                                                                                              |
+| CI/CD         | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml` · `deploy-web.yml` · `codeql.yml` · `secrets.yml` · `contract.yml`) |
 
 ## Documentation approfondie
 

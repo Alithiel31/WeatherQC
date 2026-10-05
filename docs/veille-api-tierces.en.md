@@ -16,14 +16,14 @@ This page centralizes what to watch, where, and how often.
 
 ## Providers to watch
 
-| Provider | Used for | Page to watch | Automatically detected? |
-|---|---|---|---|
-| [Open-Meteo](https://open-meteo.com) | Hourly/daily forecasts, no API key | [Terms of use](https://open-meteo.com/en/terms) · [Pricing](https://open-meteo.com/en/pricing) | ✅ `contract.yml` (nightly) |
-| [Zippopotam.us](https://www.zippopotam.us) | Postal code geocoding (Quebec FSA) | [Home page](https://www.zippopotam.us) (no dedicated ToS page known — check service availability and response format stability) | ✅ `contract.yml` (nightly) |
-| [Open-Meteo Geocoding](https://open-meteo.com/en/docs/geocoding-api) | City name geocoding | [Terms of use](https://open-meteo.com/en/terms) · [Documentation](https://open-meteo.com/en/docs/geocoding-api) | ✅ `contract.yml` (nightly) |
-| [RainViewer](https://www.rainviewer.com) | Precipitation radar tiles | [API documentation](https://www.rainviewer.com/api.html) | ✅ `contract.yml` (nightly) |
-| [OpenWeatherMap](https://openweathermap.org) | Cloud cover fallback when RainViewer has no satellite image | [Pricing](https://openweathermap.org/price) · [Terms](https://openweathermap.org/terms) | ❌ no contract test |
-| [CARTO](https://carto.com) | Base map on the "Clouds" tab (`VITE_CARTO_API_KEY`) | [Legal notices](https://carto.com/legal/) · [API key page](https://carto.com/basemaps/apikey/) | ❌ no contract test |
+| Provider                                                             | Used for                                                    | Page to watch                                                                                                                   | Automatically detected?     |
+| -------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| [Open-Meteo](https://open-meteo.com)                                 | Hourly/daily forecasts, no API key                          | [Terms of use](https://open-meteo.com/en/terms) · [Pricing](https://open-meteo.com/en/pricing)                                  | ✅ `contract.yml` (nightly) |
+| [Zippopotam.us](https://www.zippopotam.us)                           | Postal code geocoding (Quebec FSA)                          | [Home page](https://www.zippopotam.us) (no dedicated ToS page known — check service availability and response format stability) | ✅ `contract.yml` (nightly) |
+| [Open-Meteo Geocoding](https://open-meteo.com/en/docs/geocoding-api) | City name geocoding                                         | [Terms of use](https://open-meteo.com/en/terms) · [Documentation](https://open-meteo.com/en/docs/geocoding-api)                 | ✅ `contract.yml` (nightly) |
+| [RainViewer](https://www.rainviewer.com)                             | Precipitation radar tiles                                   | [API documentation](https://www.rainviewer.com/api.html)                                                                        | ✅ `contract.yml` (nightly) |
+| [OpenWeatherMap](https://openweathermap.org)                         | Cloud cover fallback when RainViewer has no satellite image | [Pricing](https://openweathermap.org/price) · [Terms](https://openweathermap.org/terms)                                         | ❌ no contract test         |
+| [CARTO](https://carto.com)                                           | Base map on the "Clouds" tab (`VITE_CARTO_API_KEY`)         | [Legal notices](https://carto.com/legal/) · [API key page](https://carto.com/basemaps/apikey/)                                  | ❌ no contract test         |
 
 `contract.yml` (see [docs/developpement.en.md](./developpement.en.md)) hits the real APIs every
 night and automatically opens a `derive-contrat` issue on schema drift — but only for
@@ -63,9 +63,9 @@ For each of the six providers:
 To be filled in on every pass over OpenWeatherMap and/or CARTO (the other four providers are
 covered by `contract.yml`, no need to log them here).
 
-| Date | Provider | Result | Action taken |
-|---|---|---|---|
-| 2026-09 (found in production) | CARTO | "API KEY REQUIRED" watermark appeared on the base map with no advance notice spotted | Documented in `frontend/.env.example` and the README; `VITE_CARTO_API_KEY` recommended |
+| Date                          | Provider | Result                                                                               | Action taken                                                                           |
+| ----------------------------- | -------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| 2026-09 (found in production) | CARTO    | "API KEY REQUIRED" watermark appeared on the base map with no advance notice spotted | Documented in `frontend/.env.example` and the README; `VITE_CARTO_API_KEY` recommended |
 
 ---
 

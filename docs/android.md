@@ -10,11 +10,11 @@ L'application est en **test interne** (Internal Testing) sur le Google Play Stor
 
 ## Workflows CI/CD
 
-| Workflow | Déclencheur | Rôle |
-|---|---|---|
-| `android.yml` | PR ou push touchant `twa-qcweather/**` | `bundleRelease` **non signé** — filet avant merge |
-| `build-twa.yml` | Push sur `twa-qcweather/**` **depuis `main`**, ou manuel **depuis `main`** | Build + signature du `.aab` |
-| `deploy-twa.yml` | Après `build-twa.yml` réussi, ou manuel depuis `main` | Publication sur Play Store (Internal Testing) |
+| Workflow         | Déclencheur                                                                | Rôle                                              |
+| ---------------- | -------------------------------------------------------------------------- | ------------------------------------------------- |
+| `android.yml`    | PR ou push touchant `twa-qcweather/**`                                     | `bundleRelease` **non signé** — filet avant merge |
+| `build-twa.yml`  | Push sur `twa-qcweather/**` **depuis `main`**, ou manuel **depuis `main`** | Build + signature du `.aab`                       |
+| `deploy-twa.yml` | Après `build-twa.yml` réussi, ou manuel depuis `main`                      | Publication sur Play Store (Internal Testing)     |
 
 > Le keystore de production n'est déchiffré que depuis `main` — `build-twa.yml` et
 > `deploy-twa.yml` portent la garde `github.ref == 'refs/heads/main'`, qui couvre aussi le
@@ -34,11 +34,11 @@ L'application est en **test interne** (Internal Testing) sur le Google Play Stor
 
 ## Secrets GitHub requis
 
-| Secret | Description |
-|---|---|
-| `KEYSTORE_BASE64` | Keystore Android encodé en base64 |
-| `KEYSTORE_PASSWORD` | Mot de passe du keystore |
-| `KEY_PASSWORD` | Mot de passe de la clé de signature |
+| Secret                      | Description                                 |
+| --------------------------- | ------------------------------------------- |
+| `KEYSTORE_BASE64`           | Keystore Android encodé en base64           |
+| `KEYSTORE_PASSWORD`         | Mot de passe du keystore                    |
+| `KEY_PASSWORD`              | Mot de passe de la clé de signature         |
 | `PLAY_SERVICE_ACCOUNT_JSON` | Clé JSON du Service Account Google Play API |
 
 ## Configurer le Service Account (une fois)

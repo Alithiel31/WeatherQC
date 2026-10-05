@@ -278,10 +278,10 @@ jobs:
       - name: Vérifier l’API à travers nginx
         run: |
           set -euo pipefail
-          curl -fsS localhost/api/sante | grep -q '"statut":"ok"'
-          curl -fsS localhost/api/villes | grep -q 'montreal'
+          curl -fsS localhost/api/sante | grep '"statut":"ok"' >/dev/null
+          curl -fsS localhost/api/villes | grep 'montreal' >/dev/null
           # La coquille applicative doit être servie, pas seulement l'API.
-          curl -fsS localhost/ | grep -q 'manifest.webmanifest'
+          curl -fsS localhost/ | grep 'manifest.webmanifest' >/dev/null
 
       - name: Vérifier les en-têtes de sécurité
         run: |
@@ -294,7 +294,7 @@ jobs:
           # `add_header` en nginx remplace au lieu de fusionner : un bloc
           # `location` qui en déclare un perd tous ceux du parent. assetlinks.json
           # est le cas où ça s'était déjà produit.
-          curl -fsSI localhost/.well-known/assetlinks.json | grep -qi '^content-security-policy:'
+          curl -fsSI localhost/.well-known/assetlinks.json | grep -i '^content-security-policy:' >/dev/null
           # Et un seul Content-Type — le doublon fait échouer la vérification
           # Digital Asset Links d'Android.
           test "$(curl -fsSI localhost/.well-known/assetlinks.json | grep -ci '^content-type:')" -eq 1
@@ -316,7 +316,7 @@ jobs:
             echo "$corps" | grep -q 'href="/"' \
               || { echo "$page n'a pas de lien de retour vers l'application"; exit 1; }
           done
-          curl -fsS localhost/legal.css | grep -q 'max-width'
+          curl -fsS localhost/legal.css | grep 'max-width' >/dev/null
           # Les liens du pied doivent exister dès la coquille : ils ne dépendent
           # pas de l'arrivée des prévisions. La page était restée orpheline —
           # servie, mais liée depuis nulle part.
@@ -328,7 +328,7 @@ jobs:
           done
           # Même piège `add_header` que pour assetlinks.json : ces pages passent
           # par le bloc `location /`, elles doivent hériter des en-têtes.
-          curl -fsSI localhost/terms.html | grep -qi '^content-security-policy:'
+          curl -fsSI localhost/terms.html | grep -i '^content-security-policy:' >/dev/null
 
       - name: Vérifier compression et politique de cache
         run: |
@@ -336,8 +336,8 @@ jobs:
           asset=$(curl -fsS localhost/ | grep -o '/assets/index-[^"]*\.js' | head -1)
           # Assets hachés : cache long. Coquille : jamais mise en cache, sinon un
           # déploiement resterait invisible.
-          curl -fsSI "localhost$asset" | grep -qi 'cache-control:.*max-age=31536000'
-          curl -fsSI localhost/index.html | grep -qi 'cache-control:.*no-cache'
+          curl -fsSI "localhost$asset" | grep -i 'cache-control:.*max-age=31536000' >/dev/null
+          curl -fsSI localhost/index.html | grep -i 'cache-control:.*no-cache' >/dev/null
           # GET et non HEAD : la négociation gzip se lit sur une vraie réponse.
           curl -fsS -H 'Accept-Encoding: gzip' -o /dev/null -D - "localhost$asset" \
             | grep -qi '^content-encoding: gzip'

@@ -16,14 +16,14 @@ Cette page centralise ce qu'il faut surveiller, où, et à quelle fréquence.
 
 ## Fournisseurs à surveiller
 
-| Fournisseur | Usage dans le projet | Page à surveiller | Détecté automatiquement ? |
-|---|---|---|---|
-| [Open-Meteo](https://open-meteo.com) | Prévisions horaires/quotidiennes, sans clé API | [Conditions d'utilisation](https://open-meteo.com/en/terms) · [Tarifs](https://open-meteo.com/en/pricing) | ✅ `contract.yml` (nocturne) |
-| [Zippopotam.us](https://www.zippopotam.us) | Géocodage des codes postaux (RTA québécoise) | [Page d'accueil](https://www.zippopotam.us) (pas de page CGU dédiée connue — vérifier la disponibilité du service et la stabilité du format de réponse) | ✅ `contract.yml` (nocturne) |
-| [Open-Meteo Geocoding](https://open-meteo.com/en/docs/geocoding-api) | Géocodage par nom de ville | [Conditions d'utilisation](https://open-meteo.com/en/terms) · [Documentation](https://open-meteo.com/en/docs/geocoding-api) | ✅ `contract.yml` (nocturne) |
-| [RainViewer](https://www.rainviewer.com) | Tuiles radar de précipitations | [Documentation API](https://www.rainviewer.com/api.html) | ✅ `contract.yml` (nocturne) |
-| [OpenWeatherMap](https://openweathermap.org) | Repli sur la couverture nuageuse quand RainViewer n'a pas d'image satellite | [Tarifs](https://openweathermap.org/price) · [Conditions](https://openweathermap.org/terms) | ❌ aucun test de contrat |
-| [CARTO](https://carto.com) | Fond de carte de l'onglet « Nuages » (`VITE_CARTO_API_KEY`) | [Mentions légales](https://carto.com/legal/) · [Page clé API](https://carto.com/basemaps/apikey/) | ❌ aucun test de contrat |
+| Fournisseur                                                          | Usage dans le projet                                                        | Page à surveiller                                                                                                                                       | Détecté automatiquement ?    |
+| -------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| [Open-Meteo](https://open-meteo.com)                                 | Prévisions horaires/quotidiennes, sans clé API                              | [Conditions d'utilisation](https://open-meteo.com/en/terms) · [Tarifs](https://open-meteo.com/en/pricing)                                               | ✅ `contract.yml` (nocturne) |
+| [Zippopotam.us](https://www.zippopotam.us)                           | Géocodage des codes postaux (RTA québécoise)                                | [Page d'accueil](https://www.zippopotam.us) (pas de page CGU dédiée connue — vérifier la disponibilité du service et la stabilité du format de réponse) | ✅ `contract.yml` (nocturne) |
+| [Open-Meteo Geocoding](https://open-meteo.com/en/docs/geocoding-api) | Géocodage par nom de ville                                                  | [Conditions d'utilisation](https://open-meteo.com/en/terms) · [Documentation](https://open-meteo.com/en/docs/geocoding-api)                             | ✅ `contract.yml` (nocturne) |
+| [RainViewer](https://www.rainviewer.com)                             | Tuiles radar de précipitations                                              | [Documentation API](https://www.rainviewer.com/api.html)                                                                                                | ✅ `contract.yml` (nocturne) |
+| [OpenWeatherMap](https://openweathermap.org)                         | Repli sur la couverture nuageuse quand RainViewer n'a pas d'image satellite | [Tarifs](https://openweathermap.org/price) · [Conditions](https://openweathermap.org/terms)                                                             | ❌ aucun test de contrat     |
+| [CARTO](https://carto.com)                                           | Fond de carte de l'onglet « Nuages » (`VITE_CARTO_API_KEY`)                 | [Mentions légales](https://carto.com/legal/) · [Page clé API](https://carto.com/basemaps/apikey/)                                                       | ❌ aucun test de contrat     |
 
 `contract.yml` (voir [docs/developpement.md](./developpement.md)) interroge les vraies APIs
 chaque nuit et ouvre automatiquement une issue `derive-contrat` en cas de dérive de schéma —
@@ -64,9 +64,9 @@ Pour chacun des six fournisseurs :
 À compléter à chaque passage sur OpenWeatherMap et/ou CARTO (les quatre autres fournisseurs sont
 couverts par `contract.yml`, inutile de les journaliser ici).
 
-| Date | Fournisseur | Résultat | Action prise |
-|---|---|---|---|
-| 2026-09 (constaté en prod) | CARTO | Filigrane « API KEY REQUIRED » apparu sur le fond de carte sans annonce préalable repérée | Documenté dans `frontend/.env.example` et le README ; clé `VITE_CARTO_API_KEY` recommandée |
+| Date                       | Fournisseur | Résultat                                                                                  | Action prise                                                                               |
+| -------------------------- | ----------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 2026-09 (constaté en prod) | CARTO       | Filigrane « API KEY REQUIRED » apparu sur le fond de carte sans annonce préalable repérée | Documenté dans `frontend/.env.example` et le README ; clé `VITE_CARTO_API_KEY` recommandée |
 
 ---
 

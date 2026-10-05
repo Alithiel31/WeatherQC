@@ -53,7 +53,7 @@ Trois mécanismes, tous visibles dans `/api/sante` :
   uniquement si l'amont vient d'échouer. La réponse porte alors `obsolete: true` et
   l'application l'affiche : des prévisions d'il y a vingt minutes valent mieux qu'un écran
   d'erreur. Côté service worker, un greffon Workbox traite un 5xx comme une panne réseau —
-  sans quoi `NetworkFirst` ne consultait jamais le cache, un 502 étant une réponse *résolue*.
+  sans quoi `NetworkFirst` ne consultait jamais le cache, un 502 étant une réponse _résolue_.
 - **Disjoncteur** — au-delà de `BREAKER_SEUIL_ECHECS` échecs consécutifs, les appels à cet
   amont sont suspendus pendant `BREAKER_REPOS_MS` et répondent **503** immédiatement, puis une
   seule requête teste le retour du service. Sans lui, un amont mort immobilisait ~10 s de
