@@ -24,6 +24,7 @@ vi.mock('web-push', () => {
 
 import webpush, { WebPushError } from 'web-push';
 import { config } from '../../../src/config.js';
+import { log } from '../../../src/lib/log.js';
 import { envoyerNotification } from '../../../src/services/notifications.service.js';
 
 const ABONNEMENT = { endpoint: 'https://push.exemple.com/1', p256dh: 'p256dh', auth: 'auth' };
@@ -77,7 +78,8 @@ describe('notifications.service', () => {
           endpoint: ABONNEMENT.endpoint,
           keys: { p256dh: ABONNEMENT.p256dh, auth: ABONNEMENT.auth },
         },
-        JSON.stringify(NOTIFICATION)
+        JSON.stringify(NOTIFICATION),
+        { timeout: 10_000 }
       );
     });
 
@@ -110,6 +112,59 @@ describe('notifications.service', () => {
       const resultat = await envoyerNotification(ABONNEMENT, NOTIFICATION);
 
       expect(resultat).toBe('echec');
+    });
+
+    describe('journalisation', () => {
+      it("n'écrit que l'hôte, jamais l'endpoint complet, pour un abonnement expiré", async () => {
+        const warn = vi.spyOn(log, 'warn').mockImplementation(() => {});
+        vi.mocked(webpush.sendNotification).mockRejectedValue(new WebPushError('révoqué', 410));
+
+        await envoyerNotification(ABONNEMENT, NOTIFICATION);
+
+        expect(warn).toHaveBeenCalledWith(
+          'Abonnement push expiré',
+          expect.objectContaining({ hote: 'push.exemple.com', statut: 410 })
+        );
+        expect(JSON.stringify(warn.mock.calls)).not.toContain(ABONNEMENT.endpoint);
+        warn.mockRestore();
+      });
+
+      it("n'écrit que l'hôte, jamais l'endpoint complet, pour un échec d'envoi", async () => {
+        const error = vi.spyOn(log, 'error').mockImplementation(() => {});
+        vi.mocked(webpush.sendNotification).mockRejectedValue(new Error('réseau coupé'));
+
+        await envoyerNotification(ABONNEMENT, NOTIFICATION);
+
+        expect(error).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({ hote: 'push.exemple.com', message: 'réseau coupé' })
+        );
+        expect(JSON.stringify(error.mock.calls)).not.toContain(ABONNEMENT.endpoint);
+        error.mockRestore();
+      });
+    });
+
+    describe('plafond de durée', () => {
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it('renvoie "echec" au bout de 15 s si web-push ne conclut jamais', async () => {
+        vi.useFakeTimers();
+        const error = vi.spyOn(log, 'error').mockImplementation(() => {});
+        // Une promesse qui ne se résout jamais : socket actif, aucune réponse.
+        vi.mocked(webpush.sendNotification).mockReturnValue(new Promise(() => {}) as never);
+
+        const envoi = envoyerNotification(ABONNEMENT, NOTIFICATION);
+        await vi.advanceTimersByTimeAsync(15_000);
+
+        expect(await envoi).toBe('echec');
+        expect(error).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({ message: expect.stringContaining('Délai') })
+        );
+        error.mockRestore();
+      });
     });
   });
 });
