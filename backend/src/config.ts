@@ -62,6 +62,11 @@ export const environnementSchema = z.object({
   RATE_LIMIT_MAX: entier(100),
   // Le géocodage tape Zippopotam : quota plus serré.
   RATE_LIMIT_GEOCODE_MAX: entier(20),
+  // Création d'abonnement push : la seule route qui écrit en base à la demande
+  // d'un inconnu. Fenêtre d'une heure, large pour ne pas bloquer un foyer ou un
+  // réseau mobile partagé (bascules de ville, réparations d'abonnement).
+  RATE_LIMIT_ABONNEMENT_WINDOW_MS: entier(3_600_000),
+  RATE_LIMIT_ABONNEMENT_MAX: entier(20),
   CACHE_TTL_PREVISIONS: entier(600_000),
   CACHE_TTL_GEOCODE: entier(2_592_000_000),
   // L'index RainViewer se renouvelle toutes les ~10 min et la carte le
@@ -131,6 +136,8 @@ export function chargerConfig(env: NodeJS.ProcessEnv = process.env) {
       windowMs: valide.RATE_LIMIT_WINDOW_MS,
       max: valide.RATE_LIMIT_MAX,
       maxGeocode: valide.RATE_LIMIT_GEOCODE_MAX,
+      windowAbonnementMs: valide.RATE_LIMIT_ABONNEMENT_WINDOW_MS,
+      maxAbonnement: valide.RATE_LIMIT_ABONNEMENT_MAX,
     },
     cache: {
       ttlPrevisions: valide.CACHE_TTL_PREVISIONS,

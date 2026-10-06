@@ -17,6 +17,8 @@
 | `RATE_LIMIT_WINDOW_MS` | ❌ | `60000` | Rate limiting window |
 | `RATE_LIMIT_MAX` | ❌ | `100` | Requests/window/IP on `/api` |
 | `RATE_LIMIT_GEOCODE_MAX` | ❌ | `20` | Requests/window/IP on `/api/geocode` and `/api/geocode-ville` |
+| `RATE_LIMIT_ABONNEMENT_WINDOW_MS` | ❌ | `3600000` | Rate limiting window for push subscription creation (default: 1 h) |
+| `RATE_LIMIT_ABONNEMENT_MAX` | ❌ | `20` | Subscription creations/window/IP on `POST /api/notifications/abonnement` |
 | `CACHE_TTL_PREVISIONS` | ❌ | `600000` | Weather cache duration in ms (default: 10 min) |
 | `CACHE_TTL_GEOCODE` | ❌ | `2592000000` | Geocoding cache duration in ms (default: 30 days) |
 | `CACHE_TTL_RAINVIEWER` | ❌ | `300000` | RainViewer index cache duration in ms (default: 5 min) |

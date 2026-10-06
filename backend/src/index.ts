@@ -5,7 +5,7 @@ import { config } from './config.js';
 
 import { zodErrorHandler } from './middlewares/zod-error-handler.js';
 import { globalErrorHandler } from './middlewares/global-error-handler.js';
-import { limiteurApi, limiteurGeocode } from './middlewares/rate-limit.js';
+import { limiteurApi, limiteurGeocode, limiteurAbonnement } from './middlewares/rate-limit.js';
 import { requestId } from './middlewares/request-id.js';
 import { journalAcces } from './middlewares/acces.js';
 import { statistiquesCache } from './services/cache.service.js';
@@ -74,6 +74,8 @@ app.get('/api/openapi.json', (_req, res) => res.json(openapiDocument));
 app.use('/api', limiteurApi);
 app.use('/api/geocode', limiteurGeocode);
 app.use('/api/geocode-ville', limiteurGeocode);
+// `post` et non `use` : la clé publique et le désabonnement ne sont pas concernés.
+app.post('/api/notifications/abonnement', limiteurAbonnement);
 
 app.use('/api', villesRouter);
 app.use('/api', previsionsRouter);

@@ -100,6 +100,39 @@ describe('Durcissement de l’exposition publique', () => {
       await request(app).get('/api/geocode/H2X').set('X-Forwarded-For', clientB).expect(200);
     });
 
+    it("limite la création d'abonnement par client réel, sans toucher aux autres routes", async () => {
+      const clientA = '203.0.113.7, 10.1.2.3';
+      const clientB = '198.51.100.42, 10.1.2.3';
+
+      // Sans clés VAPID en test, ces POST répondent 503 : seul le compteur du
+      // limiteur nous intéresse ici.
+      for (let i = 0; i < config.rateLimit.maxAbonnement; i++) {
+        const res = await request(app)
+          .post('/api/notifications/abonnement')
+          .set('X-Forwarded-For', clientA)
+          .send({});
+        expect(res.status).not.toBe(429);
+      }
+
+      const bloque = await request(app)
+        .post('/api/notifications/abonnement')
+        .set('X-Forwarded-For', clientA)
+        .send({})
+        .expect(429);
+      expect(bloque.body.error).toContain('abonnement');
+
+      // Un autre client, et la lecture de la clé publique, restent servis.
+      const autre = await request(app)
+        .post('/api/notifications/abonnement')
+        .set('X-Forwarded-For', clientB)
+        .send({});
+      expect(autre.status).not.toBe(429);
+      const cle = await request(app)
+        .get('/api/notifications/cle-publique')
+        .set('X-Forwarded-For', clientA);
+      expect(cle.status).not.toBe(429);
+    });
+
     it('ne limite jamais le healthcheck', async () => {
       for (let i = 0; i < 5; i++) {
         const response = await request(app).get('/api/sante').expect(200);

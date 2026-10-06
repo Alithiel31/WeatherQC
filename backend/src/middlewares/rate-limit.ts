@@ -30,3 +30,17 @@ export const limiteurGeocode = rateLimit({
   ...communs,
   limit: config.rateLimit.maxGeocode,
 });
+
+/**
+ * Quota de la création d'abonnement push. Fenêtre distincte (une heure) : le
+ * quota général d'une minute ne protège pas la base contre un remplissage lent.
+ */
+export const limiteurAbonnement = rateLimit({
+  ...communs,
+  windowMs: config.rateLimit.windowAbonnementMs,
+  limit: config.rateLimit.maxAbonnement,
+  message: {
+    status: 429,
+    error: "Trop de demandes d'abonnement — réessayez plus tard.",
+  },
+});
