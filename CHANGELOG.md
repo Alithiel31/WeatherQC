@@ -7,6 +7,8 @@
 - Le frontend est servi par Traefik (réseau externe `traefik-net`, routage sur `qcweather.alithiel31.dev`) au lieu
   d'un port 80 publié sur l'hôte ; `TRUST_PROXY_HOPS` passe de 2 à 3 (cloudflared + Traefik + nginx). La CI crée
   `traefik-net` et republie le port 80 par un fichier de surcharge généré à la volée
+- Refactor CSS du frontend : les styles répétés dans les composants de `frontend/src/lib/` sont
+  mutualisés dans `styles/composants.css` et `styles/tokens.css`, sans changement visuel voulu
 
 ### Added
 
