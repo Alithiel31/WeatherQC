@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import './lib/styles/tokens.css';
   import './lib/styles/verre.css';
+  import './lib/styles/composants.css';
   import Horaire from './lib/Horaire.svelte';
   import Quotidien from './lib/Quotidien.svelte';
   import CarteNuages from './lib/CarteNuages.svelte';
@@ -246,7 +247,7 @@
     Cette région doit exister dans le DOM avant la mise à jour pour être lue,
     d'où sa place ici, hors des branches conditionnelles.
   -->
-  <p class="annonce" aria-live="polite">
+  <p class="sr-only" aria-live="polite">
     {#if !chargement && donnees}
       Prévisions pour {nomLieu}, mises à jour à {heureMinute(donnees.misAJour)}
     {/if}
@@ -274,7 +275,7 @@
   {#if erreur && donnees && !chargement}
     <div class="bandeau-erreur" role="alert">
       <p>{erreur}</p>
-      <button class="reessayer pressable" onclick={charger}>Réessayer</button>
+      <button class="reessayer btn-pilule pressable" onclick={charger}>Réessayer</button>
     </div>
   {/if}
 
@@ -286,7 +287,7 @@
   {:else if erreur && !donnees}
     <div class="etat erreur" role="alert">
       <p>{erreur}</p>
-      <button class="reessayer pressable" onclick={charger}>Réessayer</button>
+      <button class="reessayer btn-pilule pressable" onclick={charger}>Réessayer</button>
     </div>
   {:else if donnees}
     <ConditionsActuelles
@@ -333,11 +334,11 @@
   </div>
 
   <div id="section-reglages" class="reglages carte-verre">
-    <h2>Réglages</h2>
+    <h2 class="titre-carte">Réglages</h2>
     <div class="ligne-reglage">
       <span>Unités</span>
       <button
-        class="bascule-unite-large pressable"
+        class="bascule-unite-large btn-verre pressable"
         onclick={() => prefs.basculerUnite()}
         aria-pressed={prefs.unite === 'imperial'}
       >°{libelleUniteTemp(prefs.unite)}</button>
@@ -416,8 +417,11 @@
       border-radius 0.2s ease,
       box-shadow 0.2s ease;
     background-color: #10243b;
+    /* Littéral sans espaces : `voilePage()` de `tests/unit/contraste.test.ts` le relit. */
+    --voile: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45));
     background-image:
-      linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)),
+      var(--decor, none),
+      var(--voile),
       linear-gradient(180deg, var(--ciel-haut, #10243b) 0%, var(--ciel-bas, #10243b) var(--ciel-fin, 130%));
   }
 
@@ -432,18 +436,17 @@
     l'ancêtre englobant (`main` n'a pas de `z-index` propre), et se
     retrouvait ainsi peint sous le fond de page tout entier — invisible.
     Le fond d'un élément, lui, se peint toujours avant son contenu, sans
-    ambiguïté d'empilement. Chaque règle ci-dessous reprend donc le voile et
-    le dégradé de base en plus de sa couche propre ; les variables
-    `--ciel-*` restent celles que `tests/unit/contraste.test.ts` relit.
+    ambiguïté d'empilement. Chaque règle ci-dessous ne déclare que sa couche
+    propre dans `--decor`, que `main` empile au-dessus du voile et du dégradé.
+    Ces règles restent séparées des blocs `--ciel-haut/--ciel-bas` plus bas,
+    que `tests/unit/contraste.test.ts` relit par expression régulière.
   */
   .ciel.degage:not(.nuit) {
-    background-image:
-      radial-gradient(circle at 88% -6%, rgba(255, 214, 140, 0.4), transparent 55%),
-      linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)),
-      linear-gradient(180deg, var(--ciel-haut) 0%, var(--ciel-bas) var(--ciel-fin, 130%));
+    --decor:
+      radial-gradient(circle at 88% -6%, rgba(255, 214, 140, 0.4), transparent 55%);
   }
   .ciel.degage.nuit {
-    background-image:
+    --decor:
       radial-gradient(1.8px 1.8px at 18% 10%, #fff 60%, transparent 65%),
       radial-gradient(1.4px 1.4px at 68% 7%, #fff 60%, transparent 65%),
       radial-gradient(1.6px 1.6px at 40% 16%, rgba(255,255,255,0.9) 60%, transparent 65%),
@@ -452,50 +455,30 @@
       radial-gradient(1.4px 1.4px at 10% 26%, #fff 60%, transparent 65%),
       radial-gradient(1.4px 1.4px at 92% 24%, rgba(255,255,255,0.85) 60%, transparent 65%),
       radial-gradient(1.6px 1.6px at 30% 30%, #fff 60%, transparent 65%),
-      radial-gradient(circle at 78% 2%, rgba(160, 190, 255, 0.2), transparent 45%),
-      linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)),
-      linear-gradient(180deg, var(--ciel-haut) 0%, var(--ciel-bas) var(--ciel-fin, 130%));
+      radial-gradient(circle at 78% 2%, rgba(160, 190, 255, 0.2), transparent 45%);
   }
   .ciel.pluie, .ciel.orage {
-    background-image:
-      repeating-linear-gradient(112deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 16px),
-      linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)),
-      linear-gradient(180deg, var(--ciel-haut) 0%, var(--ciel-bas) var(--ciel-fin, 130%));
+    --decor:
+      repeating-linear-gradient(112deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 16px);
   }
   .ciel.neige {
-    background-image:
+    --decor:
       radial-gradient(1.6px 1.6px at 15% 8%, rgba(255,255,255,0.85) 65%, transparent 70%),
       radial-gradient(1.8px 1.8px at 45% 14%, rgba(255,255,255,0.75) 65%, transparent 70%),
       radial-gradient(1.4px 1.4px at 75% 5%, rgba(255,255,255,0.8) 65%, transparent 70%),
       radial-gradient(1.6px 1.6px at 90% 18%, rgba(255,255,255,0.7) 65%, transparent 70%),
-      radial-gradient(1.4px 1.4px at 25% 22%, rgba(255,255,255,0.65) 65%, transparent 70%),
-      linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)),
-      linear-gradient(180deg, var(--ciel-haut) 0%, var(--ciel-bas) var(--ciel-fin, 140%));
+      radial-gradient(1.4px 1.4px at 25% 22%, rgba(255,255,255,0.65) 65%, transparent 70%);
   }
 
   /*
     Base mobile-first inchangée en dessous de 640px : `main` occupe tout
-    l'écran comme avant. Au-delà, la carte se détache du fond au lieu de
-    s'étirer indéfiniment dans un bandeau vide — cf. discussion sur le rendu
-    desktop. `min-width` plutôt que `max-width` : on part du mobile et on
+    l'écran. `min-width` plutôt que `max-width` : on part du mobile et on
     ajoute, on ne part pas du desktop pour retirer.
-  */
-  @media (min-width: 640px) {
-    main {
-      max-width: 42rem;
-      margin: 2rem auto;
-      min-height: auto;
-      border-radius: 1.5rem;
-      box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.35);
-    }
-  }
 
-  /*
-    Au-delà du mobile, la colonne de 32rem flottait au milieu d'un fond uni
-    de la même teinte que le body — aucune démarcation, juste un grand vide de
-    part et d'autre. Le mobile reste inchangé sous ce seuil ; au-delà, la
-    colonne s'élargit et se détache visuellement du fond avec une ombre et un
-    liseré, plutôt que de s'étirer en pleine largeur.
+    Au-delà, la colonne de 32rem flottait au milieu d'un fond uni de la même
+    teinte que le body — aucune démarcation, juste un grand vide de part et
+    d'autre. Elle s'élargit donc et se détache visuellement du fond avec une
+    ombre et un liseré, plutôt que de s'étirer en pleine largeur.
   */
   @media (min-width: 640px) {
     :global(body) { background: #050b16; }
@@ -535,26 +518,18 @@
   /* Même voile que le déclencheur de `SelecteurVille.svelte` : cf. son historique de contraste. */
   .bascule-unite {
     flex-shrink: 0;
-    border: 1px solid var(--verre-bordure, rgba(112,170,255,0.22));
+    border: 1px solid var(--verre-bordure);
     background: rgba(0,0,0,0.25); color: #fff; font: inherit;
     font-weight: 700; font-size: 0.8rem; line-height: 1;
     width: 2.1rem; height: 2.1rem; border-radius: 50%; cursor: pointer;
     backdrop-filter: blur(10px);
   }
-  .bascule-unite:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-
-  /* Lue par les lecteurs d'écran, jamais affichée. `clip-path` plutôt que
-     `display: none`, qui la retirerait de l'arbre d'accessibilité. */
-  .annonce {
-    position: absolute; width: 1px; height: 1px; margin: -1px;
-    padding: 0; overflow: hidden; white-space: nowrap;
-    clip-path: inset(50%); border: 0;
-  }
+  .bascule-unite:focus-visible { outline: var(--contour-focus); outline-offset: 2px; }
 
   .bandeau-hors-ligne {
     margin: 1rem 0 0; padding: 0.5rem 0.9rem;
     background: rgba(0,0,0,0.3); border-radius: 0.6rem; font-size: 0.85rem;
-    border: 1px solid var(--verre-bordure, rgba(112,170,255,0.22));
+    border: 1px solid var(--verre-bordure);
   }
 
   .bandeau-erreur {
@@ -578,10 +553,7 @@
     .spinner { animation: none; }
     main { transition: none; }
   }
-  .reessayer {
-    border: 1px solid rgba(255,255,255,0.5); background: transparent; color: #fff;
-    font: inherit; padding: 0.5rem 1.25rem; border-radius: 999px; cursor: pointer;
-  }
+  .reessayer { padding: 0.5rem 1.25rem; }
 
   footer { margin-top: 1.75rem; text-align: center; font-size: 0.8rem; }
   footer a { color: inherit; }
@@ -611,29 +583,12 @@
     padding: 1.1rem;
     margin-top: 0.9rem;
   }
-  .reglages h2 {
-    margin: 0 0 0.7rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    opacity: 0.75;
-  }
+  .reglages h2 { margin: 0 0 0.7rem; }
   .ligne-reglage {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0.4rem 0;
   }
-  .bascule-unite-large {
-    border: 1px solid var(--verre-bordure, rgba(112, 170, 255, 0.22));
-    background: rgba(0, 0, 0, 0.25);
-    color: #fff;
-    font: inherit;
-    font-weight: 700;
-    padding: 0.4rem 1rem;
-    border-radius: 999px;
-    cursor: pointer;
-  }
-  .bascule-unite-large:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .bascule-unite-large { font-weight: 700; padding: 0.4rem 1rem; }
 </style>

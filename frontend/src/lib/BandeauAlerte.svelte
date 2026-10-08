@@ -71,7 +71,7 @@
     padding: 0.75rem 0.95rem;
     background: rgba(0, 0, 0, 0.22);
   }
-  .icone { flex-shrink: 0; margin-top: 0.1rem; color: var(--accent-doux, #a9d3ff); }
+  .icone { flex-shrink: 0; margin-top: 0.1rem; color: var(--accent-doux); }
   /* Bordure/icône ambrées réservées aux alertes "importantes" (verglas, orage) :
      la hiérarchie visuelle doit distinguer un simple avis d'un vrai danger. */
   .alerte.importante { border-color: rgba(255, 191, 92, 0.5); }
@@ -84,5 +84,5 @@
     border: 0; background: transparent; color: rgba(255, 255, 255, 0.7);
     padding: 0.3rem; cursor: pointer; line-height: 0;
   }
-  .voir-plus:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 0.3rem; }
+  .voir-plus:focus-visible { outline: var(--contour-focus); outline-offset: 2px; border-radius: 0.3rem; }
 </style>

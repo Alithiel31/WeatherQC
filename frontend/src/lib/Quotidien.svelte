@@ -1,5 +1,6 @@
 <script lang="ts">
   import './styles/verre.css';
+  import './styles/composants.css';
   import { iconeMeteo, descriptionMeteo, degres, jourCourt, jourLong } from './meteo.ts';
   import type { Unite } from './meteo.ts';
   import type { PrevisionsQuotidiennes } from './types.ts';
@@ -29,7 +30,7 @@
 </script>
 
 <section class="carte-verre" aria-label="Prévisions sur 7 jours">
-  <h2>Cette semaine</h2>
+  <h2 class="titre-carte">Cette semaine</h2>
   <ol>
     {#each jours as j, i (j.date)}
       <li>
@@ -66,24 +67,24 @@
     background: rgba(0,0,0,0.2);
     padding: 1.1rem; margin-top: 0.9rem;
   }
-  h2 { margin: 0 0 0.6rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.75; }
+  h2 { margin: 0 0 0.6rem; }
   ol  { margin: 0; padding: 0; list-style: none; }
   li  {
     display: grid;
     grid-template-columns: 3rem 1.8rem 2.6rem 2.2rem 1fr 2.2rem;
     align-items: center; gap: 0.4rem;
-    padding: 0.6rem 0; border-top: 1px solid var(--verre-bordure, rgba(112,170,255,0.22));
+    padding: 0.6rem 0; border-top: 1px solid var(--verre-bordure);
     font-variant-numeric: tabular-nums;
   }
   li:first-child { border-top: 0; }
   .jour  { font-weight: 600; text-transform: capitalize; }
   .icone { font-size: 1.2rem; text-align: center; }
-  .pluie { font-size: 0.72rem; color: #bfe3ff; text-align: right; }
+  .pluie { font-size: 0.72rem; color: var(--bleu-pluie); text-align: right; }
   .min   { text-align: right; opacity: 0.75; }
   .max   { text-align: right; font-weight: 600; }
-  .barre { position: relative; height: 0.3rem; border-radius: 999px; background: rgba(0,0,0,0.25); }
+  .barre { position: relative; height: 0.3rem; border-radius: var(--rayon-pilule); background: rgba(0,0,0,0.25); }
   .plage {
-    position: absolute; top: 0; bottom: 0; border-radius: 999px;
+    position: absolute; top: 0; bottom: 0; border-radius: var(--rayon-pilule);
     background: linear-gradient(90deg, #4da3ff, #ffd479); min-width: 0.3rem;
   }
 </style>

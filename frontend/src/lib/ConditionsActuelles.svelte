@@ -169,8 +169,8 @@
     border: 0; background: transparent; color: #fff; padding: 0.2rem;
     cursor: pointer; line-height: 0;
   }
-  .favori svg { color: var(--accent-doux, #a9d3ff); }
-  .favori:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 0.3rem; }
+  .favori svg { color: var(--accent-doux); }
+  .favori:focus-visible { outline: var(--contour-focus); outline-offset: 2px; border-radius: 0.3rem; }
 
   /*
     Le rebond ne joue qu'à l'ajout (attribut passant à "true"), jamais au
@@ -275,8 +275,8 @@
     padding: 0.85rem 1.1rem;
     text-align: left;
   }
-  .stat:first-child { border-right: 1px solid var(--verre-bordure, rgba(112, 170, 255, 0.22)); }
-  .stat-icone { flex-shrink: 0; color: var(--accent-doux, #a9d3ff); }
+  .stat:first-child { border-right: 1px solid var(--verre-bordure); }
+  .stat-icone { flex-shrink: 0; color: var(--accent-doux); }
   .stat-texte { min-width: 0; }
   .stat-label { margin: 0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.85; }
   .stat-valeur { margin: 0.15rem 0 0; font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
