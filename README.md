@@ -191,17 +191,17 @@ se tient à jour dans la console et non dans ce dépôt.
 
 ## Stack
 
-| Couche        | Technologie                                                                                                                                       |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Backend       | Express 5 · Node.js 22+ · TypeScript 5.6                                                                                                          |
-| Frontend      | Svelte 5 · TypeScript · Vite 8                                                                                                                    |
-| PWA           | vite-plugin-pwa · Service Worker (network-first)                                                                                                  |
-| Carte         | Leaflet · RainViewer                                                                                                                              |
-| Infra         | Docker · Nginx                                                                                                                                    |
-| Accès réseau  | Tailscale                                                                                                                                         |
-| APIs externes | Open-Meteo · Open-Meteo Geocoding · Zippopotam.us · CARTO / OpenStreetMap · RainViewer · OpenWeatherMap                                           |
-| Android       | TWA · Bubblewrap · Google Play Store                                                                                                              |
-| CI/CD         | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml` · `deploy-web.yml` · `codeql.yml` · `secrets.yml` · `contract.yml`) |
+| Couche        | Technologie                                                                                                                                                      |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend       | Express 5 · Node.js 22+ · TypeScript 5.6                                                                                                                         |
+| Frontend      | Svelte 5 · TypeScript · Vite 8                                                                                                                                   |
+| PWA           | vite-plugin-pwa · Service Worker (network-first)                                                                                                                 |
+| Carte         | Leaflet · RainViewer                                                                                                                                             |
+| Infra         | Docker · Nginx                                                                                                                                                   |
+| Accès réseau  | Tailscale                                                                                                                                                        |
+| APIs externes | Open-Meteo · Open-Meteo Geocoding · Zippopotam.us · CARTO / OpenStreetMap · RainViewer · OpenWeatherMap                                                          |
+| Android       | TWA · Bubblewrap · Google Play Store                                                                                                                             |
+| CI/CD         | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml` · `deploy-web.yml` · `codeql.yml` · `secrets.yml` · `zizmor.yml` · `contract.yml`) |
 
 ## Documentation approfondie
 

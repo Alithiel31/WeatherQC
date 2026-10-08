@@ -87,6 +87,24 @@ cd twa-qcweather
 
 `bundleRelease` rather than `assembleDebug`: it is the task the release chain actually runs, and the only one that puts the code through R8 (`minifyEnabled true` on `release`). The production signature only exists on `main`.
 
+### Workflows (`zizmor.yml`)
+
+Any change to `.github/workflows/` goes through `zizmor`:
+
+```bash
+pip install zizmor==1.30.1
+zizmor --offline .github/workflows   # `--offline`: CI also runs the online audits
+```
+
+Two rules keep it from failing:
+
+- **Pin every action to a commit SHA**, with the version as a comment:
+  `uses: actions/checkout@<40-character sha> # v7.0.1`. Find the SHA with
+  `git ls-remote --tags https://github.com/<repo> 'refs/tags/<tag>*'`; for an annotated tag, take the `^{}` line. Dependabot then updates both.
+- **`persist-credentials: false`** on every `actions/checkout`, unless the job really has to push with `git`.
+
+The accepted exceptions live in `.github/zizmor.yml`, each with its reason. Adding one requires the same justification.
+
 ### External API contracts
 
 `npm run test:contract` (backend) makes real calls to Open-Meteo, Zippopotam and RainViewer — outside the PR path, it runs nightly via `contract.yml`. Only run it when you doubt an upstream schema (see [TROUBLESHOOTING.en.md](./TROUBLESHOOTING.en.md)).

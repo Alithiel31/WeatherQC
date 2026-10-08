@@ -57,6 +57,10 @@ Avant de signaler un problème déjà couvert, quelques mécanismes existants (d
   Actions).
 - **Secrets** — le workflow `secrets.yml` (gitleaks) scanne tout l'historique à chaque push,
   chaque PR et chaque semaine.
+- **Workflows** — `zizmor.yml` audite statiquement les workflows (injection dans un `run`,
+  déclencheurs dangereux, permissions trop larges). Les actions GitHub sont épinglées par SHA de
+  commit, les `checkout` ne conservent pas le jeton Git (`persist-credentials: false`), et les
+  outils installés en `run` (Bubblewrap, Infisical CLI) le sont à version exacte.
 - **Entrées** — tous les paramètres de requête sont validés par Zod
   (`backend/src/schemas/validation.ts`) ; toutes les réponses des APIs amont le sont aussi
   (`backend/src/schemas/*.schema.ts`) — une dérive de contrat externe donne un 502, jamais un

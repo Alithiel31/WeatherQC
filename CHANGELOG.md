@@ -105,6 +105,22 @@
   vers `docs/en/`, hors des dossiers scannés par GitHub pour ces fichiers (racine, `.github/`,
   `docs/`), pour garantir que la version française reste celle affichée
 
+### Security
+
+- Toutes les actions GitHub sont épinglées par SHA de commit (30 références) au lieu d'un tag
+  mobile, avec la version en commentaire : un tag republié par un compte compromis n'exécute plus
+  de code dans les jobs qui portent le keystore Android, la clé Play Store ou les identifiants
+  Infisical du Pi. Dependabot (`github-actions`) continue de les relever
+- `persist-credentials: false` sur chaque `actions/checkout` : le jeton Git ne reste plus dans
+  `.git/config` après le checkout, donc hors de portée d'une étape ou d'un artefact ultérieur
+- `deploy-web.yml` installe désormais `@infisical/cli@0.43.137` et non la dernière version
+  publiée : l'étape suivante lui passe le client ID et le secret qui ouvrent les secrets de
+  production, une version flottante laissait un paquet npm compromis les lire
+- Nouveau workflow `zizmor.yml` : audit statique des workflows (injection dans un `run`,
+  déclencheurs dangereux, permissions trop larges, actions non épinglées), à chaque PR qui touche
+  `.github/` et chaque semaine. Les quatre exceptions admises sont justifiées dans
+  `.github/zizmor.yml`
+
 ## [3.2.0] - 2026-09-23
 
 ### Added
