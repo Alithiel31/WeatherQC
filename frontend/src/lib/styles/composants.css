@@ -1,0 +1,56 @@
+/**
+ * Classes utilitaires partagées entre composants.
+ *
+ * Ne portent que ce qui est strictement identique d'un composant à l'autre :
+ * marges, tailles et variantes restent dans le `<style>` scoped de chacun.
+ * Un sélecteur scoped Svelte (`.x.svelte-abc`, `h2.svelte-abc`) est toujours
+ * plus spécifique qu'une classe seule ici, donc toute déclaration locale
+ * l'emporte sans dépendre de l'ordre d'import.
+ */
+
+/* Titre de carte : « HEURE PAR HEURE », « FAVORIS », « RÉGLAGES »… */
+.titre-carte {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.75;
+}
+
+/* Bouton pilule à contour blanc, fond transparent (« Réessayer », alertes). */
+.btn-pilule {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  color: var(--texte);
+  font: inherit;
+  border-radius: var(--rayon-pilule);
+  cursor: pointer;
+}
+
+/* Bouton pilule sur voile sombre + bordure verre (sélecteur de ville, unités). */
+.btn-verre {
+  border: 1px solid var(--verre-bordure);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--texte);
+  font: inherit;
+  border-radius: var(--rayon-pilule);
+  cursor: pointer;
+}
+.btn-verre:focus-visible {
+  outline: var(--contour-focus);
+  outline-offset: 2px;
+}
+
+/* Lu par les lecteurs d'écran, jamais affiché. `clip-path` plutôt que
+   `display: none`, qui le retirerait de l'arbre d'accessibilité. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+  border: 0;
+}

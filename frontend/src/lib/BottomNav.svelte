@@ -91,7 +91,7 @@
     background: rgba(77, 163, 255, 0.16);
   }
   button.actif svg { color: var(--accent-doux); }
-  button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  button:focus-visible { outline: var(--contour-focus); outline-offset: 2px; }
 
   .icone-onglet { transition: transform 0.15s ease; }
   button.actif .icone-onglet { transform: translateY(-1px) scale(1.08); }

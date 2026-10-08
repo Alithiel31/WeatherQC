@@ -16,4 +16,12 @@
   --rayon-carte: 1.25rem;
   --rayon-pilule: 999px;
   --ombre-carte: 0 1.5rem 3rem rgba(2, 6, 16, 0.5);
+
+  /* Couleurs de texte et de focus partagées. Les voiles `rgba(0,0,0,x)` restent
+     volontairement littéraux dans chaque composant : `tests/unit/contraste.test.ts`
+     les relit par regex. */
+  --texte: #fff;
+  --marine: #0d1c30;
+  --contour-focus: 2px solid #fff;
+  --bleu-pluie: #bfe3ff;
 }

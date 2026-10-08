@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import './styles/verre.css';
+  import './styles/composants.css';
   import { ErreurApi } from './api.ts';
   import {
     supportePush,
@@ -81,7 +82,7 @@
     </svg>
     {#if abonneIci}
       <p class="etat">Alertes météo activées pour {villeNom}</p>
-      <button type="button" class="bascule pressable" onclick={desactiver} disabled={enCours}>
+      <button type="button" class="bascule btn-pilule pressable" onclick={desactiver} disabled={enCours}>
         {enCours ? 'Désactivation…' : 'Désactiver'}
       </button>
     {:else}
@@ -89,7 +90,7 @@
         Crée un abonnement technique (sans lien avec votre identité) enregistré sur nos serveurs
         pour cette ville. <a href="/privacy-policy.html#alertes-meteo">Détails</a>.
       </p>
-      <button type="button" class="bascule pressable" onclick={activer} disabled={enCours}>
+      <button type="button" class="bascule btn-pilule pressable" onclick={activer} disabled={enCours}>
         {enCours ? 'Activation…' : `Activer les alertes météo pour ${villeNom}`}
       </button>
     {/if}
@@ -111,7 +112,7 @@
     font-size: 0.85rem;
   }
 
-  .cloche { flex-shrink: 0; color: var(--accent-doux, #a9d3ff); }
+  .cloche { flex-shrink: 0; color: var(--accent-doux); }
 
   .etat { margin: 0; flex: 1 1 auto; }
 
@@ -133,16 +134,10 @@
   */
   .bascule {
     min-width: 0;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    background: transparent;
-    color: #fff;
-    font: inherit;
     font-size: 0.8rem;
     padding: 0.4rem 1rem;
-    border-radius: 999px;
-    cursor: pointer;
   }
-  .bascule:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .bascule:focus-visible { outline: var(--contour-focus); outline-offset: 2px; }
   .bascule:disabled { opacity: 0.6; cursor: default; }
 
   .erreur { margin: 0; flex-basis: 100%; }

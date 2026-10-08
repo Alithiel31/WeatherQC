@@ -1,5 +1,6 @@
 <script lang="ts">
   import './styles/verre.css';
+  import './styles/composants.css';
   import type { VilleDisponible, LieuCP } from './types.ts';
 
   interface Props {
@@ -96,7 +97,7 @@
   <div class="zone-declencheur">
     <button
       type="button"
-      class="declencheur pressable"
+      class="declencheur btn-verre pressable"
       bind:this={declencheur}
       aria-haspopup="true"
       aria-expanded={ouvert}
@@ -171,12 +172,9 @@
      dans App.svelte. */
   .declencheur {
     display: flex; align-items: center; gap: 0.4rem;
-    border: 1px solid var(--verre-bordure, rgba(112,170,255,0.22));
-    background: rgba(0,0,0,0.25); color: #fff; font: inherit;
-    font-weight: 600; padding: 0.45rem 1.1rem; border-radius: 999px; cursor: pointer;
+    font-weight: 600; padding: 0.45rem 1.1rem;
     backdrop-filter: blur(10px);
   }
-  .declencheur:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
   .chevron { transition: transform 0.15s ease; }
   .chevron.ouvert { transform: rotate(180deg); }
@@ -189,8 +187,8 @@
     display: flex; flex-direction: column; gap: 0.15rem;
     margin: 0; padding: 0.35rem;
     min-width: 12rem; max-width: min(85vw, 16rem);
-    background: #0d1c30; border-radius: 0.9rem;
-    border: 1px solid var(--verre-bordure-vive, rgba(112,170,255,0.42));
+    background: var(--marine); border-radius: 0.9rem;
+    border: 1px solid var(--verre-bordure-vive);
     box-shadow: 0 1rem 2.5rem rgba(0,0,0,0.5);
     backdrop-filter: blur(16px);
     list-style: none;
@@ -203,6 +201,6 @@
   }
   .panneau button:hover { background: rgba(255,255,255,0.1); }
   /* Fond clair + texte marine : cf. le même choix dans `RechercheCodePostal.svelte`. */
-  .panneau button.active { background: var(--accent-doux, #a9d3ff); color: #0d1c30; }
-  .panneau button:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
+  .panneau button.active { background: var(--accent-doux); color: var(--marine); }
+  .panneau button:focus-visible { outline: var(--contour-focus); outline-offset: -2px; }
 </style>

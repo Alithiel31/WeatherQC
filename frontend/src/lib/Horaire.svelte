@@ -1,5 +1,6 @@
 <script lang="ts">
   import './styles/verre.css';
+  import './styles/composants.css';
   import { iconeMeteo, descriptionMeteo, degres, heureCourte, jourCourt } from './meteo.ts';
   import type { Unite } from './meteo.ts';
   import type { PrevisionsHoraires } from './types.ts';
@@ -20,7 +21,7 @@
 </script>
 
 <section class="carte-verre" aria-label="Prévisions horaires">
-  <h2>Heure par heure — 48 h</h2>
+  <h2 class="titre-carte">Heure par heure — 48 h</h2>
   <!--
     `overflow-x: auto` sans `tabindex` : un conteneur défilant n'est focusable par
     aucun moyen au clavier, donc tout ce qui dépasse la sixième heure était hors
@@ -71,12 +72,9 @@
     background: rgba(0,0,0,0.2);
     padding: 1.1rem 0 0.9rem;
   }
-  h2 {
-    margin: 0 1.1rem 0.75rem; font-size: 0.75rem; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.75;
-  }
+  h2 { margin: 0 1.1rem 0.75rem; }
   .bande { overflow-x: auto; scrollbar-width: thin; }
-  .bande:focus-visible { outline: 2px solid #fff; outline-offset: -2px; border-radius: 0.5rem; }
+  .bande:focus-visible { outline: var(--contour-focus); outline-offset: -2px; border-radius: 0.5rem; }
   ul {
     display: flex; gap: 0.55rem;
     padding: 0 1.1rem 0.5rem; margin: 0; list-style: none;
@@ -90,14 +88,14 @@
   .heure { font-size: 0.72rem; opacity: 0.75; white-space: nowrap; }
   .icone { font-size: 1.3rem; }
   .temp  { font-weight: 600; }
-  .pluie { font-size: 0.68rem; color: #bfe3ff; }
+  .pluie { font-size: 0.68rem; color: var(--bleu-pluie); }
   .minuit { border-left: 1px solid rgba(255,255,255,0.35); margin-left: 0.15rem; }
 
   /* L'échéance courante ("Maint.") se distingue par la bordure/lueur bleu
      électrique plutôt que par une opacité réduite des autres — cf. la
      hiérarchie voulue : un seul repère fort, pas un dégradé de gris. */
   .maintenant {
-    border-color: var(--verre-bordure-vive, rgba(112,170,255,0.42));
+    border-color: var(--verre-bordure-vive);
     background: rgba(77, 163, 255, 0.12);
     box-shadow: 0 0 0 1px rgba(77, 163, 255, 0.2) inset;
   }

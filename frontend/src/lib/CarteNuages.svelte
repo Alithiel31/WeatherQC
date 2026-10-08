@@ -3,6 +3,7 @@
   import L from 'leaflet';
   import 'leaflet/dist/leaflet.css';
   import './styles/verre.css';
+  import './styles/composants.css';
   import { framesRainViewer, HOTE_TUILES_DEFAUT } from './api.ts';
   import { heureMinute, resumeCarte } from './meteo.ts';
   import { creerAnimation } from './animationFrames.svelte.ts';
@@ -213,7 +214,7 @@
 
 <section class="carte-verre" aria-label="Carte animée des nuages et précipitations">
   <header>
-    <h2>Carte animée — {nom}</h2>
+    <h2 class="titre-carte">Carte animée — {nom}</h2>
     <div class="modes" role="group" aria-label="Type de couche">
       <button
         class="pressable"
@@ -280,28 +281,24 @@
     display: flex; justify-content: space-between; align-items: center;
     gap: 0.5rem; margin-bottom: 0.7rem;
   }
-  h2 {
-    margin: 0; font-size: 0.75rem; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.75;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
+  h2 { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .modes {
     display: inline-flex; gap: 0.2rem;
-    background: rgba(0,0,0,0.25); border-radius: 999px; padding: 0.2rem; flex-shrink: 0;
-    border: 1px solid var(--verre-bordure, rgba(112,170,255,0.22));
+    background: rgba(0,0,0,0.25); border-radius: var(--rayon-pilule); padding: 0.2rem; flex-shrink: 0;
+    border: 1px solid var(--verre-bordure);
   }
   .modes button {
     border: 0; background: transparent; color: #fff; font: inherit;
     font-size: 0.78rem; font-weight: 600; padding: 0.3rem 0.8rem;
-    border-radius: 999px; cursor: pointer;
+    border-radius: var(--rayon-pilule); cursor: pointer;
   }
   /* Fond clair + texte marine : cf. le même choix dans `RechercheCodePostal.svelte`. */
-  .modes button.active { background: var(--accent-doux, #a9d3ff); color: #0d1c30; }
-  .modes button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .modes button.active { background: var(--accent-doux); color: var(--marine); }
+  .modes button:focus-visible { outline: var(--contour-focus); outline-offset: 2px; }
   .resume { margin: 0 0 0.7rem; font-size: 0.85rem; opacity: 0.9; }
   .carte {
     height: 16rem; border-radius: 0.9rem; overflow: hidden;
-    border: 1px solid var(--verre-bordure, rgba(112,170,255,0.22));
+    border: 1px solid var(--verre-bordure);
   }
   .controles { display: flex; align-items: center; gap: 0.7rem; margin-top: 0.7rem; }
   .lecture {
@@ -309,8 +306,8 @@
     width: 2.2rem; height: 2.2rem; border-radius: 50%; font-size: 0.9rem;
     cursor: pointer; flex-shrink: 0;
   }
-  .lecture:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-  input[type="range"] { flex: 1; accent-color: var(--accent, #4da3ff); }
+  .lecture:focus-visible { outline: var(--contour-focus); outline-offset: 2px; }
+  input[type="range"] { flex: 1; accent-color: var(--accent); }
   .heure { font-size: 0.85rem; font-variant-numeric: tabular-nums; min-width: 4rem; text-align: right; }
   .erreur { margin: 0.7rem 0 0; font-size: 0.85rem; opacity: 0.85; }
 </style>

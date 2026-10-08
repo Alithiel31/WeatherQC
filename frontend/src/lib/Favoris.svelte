@@ -1,5 +1,6 @@
 <script lang="ts">
   import './styles/verre.css';
+  import './styles/composants.css';
   import { previsionsVille, previsionsCoordonnees } from './api.ts';
   import { cleFavori } from './preferences.svelte.ts';
   import { iconeMeteo, descriptionMeteo, degres } from './meteo.ts';
@@ -71,7 +72,7 @@
 </script>
 
 <section class="favoris carte-verre" aria-label="Lieux favoris">
-  <h2>Favoris</h2>
+  <h2 class="titre-carte">Favoris</h2>
   {#if favoris.length === 0}
     <p class="vide">
       Aucun favori pour l'instant — l'étoile à côté du nom de lieu en ajoute un.
@@ -117,14 +118,7 @@
     padding: 1.1rem;
     margin-top: 0.9rem;
   }
-  h2 {
-    margin: 0 0 0.6rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    opacity: 0.75;
-  }
+  h2 { margin: 0 0 0.6rem; }
   .vide { margin: 0; font-size: 0.9rem; opacity: 0.85; }
   ul { margin: 0; padding: 0; list-style: none; }
   li {
@@ -132,7 +126,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0;
-    border-top: 1px solid var(--verre-bordure, rgba(112, 170, 255, 0.22));
+    border-top: 1px solid var(--verre-bordure);
   }
   li:first-child { border-top: 0; }
   .cible {
@@ -180,5 +174,5 @@
     cursor: pointer;
   }
   .retirer:focus-visible,
-  .cible:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .cible:focus-visible { outline: var(--contour-focus); outline-offset: 2px; }
 </style>
