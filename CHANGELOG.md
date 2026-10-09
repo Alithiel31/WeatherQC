@@ -4,6 +4,9 @@
 
 ### Changed
 
+- Le conteneur frontend écoute sur le port **8080** et non plus 80 (nginx ne tourne plus en
+  root). Le label Traefik `loadbalancer.server.port` et le port republié par la CI suivent ;
+  toute autre configuration qui visait directement le port 80 du conteneur doit être mise à jour
 - Le frontend est servi par Traefik (réseau externe `traefik-net`, routage sur `qcweather.alithiel31.dev`) au lieu
   d'un port 80 publié sur l'hôte ; `TRUST_PROXY_HOPS` passe de 2 à 3 (cloudflared + Traefik + nginx). La CI crée
   `traefik-net` et republie le port 80 par un fichier de surcharge généré à la volée
@@ -106,6 +109,17 @@
   `docs/`), pour garantir que la version française reste celle affichée
 
 ### Security
+
+- Les conteneurs ne tournent plus en root : le backend s'exécute en `node` (UID 1000) et le
+  frontend sert depuis `nginxinc/nginx-unprivileged` (UID 101). Une faille dans l'API ou une
+  dépendance ne donne plus un shell root dans le conteneur. Le compose ajoute `read_only`,
+  `cap_drop: ALL` et `no-new-privileges` ; seuls `/tmp` (en mémoire) et le volume des abonnements
+  restent inscriptibles. Un service `backend-data-init` (root, capacité `CHOWN` seule) rend à
+  `node` un volume `backend-data` créé avant ce changement, sans quoi le backend ne pourrait plus
+  ouvrir la base SQLite au premier déploiement
+- Nouveau job `dockerfiles` dans `ci.yml` : `hadolint` (binaire vérifié par empreinte) analyse les
+  deux Dockerfiles. Les quatre lignes `ARG`/`ENV` des clés `VITE_*` sont ignorées avec la raison
+  écrite sur place : ce sont des clés publiques, embarquées dans le bundle
 
 - Toutes les actions GitHub sont épinglées par SHA de commit (30 références) au lieu d'un tag
   mobile, avec la version en commentaire : un tag republié par un compte compromis n'exécute plus

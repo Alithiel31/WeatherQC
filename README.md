@@ -70,14 +70,15 @@ docker compose --env-file frontend/.env --env-file backend/.env up --build -d
 
 > **Prérequis** : le compose rejoint le réseau externe `traefik-net` (celui de Traefik sur Caesura).
 > Hors Caesura, crée-le une fois avec `docker network create traefik-net`. Comme aucun port n'est
-> publié, un test local sans Traefik demande de republier le port 80 :
+> publié, un test local sans Traefik demande de republier le port du conteneur (8080 : nginx ne
+> tourne pas en root, il ne peut pas lier le 80) sur le 80 de l'hôte :
 >
 > ```bash
 > docker compose --env-file frontend/.env --env-file backend/.env \
 >   -f docker-compose.yml -f - up --build -d <<'EOF'
 > services:
 >   frontend:
->     ports: ['80:80']
+>     ports: ['80:8080']
 > EOF
 > ```
 

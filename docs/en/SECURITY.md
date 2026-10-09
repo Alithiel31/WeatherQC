@@ -67,6 +67,9 @@ Before reporting something already covered, a few existing mechanisms (detailed 
   processing of unvalidated data.
 - **Headers** — `helmet` on the API side, CSP/HSTS/`X-Content-Type-Options` set by nginx on the
   HTML document side (see `frontend/nginx.conf`).
+- **Containers** — neither the backend (UID 1000) nor nginx (`nginx-unprivileged`, UID 101,
+  listening on port 8080) runs as root; read-only filesystem, no Linux capabilities,
+  `no-new-privileges`. Dockerfiles are linted with `hadolint` on every PR.
 - **Base images** — the Docker images (`node:*-alpine`, `nginx:alpine`) are updated weekly via
   Dependabot, and `apk update && apk upgrade` runs on every build to pick up a patch published
   between two tags.

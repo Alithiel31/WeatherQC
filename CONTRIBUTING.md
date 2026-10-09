@@ -76,6 +76,8 @@ curl -fsSI localhost/ | grep -i content-security-policy
 docker compose down -v
 ```
 
+Les conteneurs tournent sans privilèges (UID 1000 pour le backend, 101 pour nginx), système de fichiers en lecture seule, aucune capacité Linux : seuls `/tmp` et le volume `backend-data` sont inscriptibles. Une écriture ailleurs échoue avec `Read-only file system` — c'est voulu. Si un nouveau code doit écrire sur disque, le chemin va dans un volume, pas dans l'image. Les Dockerfiles passent aussi par `hadolint` (`hadolint backend/Dockerfile frontend/Dockerfile`, binaire à installer en local).
+
 ### Android (job `build` de `android.yml`)
 
 Ne se déclenche que sur une PR touchant `twa-qcweather/**` — à reproduire avant toute montée du wrapper Gradle, d'AGP ou d'`androidbrowserhelper` :

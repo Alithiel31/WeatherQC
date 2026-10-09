@@ -6,13 +6,61 @@ x-logs: &logs
     max-size: '10m'
     max-file: '3'
 
+# Durcissement commun aux conteneurs applicatifs. Un processus compromis se
+# retrouve sans écriture possible sur le système de fichiers, sans capacité
+# Linux, et sans moyen de regagner des privilèges. Les seuls endroits
+# inscriptibles sont /tmp (en mémoire, vidé à chaque redémarrage) et, pour le
+# backend, le volume des abonnements.
+x-durcissement: &durcissement
+  read_only: true
+  tmpfs:
+    - /tmp
+  cap_drop:
+    - ALL
+  security_opt:
+    - 'no-new-privileges:true'
+
 services:
+  # Les conteneurs ne tournent plus en root, mais un volume créé avant ce
+  # changement appartient encore à root : sans cette étape, le backend ne
+  # pourrait plus ouvrir la base SQLite au premier déploiement et les
+  # abonnements existants deviendraient illisibles. Idempotent, quelques
+  # millisecondes ; c'est le seul conteneur qui garde root, pour cette commande
+  # et avec la seule capacité CHOWN.
+  backend-data-init:
+    build:
+      context: ./backend
+      target: production
+    user: '0:0'
+    entrypoint: ['chown', '-R', 'node:node', '/app/data']
+    labels:
+      - 'homelab.tier=app'
+    volumes:
+      - backend-data:/app/data
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+    security_opt:
+      - 'no-new-privileges:true'
+    restart: 'no'
+    logging: *logs
+    deploy:
+      resources:
+        limits:
+          memory: 16M
+
   backend:
+    <<: *durcissement
     build:
       context: ./backend
       target: production
     labels:
       - 'homelab.tier=app'
+    depends_on:
+      backend-data-init:
+        condition: service_completed_successfully
     env_file:
       - ./backend/.env
     environment:
@@ -47,6 +95,7 @@ services:
       start_period: 10s
 
   frontend:
+    <<: *durcissement
     build:
       context: ./frontend
       target: production
@@ -67,7 +116,7 @@ services:
       - 'traefik.enable=true'
       - 'traefik.http.routers.qcweather.rule=Host(`qcweather.alithiel31.dev`)'
       - 'traefik.http.routers.qcweather.entrypoints=web'
-      - 'traefik.http.services.qcweather.loadbalancer.server.port=80'
+      - 'traefik.http.services.qcweather.loadbalancer.server.port=8080'
     depends_on:
       backend:
         condition: service_healthy

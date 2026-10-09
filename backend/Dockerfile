@@ -35,6 +35,18 @@ RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
+# Le processus ne tourne plus en root : une faille dans l'API ou une dépendance
+# ne donne plus un shell root dans le conteneur. `node` (UID 1000) existe déjà
+# dans l'image de base ; l'UID numérique, et non le nom, pour qu'un orchestrateur
+# puisse vérifier que le conteneur n'est pas root (hadolint DL3066).
+#
+# Le code reste à root, en lecture seule pour `node` : un processus compromis ne
+# peut pas le réécrire. Seul `/app/data` — le volume des abonnements, voir
+# `docker-compose.yml` — appartient à `node`. Créé ici pour qu'un volume neuf en
+# hérite ; un volume existant garde son propriétaire, d'où le service
+# `backend-data-init` du compose.
+RUN mkdir -p /app/data && chown node:node /app/data
 ENV NODE_ENV=production PORT=3005
 EXPOSE 3005
+USER 1000
 CMD ["node", "dist/app.js"]
