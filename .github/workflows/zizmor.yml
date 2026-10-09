@@ -5,16 +5,19 @@ name: Audit des workflows
 # keystore Android, la clé du Play Store et les identifiants Infisical du Pi.
 # zizmor les analyse statiquement : injection par `${{ }}` dans un `run`,
 # déclencheurs dangereux, permissions trop larges, actions non épinglées par
-# SHA, jeton Git laissé dans `.git/config` après `checkout`.
+# SHA, jeton Git laissé dans `.git/config` après `checkout`. Il lit aussi
+# `dependabot.yml` (délai avant de proposer une version fraîchement publiée).
 on:
   push:
     branches: [main]
     paths:
       - '.github/workflows/**'
+      - '.github/dependabot.yml'
       - '.github/zizmor.yml'
   pull_request:
     paths:
       - '.github/workflows/**'
+      - '.github/dependabot.yml'
       - '.github/zizmor.yml'
   # Comme pour CodeQL et gitleaks : les règles s'enrichissent avec les versions,
   # et une action peut être déclarée vulnérable sans qu'une ligne du dépôt bouge.

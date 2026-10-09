@@ -93,7 +93,7 @@ Any change to `.github/workflows/` goes through `zizmor`:
 
 ```bash
 pip install zizmor==1.30.1
-zizmor --offline .github/workflows   # `--offline`: CI also runs the online audits
+zizmor --offline .github   # `--offline`: CI also runs the online audits
 ```
 
 Two rules keep it from failing:

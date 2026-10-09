@@ -54,7 +54,8 @@ Avant de signaler un problème déjà couvert, quelques mécanismes existants (d
 
 - **Dépendances** — `npm audit --audit-level=high` bloque la CI sur les dépendances de
   production ; Dependabot ouvre une PR hebdomadaire par écosystème (npm, Docker, Gradle, GitHub
-  Actions).
+  Actions), et n'en propose une version qu'après 7 jours de recul (`cooldown`) — hors mises à
+  jour de sécurité.
 - **Secrets** — le workflow `secrets.yml` (gitleaks) scanne tout l'historique à chaque push,
   chaque PR et chaque semaine.
 - **Workflows** — `zizmor.yml` audite statiquement les workflows (injection dans un `run`,

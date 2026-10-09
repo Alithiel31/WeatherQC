@@ -120,6 +120,9 @@
   déclencheurs dangereux, permissions trop larges, actions non épinglées), à chaque PR qui touche
   `.github/` et chaque semaine. Les quatre exceptions admises sont justifiées dans
   `.github/zizmor.yml`
+- Dependabot : `cooldown` de 7 jours sur chaque écosystème (`dependabot.yml`). Une version
+  fraîchement publiée n'est plus proposée avant d'avoir eu le temps d'être retirée si elle est
+  compromise ; les mises à jour de sécurité ne sont pas concernées
 
 ## [3.2.0] - 2026-09-23
 
