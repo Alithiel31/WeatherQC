@@ -5,7 +5,7 @@
 # 26 parce que c'est le tag le plus récent ; ce n'est pas le même critère.
 
 # ── deps : dépendances complètes (dev + prod) ─────────────────────────────
-FROM node:24-alpine AS deps
+FROM node:25-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -22,7 +22,7 @@ COPY . .
 RUN npx tsc
 
 # ── production : image minimale, cible de docker-compose ──────────────────
-FROM node:24-alpine AS production
+FROM node:25-alpine AS production
 # Applique les derniers correctifs de sécurité Alpine (ex. CVE-2026-14456 sur
 # libssl3/libcrypto3) : l'image de base peut ne pas avoir été republiée depuis
 # la sortie du correctif upstream, indépendamment de l'âge du tag.
