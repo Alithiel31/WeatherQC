@@ -262,12 +262,13 @@ jobs:
           cp frontend/.env.example frontend/.env
           # En prod, le compose ne publie aucun port et rejoint le réseau externe
           # `traefik-net` (Traefik route par nom d'hôte). Ici il n'y a pas de Traefik :
-          # on crée le réseau, et on republie le port 80 par un fichier de surcharge
+          # on crée le réseau, et on republie le port du conteneur (8080, nginx ne
+          # tourne pas en root) sur le 80 de l'hôte par un fichier de surcharge
           # généré à la volée (non versionné), pour que les `curl localhost` ci-dessous
           # testent bien le frontend. COMPOSE_FILE vaut pour toutes les étapes
           # suivantes (up, logs, down).
           docker network create traefik-net
-          printf "services:\n  frontend:\n    ports:\n      - '80:80'\n" > docker-compose.ci.yml
+          printf "services:\n  frontend:\n    ports:\n      - '80:8080'\n" > docker-compose.ci.yml
           echo "COMPOSE_FILE=docker-compose.yml:docker-compose.ci.yml" >> "$GITHUB_ENV"
 
       # Pas de `nginx -t` isolé : `proxy_pass http://backend:3005` exige de
@@ -357,6 +358,44 @@ jobs:
       - name: Arrêter la pile
         if: always()
         run: docker compose --env-file frontend/.env down -v
+
+  dockerfiles:
+    name: Dockerfiles — hadolint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # `docker build` accepte n'importe quel Dockerfile qui compile ; hadolint
+      # relève ce qu'il laisse passer : `apk add` sans `--no-cache`, `COPY` là où
+      # `ADD` est visé, `cd` dans un `RUN`, commande `curl | sh`, etc. Il ne
+      # signale PAS l'absence de `USER` — cette protection-là se vérifie par le
+      # démarrage réel du job `docker`, qui échoue si le conteneur ne peut plus
+      # écrire où il ne devrait pas.
+      #
+      # Binaire officiel plutôt que `hadolint/hadolint-action` (Docker-in-Docker,
+      # image à part), vérifié par empreinte comme gitleaks dans `secrets.yml`.
+      # Version et empreinte se relèvent à la main, Dependabot ne lisant pas les
+      # étapes `run` :
+      #   git ls-remote --tags https://github.com/hadolint/hadolint
+      #   puis `sha256sum` du binaire `hadolint-linux-x86_64` de la release.
+      - name: Installer hadolint
+        env:
+          VERSION: v2.15.1
+          SHA256: c7187db94eeeeca956519a6af171adc31453941a1e777961f6e680f697c8c507
+        run: |
+          set -euo pipefail
+          curl -fsSL -o hadolint \
+            "https://github.com/hadolint/hadolint/releases/download/${VERSION}/hadolint-linux-x86_64"
+          echo "${SHA256}  hadolint" | sha256sum -c -
+          sudo install -m 0755 hadolint /usr/local/bin/hadolint
+
+      # Seuil par défaut de hadolint : même les `info` font échouer le job.
+      - name: Analyser les Dockerfiles
+        run: hadolint backend/Dockerfile frontend/Dockerfile
 
   dependances:
     name: Revue des dépendances ajoutées

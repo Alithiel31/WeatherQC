@@ -68,6 +68,9 @@ Avant de signaler un problème déjà couvert, quelques mécanismes existants (d
   traitement de données non validées.
 - **En-têtes** — `helmet` côté API, CSP/HSTS/`X-Content-Type-Options` posés par nginx côté
   document HTML (voir `frontend/nginx.conf`).
+- **Conteneurs** — ni le backend (UID 1000) ni nginx (`nginx-unprivileged`, UID 101, port 8080)
+  ne tournent en root ; système de fichiers en lecture seule, aucune capacité Linux,
+  `no-new-privileges`. Les Dockerfiles sont analysés par `hadolint` à chaque PR.
 - **Images de base** — les images Docker (`node:*-alpine`, `nginx:alpine`) sont mises à jour
   chaque semaine via Dependabot, et `apk update && apk upgrade` s'exécute à chaque build pour
   absorber un correctif publié entre deux tags.
