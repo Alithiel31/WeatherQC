@@ -35,10 +35,11 @@ jobs:
       # `fetch-depth: 0` — le versionCode se recalcule à partir du nombre de
       # commits, cf. `twa-qcweather/app/build.gradle`.
       - name: Checkout du commit publié
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Download AAB artifact
         uses: dawidd6/action-download-artifact@eab87c9830c39eff17e5a6eadb20bfb4bc880477 # v27

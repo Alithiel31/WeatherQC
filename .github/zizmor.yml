@@ -1,0 +1,27 @@
+# Configuration de zizmor (cf. .github/workflows/zizmor.yml).
+#
+# Chaque exception est un risque examiné, pas une alerte réduite au silence : la
+# raison est écrite en face, et la règle reste active partout ailleurs.
+rules:
+  dangerous-triggers:
+    ignore:
+      # `workflow_run` peut exécuter, avec des secrets, du code issu d'une PR de
+      # fork. Ici le déclencheur est borné deux fois : `branches: [main]`, et
+      # `workflow_run.event == 'push'` dans le `if:` du job, ce qui écarte toute
+      # CI de pull request — y compris une branche de fork appelée `main`.
+      # Le déploiement ne part donc que d'un commit déjà fusionné.
+      - deploy-web.yml
+      # Même schéma : le workflow n'écoute que `Build TWA Android App`, lui-même
+      # limité à `push` sur `main`, et un lancement manuel exige `refs/heads/main`.
+      - deploy-twa.yml
+
+  adhoc-packages:
+    ignore:
+      # Installation globale hors lockfile, mais à version exacte (1.25.0) :
+      # un paquet compromis ne s'y glisserait pas sans changer ce numéro, qui
+      # se relève à la main et passe en revue. Un lockfile dédié à un outil
+      # installé une seule fois n'apporterait pas de garantie de plus.
+      - build-twa.yml
+      # Idem pour Infisical CLI (0.43.137) : version exacte, et l'étape ne
+      # s'exécute que si le binaire est absent du Pi.
+      - deploy-web.yml

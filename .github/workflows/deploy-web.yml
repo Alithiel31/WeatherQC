@@ -48,13 +48,14 @@ jobs:
       # n'est pas versionné, et sur ce Pi il n'est pas régénéré à chaque run
       # comme dans `ci.yml` (qui copie `.env.example`) — il est déposé une
       # seule fois, à la main, avec les vraies valeurs de production.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           clean: false
           # Le commit que la CI a validé, pas la tête de `main` : entre la CI et
           # ici, `main` a pu avancer. `fetch-depth: 2` pour comparer au parent.
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 2
+          persist-credentials: false
 
       # `workflow_run` ne sait pas filtrer par chemin (l'ancien `push` le
       # faisait) : sans cette étape, un commit qui ne touche que `docs/`
@@ -85,9 +86,16 @@ jobs:
       # alors que `npm install -g` ne demande pas sudo tant que Node tourne en
       # espace utilisateur — déjà le cas ici puisque le runner exécute les
       # scripts npm du projet.
+      #
+      # Version épinglée : l'étape suivante passe à ce binaire le client ID et le
+      # secret Universal Auth qui ouvrent les secrets de production. Une version
+      # flottante laisserait un paquet npm compromis les lire. Même règle que
+      # Bubblewrap dans `build-twa.yml` ; Dependabot ne lit pas les étapes `run`,
+      # le numéro se relève à la main (`npm view @infisical/cli version`) — de
+      # préférence une version publiée depuis quelques semaines.
       - name: Installer Infisical CLI (si absent)
         if: steps.portee.outputs.deployer == 'true'
-        run: command -v infisical >/dev/null 2>&1 || npm install -g @infisical/cli
+        run: command -v infisical >/dev/null 2>&1 || npm install -g @infisical/cli@0.43.137
 
       - name: Build & redémarrage
         if: steps.portee.outputs.deployer == 'true'

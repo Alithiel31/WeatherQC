@@ -2,6 +2,10 @@ version: 2
 
 # Trois manifestes npm distincts (racine, backend, frontend) : chacun a besoin de
 # sa propre entrée, Dependabot ne parcourt pas les sous-dossiers tout seul.
+# `cooldown` : Dependabot attend 7 jours après la publication d'une version avant de la
+# proposer. Un paquet ou une action compromis est en général retiré dans les jours qui suivent ;
+# sans délai, une PR hebdomadaire pouvait en embarquer un publié la veille. Les mises à jour de
+# sécurité ne sont pas retardées. Exigé par `zizmor` (règle `dependabot-cooldown`).
 updates:
   - package-ecosystem: npm
     directory: /
@@ -10,6 +14,8 @@ updates:
     open-pull-requests-limit: 3
     commit-message:
       prefix: chore
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: npm
     directory: /backend
@@ -33,6 +39,8 @@ updates:
       # aligné — à ce moment cette entrée saute, ici et côté frontend.
       - dependency-name: 'typescript'
         versions: ['7.x']
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: npm
     directory: /frontend
@@ -50,6 +58,8 @@ updates:
       # deux moitiés d'un dépôt qui partage sa configuration de types.
       - dependency-name: 'typescript'
         versions: ['7.x']
+    cooldown:
+      default-days: 7
 
   # Les actions manipulant le keystore et la clé Play Store sont épinglées par
   # SHA : sans Dependabot, ces épingles ne bougeraient plus jamais.
@@ -59,6 +69,8 @@ updates:
       interval: weekly
     commit-message:
       prefix: ci
+    cooldown:
+      default-days: 7
 
   # Les images de base ne bougeaient pas : `node:22-alpine` et `nginx:alpine`
   # sont pourtant là où atterrissent les CVE d'Alpine et de nginx, et c'est ce
@@ -69,6 +81,8 @@ updates:
       interval: weekly
     commit-message:
       prefix: chore
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: docker
     directory: /frontend
@@ -76,6 +90,8 @@ updates:
       interval: weekly
     commit-message:
       prefix: chore
+    cooldown:
+      default-days: 7
 
   # Le module signé et envoyé au Play Store était le seul sans automatisation de
   # dépendances : AGP, `androidbrowserhelper` et le wrapper Gradle.
@@ -98,3 +114,5 @@ updates:
       # et d'`androidbrowserhelper` restent proposées.
       - dependency-name: 'gradle-wrapper'
         versions: ['9.x']
+    cooldown:
+      default-days: 7

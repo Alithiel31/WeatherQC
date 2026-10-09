@@ -1,0 +1,60 @@
+name: Audit des workflows
+
+# `npm audit`, Trivy, CodeQL et gitleaks surveillent le code, les dépendances et
+# les images. Rien ne regardait les workflows eux-mêmes — alors qu'ils portent le
+# keystore Android, la clé du Play Store et les identifiants Infisical du Pi.
+# zizmor les analyse statiquement : injection par `${{ }}` dans un `run`,
+# déclencheurs dangereux, permissions trop larges, actions non épinglées par
+# SHA, jeton Git laissé dans `.git/config` après `checkout`. Il lit aussi
+# `dependabot.yml` (délai avant de proposer une version fraîchement publiée).
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - '.github/dependabot.yml'
+      - '.github/zizmor.yml'
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - '.github/dependabot.yml'
+      - '.github/zizmor.yml'
+  # Comme pour CodeQL et gitleaks : les règles s'enrichissent avec les versions,
+  # et une action peut être déclarée vulnérable sans qu'une ligne du dépôt bouge.
+  schedule:
+    - cron: '17 5 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zizmor-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  zizmor:
+    name: zizmor
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Action officielle de zizmor, épinglée par SHA comme les autres actions
+      # tierces du dépôt. Sa propre version et celle de zizmor se relèvent à
+      # deux endroits : Dependabot suit la première, pas la seconde (entrée
+      # `version`, à relever à la main — `pip index versions zizmor`).
+      #
+      # `advanced-security: false` : les constats s'affichent en annotations sur
+      # la PR et font échouer le job. En mode SARIF, ils iraient dans l'onglet
+      # Security sans jamais bloquer la fusion.
+      #
+      # Les audits en ligne (action déclarée vulnérable, SHA qui ne correspond
+      # à aucun tag, etc.) utilisent le jeton du workflow, en lecture seule.
+      - name: Analyser les workflows
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          version: 1.30.1
+          advanced-security: false

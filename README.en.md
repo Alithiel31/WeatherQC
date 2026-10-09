@@ -177,17 +177,17 @@ rather than in this repository.
 
 ## Stack
 
-| Layer          | Technology                                                                                                                                        |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Backend        | Express 5 · Node.js 22+ · TypeScript 5.6                                                                                                          |
-| Frontend       | Svelte 5 · TypeScript · Vite 8                                                                                                                    |
-| PWA            | vite-plugin-pwa · Service Worker (network-first)                                                                                                  |
-| Map            | Leaflet · RainViewer                                                                                                                              |
-| Infra          | Docker · Nginx                                                                                                                                    |
-| Network access | Tailscale                                                                                                                                         |
-| External APIs  | Open-Meteo · Open-Meteo Geocoding · Zippopotam.us · CARTO / OpenStreetMap                                                                         |
-| Android        | TWA · Bubblewrap · Google Play Store                                                                                                              |
-| CI/CD          | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml` · `deploy-web.yml` · `codeql.yml` · `secrets.yml` · `contract.yml`) |
+| Layer          | Technology                                                                                                                                                       |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend        | Express 5 · Node.js 22+ · TypeScript 5.6                                                                                                                         |
+| Frontend       | Svelte 5 · TypeScript · Vite 8                                                                                                                                   |
+| PWA            | vite-plugin-pwa · Service Worker (network-first)                                                                                                                 |
+| Map            | Leaflet · RainViewer                                                                                                                                             |
+| Infra          | Docker · Nginx                                                                                                                                                   |
+| Network access | Tailscale                                                                                                                                                        |
+| External APIs  | Open-Meteo · Open-Meteo Geocoding · Zippopotam.us · CARTO / OpenStreetMap                                                                                        |
+| Android        | TWA · Bubblewrap · Google Play Store                                                                                                                             |
+| CI/CD          | GitHub Actions (`ci.yml` · `android.yml` · `build-twa.yml` · `deploy-twa.yml` · `deploy-web.yml` · `codeql.yml` · `secrets.yml` · `zizmor.yml` · `contract.yml`) |
 
 ## Further documentation
 

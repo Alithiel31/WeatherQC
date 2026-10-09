@@ -53,9 +53,14 @@ Before reporting something already covered, a few existing mechanisms (detailed 
 [README](./README.en.md)):
 
 - **Dependencies** — `npm audit --audit-level=high` blocks CI on production dependencies;
-  Dependabot opens a weekly PR per ecosystem (npm, Docker, Gradle, GitHub Actions).
+  Dependabot opens a weekly PR per ecosystem (npm, Docker, Gradle, GitHub Actions) and only
+  proposes a version 7 days after its release (`cooldown`) — security updates excepted.
 - **Secrets** — the `secrets.yml` workflow (gitleaks) scans the full history on every push, every
   PR, and weekly.
+- **Workflows** — `zizmor.yml` statically audits the workflows (injection in a `run`, dangerous
+  triggers, excessive permissions). GitHub Actions are pinned to a commit SHA, `checkout` steps
+  don't keep the Git token (`persist-credentials: false`), and tools installed in a `run` step
+  (Bubblewrap, Infisical CLI) are installed at an exact version.
 - **Input** — every request parameter is validated with Zod
   (`backend/src/schemas/validation.ts`); every upstream API response is too
   (`backend/src/schemas/*.schema.ts`) — an external contract drift returns a 502, never
