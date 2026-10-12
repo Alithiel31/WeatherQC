@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr-CA">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Page introuvable — Météo Québec</title>
+    <!--
+      Servie par nginx via `error_page 404` (cf. nginx.conf), sur l'URL demandée :
+      les liens sont donc absolus. Même feuille que les pages légales, sans
+      JavaScript (la CSP interdit le script inline). Bilingue en une seule page :
+      l'URL ne dit rien de la langue du visiteur.
+    -->
+    <link rel="stylesheet" href="/legal.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Page introuvable</h1>
+      <p>Ce fichier n'existe pas ou a été déplacé.</p>
+      <p><a href="/">← Retour à Météo Québec</a></p>
+
+      <h2>Page not found</h2>
+      <p>This file does not exist or has moved.</p>
+      <p><a href="/">← Back to Météo Québec</a></p>
+    </main>
+  </body>
+</html>

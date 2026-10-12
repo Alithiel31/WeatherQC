@@ -15,6 +15,9 @@
 
 ### Added
 
+- Page `404.html` bilingue servie par nginx (`error_page 404`) pour les fichiers statiques manquants
+  (`/assets/*`, `/icons/*`…). Les routes inconnues retombent toujours sur la coquille SPA, et les
+  réponses d'erreur de l'API ne sont pas interceptées
 - `GET /api/previsions/*` expose de nouvelles données météo, toutes additives (aucun champ renommé
   ni retiré) et nullables : direction du vent, rafales et UV dans `actuel` ; ressenti, humidité,
   vent, direction, `precipitationMm` et UV par heure ; UV max, cumul de pluie en mm, vent et
