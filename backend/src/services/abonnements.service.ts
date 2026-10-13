@@ -149,7 +149,14 @@ export function effacerEnvoyee(abonnementId: number, type: string): void {
     .run(abonnementId, type);
 }
 
-/** Diagnostic — nombre total d'abonnements. */
+/** Cet endpoint est-il déjà enregistré ? Un réabonnement ne compte pas dans le plafond. */
+export function abonnementExiste(endpoint: string): boolean {
+  return (
+    connexion().prepare('SELECT 1 FROM abonnements WHERE endpoint = ?').get(endpoint) !== undefined
+  );
+}
+
+/** Nombre total d'abonnements — diagnostic, et plafond `ABONNEMENTS_MAX`. */
 export function nombreAbonnements(): number {
   const ligne = connexion().prepare('SELECT COUNT(*) AS n FROM abonnements').get() as {
     n: number;

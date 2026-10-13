@@ -2,6 +2,7 @@ import webpush, { WebPushError } from 'web-push';
 import { config } from '../config.js';
 import { log } from '../lib/log.js';
 import type { Abonnement } from './abonnements.service.js';
+import { estEndpointPushAutorise } from '../schemas/validation.js';
 import type { Notification } from './detecteur-alertes.js';
 
 /**
@@ -25,6 +26,16 @@ export async function envoyerNotification(
   if (!config.vapid) {
     log.error('Envoi de notification tenté sans clés VAPID configurées.');
     return 'echec';
+  }
+
+  // Défense en profondeur : un endpoint enregistré avant la liste blanche (voir
+  // `schemas/validation.ts`) ne doit jamais recevoir de requête du serveur.
+  // `expiree` le fait purger par le vérificateur, comme un abonnement révoqué.
+  if (!estEndpointPushAutorise(abonnement.endpoint)) {
+    log.warn('Endpoint push hors liste blanche, abonnement purgé', {
+      endpoint: abonnement.endpoint.slice(0, 200),
+    });
+    return 'expiree';
   }
 
   // Appelé à chaque envoi plutôt que mis en cache : `sendNotification` ne

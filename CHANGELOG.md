@@ -13,6 +13,15 @@
 - Refactor CSS du frontend : les styles répétés dans les composants de `frontend/src/lib/` sont
   mutualisés dans `styles/composants.css` et `styles/tokens.css`, sans changement visuel voulu
 
+### Security
+
+- `POST /api/notifications/abonnement` n'accepte plus qu'un `endpoint` HTTPS hébergé par un service
+  push reconnu (FCM, Mozilla, Apple, Windows) : une URL quelconque permettait de faire envoyer par
+  le serveur des requêtes vers son réseau local (SSRF). Un endpoint déjà enregistré hors de cette
+  liste est purgé au premier cycle d'alertes, sans être contacté
+- Abonnements push bornés : quota dédié `RATE_LIMIT_ABONNEMENT_MAX` (5/min/IP par défaut), plafond
+  global `ABONNEMENTS_MAX` (5000, 503 au-delà) et longueur maximale de `endpoint`, `p256dh` et `auth`
+
 ### Added
 
 - Page `404.html` bilingue servie par nginx (`error_page 404`) pour les fichiers statiques manquants
