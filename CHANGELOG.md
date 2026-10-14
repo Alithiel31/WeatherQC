@@ -4,6 +4,10 @@
 
 ### Changed
 
+- Performances mobiles (PageSpeed : CLS 0,6, LCP 3,8 s) : squelette de chargement aux hauteurs du
+  contenu à la place du spinner, photos de villes ramenées à 1000 px (24–67 Ko au lieu de 160–305 Ko),
+  fondu d'apparition de la photo retiré, et Saguenay converti de `.jpg` en `.webp` (plus
+  d'exception d'extension dans `villesPhotos.ts`)
 - Le conteneur frontend écoute sur le port **8080** et non plus 80 (nginx ne tourne plus en
   root). Le label Traefik `loadbalancer.server.port` et le port republié par la CI suivent ;
   toute autre configuration qui visait directement le port 80 du conteneur doit être mise à jour
