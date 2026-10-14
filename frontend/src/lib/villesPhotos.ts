@@ -7,7 +7,7 @@
  * encore livrée) garde le dégradé atmosphérique existant : `photoVille`
  * rend `null` et `ConditionsActuelles` ne tente aucun chargement.
  */
-const VILLES_AVEC_PHOTO = new Set([
+export const VILLES_AVEC_PHOTO = new Set([
   'montreal',
   'quebec',
   'gatineau',

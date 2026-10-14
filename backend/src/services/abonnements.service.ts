@@ -111,7 +111,16 @@ export function abonnementsParVille(ville: string): Abonnement[] {
       'SELECT id, ville, endpoint, p256dh, auth, cree_le AS creeLe FROM abonnements WHERE ville = ? ORDER BY id'
     )
     .all(ville);
-  return lignes as unknown as Abonnement[];
+  // `node:sqlite` type chaque colonne en `SQLOutputValue` : conversion
+  // explicite plutôt qu'un `as unknown as` qui n'aurait rien vérifié.
+  return lignes.map((l) => ({
+    id: Number(l.id),
+    ville: String(l.ville),
+    endpoint: String(l.endpoint),
+    p256dh: String(l.p256dh),
+    auth: String(l.auth),
+    creeLe: Number(l.creeLe),
+  }));
 }
 
 /** Villes ayant au moins un abonnement — évite d'interroger Open-Meteo pour les autres au cycle horaire. */
