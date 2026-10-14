@@ -22,6 +22,14 @@
 - Abonnements push bornés : quota dédié `RATE_LIMIT_ABONNEMENT_MAX` (5/min/IP par défaut), plafond
   global `ABONNEMENTS_MAX` (5000, 503 au-delà) et longueur maximale de `endpoint`, `p256dh` et `auth`
 
+### Tests
+
+- Test de contrat `backend/tests/integration/contrat-reponses.test.ts` : chaque couple méthode +
+  statut documenté dans `/api/openapi.json` est rejoué contre l'application, et le corps de réponse
+  comparé à son schéma (`openapi-reponses.ts`), champ manquant comme champ non déclaré. Un garde
+  fait échouer la CI si une opération documentée n'a pas de cas. Le champ `stack` des erreurs hors
+  production, renvoyé mais absent de la documentation, y est désormais déclaré
+
 ### Added
 
 - Page `404.html` bilingue servie par nginx (`error_page 404`) pour les fichiers statiques manquants
