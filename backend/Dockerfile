@@ -23,15 +23,14 @@ RUN npx tsc
 
 # ── production : image minimale, cible de docker-compose ──────────────────
 FROM node:24-alpine AS production
-# Applique les derniers correctifs de sécurité Alpine (ex. CVE-2026-14456 sur
-# libssl3/libcrypto3) : l'image de base peut ne pas avoir été republiée depuis
-# la sortie du correctif upstream, indépendamment de l'âge du tag.
+# Applique les derniers correctifs de sécurité Alpine : l'image de base peut ne
+# pas avoir été republiée depuis la sortie d'un correctif upstream,
+# indépendamment de l'âge du tag. Couvre notamment libssl3/libcrypto3
+# (CVE-2026-14456, DoS QUIC côté serveur OpenSSL — sans lien avec ce backend
+# qui n'expose pas de serveur QUIC, mais bloquant le scan CI) : une mise à jour
+# ciblée de ces deux paquets, en plus de celle-ci, ne changeait rien.
 RUN apk update && apk upgrade --no-cache
 WORKDIR /app
-# libssl3/libcrypto3 patchés indépendamment de la date de publication du tag
-# node:24-alpine (CVE-2026-14456, DoS QUIC côté serveur OpenSSL — sans lien
-# avec ce backend qui n'expose pas de serveur QUIC, mais bloquant le scan CI).
-RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist

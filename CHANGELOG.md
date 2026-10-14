@@ -4,6 +4,11 @@
 
 ### Changed
 
+- Ménage : `engines.node` du backend passe de `>=22` à `>=24` (la version réellement exécutée en
+  image et en CI) ; le second `apk upgrade`, redondant, est retiré de l'étape production de
+  `backend/Dockerfile` ; `abonnementsParVille` convertit ses lignes SQLite au lieu d'un
+  `as unknown as` ; un test frontend vérifie que les villes du backend, les visuels
+  (`VILLES_AVEC_PHOTO`, fichiers jour et nuit) et le repli hors ligne restent alignés
 - Test de contrat `backend/tests/integration/contrat-reponses.test.ts` : chaque couple méthode +
   statut documenté dans `/api/openapi.json` est rejoué contre l'application, et le corps de réponse
   comparé à son schéma (`openapi-reponses.ts`), champ manquant comme champ non déclaré. Un garde
