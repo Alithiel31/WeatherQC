@@ -12,7 +12,13 @@ describe('chargerConfig', () => {
     expect(config.defaultTimezone).toBe('America/Toronto');
     expect(config.fetchTimeoutMs).toBe(5000);
     expect(config.trustProxyHops).toBe(2);
-    expect(config.rateLimit).toEqual({ windowMs: 60_000, max: 100, maxGeocode: 20 });
+    expect(config.rateLimit).toEqual({
+      windowMs: 60_000,
+      max: 100,
+      maxGeocode: 20,
+      maxAbonnement: 5,
+    });
+    expect(config.abonnementsMax).toBe(5000);
     expect(config.cache.maxEntries).toBe(500);
   });
 

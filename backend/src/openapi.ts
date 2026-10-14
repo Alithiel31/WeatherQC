@@ -24,8 +24,8 @@ import {
  * Les paramètres de chaque route sont dérivés des mêmes schémas Zod que ceux
  * qui valident réellement la requête (`schemas/validation.ts`) : un champ
  * ajouté, renommé ou resserré s'y reflète tout seul, sans repasser par une
- * spec qu'on oublierait de tenir à jour. Les corps de réponse n'ont pas cette
- * garantie — voir le commentaire de `schemas/openapi-reponses.ts`.
+ * spec qu'on oublierait de tenir à jour. Les corps de réponse, eux, sont
+ * vérifiés par les tests — voir le commentaire de `schemas/openapi-reponses.ts`.
  *
  * `io: 'input'` sur les paramètres : sans lui, un champ portant un `.default()`
  * (`nom` sur `/api/previsions-coordonnees`) ressort marqué requis, puisque la

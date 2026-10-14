@@ -41,14 +41,62 @@ export const rechercheVilleSchema = z.object({
 });
 
 /**
+ * Services push des navigateurs, seuls destinataires légitimes d'un abonnement.
+ *
+ * Le vérificateur horaire envoie un POST à chaque `endpoint` enregistré. Une
+ * simple URL laissait n'importe qui faire viser au serveur une adresse de son
+ * réseau local (`http://192.168.x.x`, `http://backend:3005`, une IP Tailscale) :
+ * une SSRF depuis le Raspberry Pi. Seuls ces hôtes, en HTTPS sur le port par
+ * défaut, sont acceptés.
+ *
+ * - Chrome, Edge Chromium, Opera, Samsung Internet : `fcm.googleapis.com`
+ * - Firefox : `updates.push.services.mozilla.com`
+ * - Safari (macOS, iOS ≥ 16.4) : `web.push.apple.com`
+ * - Edge historique (WNS) : `*.notify.windows.com`
+ */
+const HOTES_PUSH_EXACTS = new Set(['fcm.googleapis.com', 'web.push.apple.com']);
+const SUFFIXES_HOTES_PUSH = [
+  '.push.services.mozilla.com',
+  '.notify.windows.com',
+  '.push.apple.com',
+];
+
+/** Longueur maximale d'un endpoint : les plus longs observés (FCM) font ~200 caractères. */
+const LONGUEUR_MAX_ENDPOINT = 1024;
+
+export function estEndpointPushAutorise(endpoint: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(endpoint);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== 'https:' || url.port !== '' || url.username || url.password) return false;
+
+  const hote = url.hostname.toLowerCase();
+  return HOTES_PUSH_EXACTS.has(hote) || SUFFIXES_HOTES_PUSH.some((s) => hote.endsWith(s));
+}
+
+const endpointSchema = z
+  .url('endpoint doit être une URL absolue')
+  .max(LONGUEUR_MAX_ENDPOINT, `endpoint max ${LONGUEUR_MAX_ENDPOINT} caractères`);
+
+/**
  * Corps attendu de `PushSubscription.toJSON()` côté navigateur — voir
  * https://developer.mozilla.org/docs/Web/API/PushSubscription/toJSON.
+ *
+ * Les clés sont bornées : `p256dh` fait 87 caractères en base64 URL-safe et
+ * `auth` 22. Sans plafond, chaque ligne pouvait porter jusqu'à 10 ko — la
+ * limite de `express.json`.
  */
 const pushSubscriptionSchema = z.object({
-  endpoint: z.url('endpoint doit être une URL absolue'),
+  endpoint: endpointSchema.refine(
+    estEndpointPushAutorise,
+    'endpoint doit désigner un service push reconnu (FCM, Mozilla, Apple, Windows) en HTTPS'
+  ),
   keys: z.object({
-    p256dh: z.string().min(1, 'p256dh requis'),
-    auth: z.string().min(1, 'auth requis'),
+    p256dh: z.string().min(1, 'p256dh requis').max(128, 'p256dh max 128 caractères'),
+    auth: z.string().min(1, 'auth requis').max(64, 'auth max 64 caractères'),
   }),
 });
 
@@ -57,6 +105,8 @@ export const abonnementSchema = z.object({
   subscription: pushSubscriptionSchema,
 });
 
+// Pas de liste blanche ici : un désabonnement ne déclenche aucun appel sortant,
+// et il doit rester possible de retirer un endpoint enregistré avant elle.
 export const desabonnementSchema = z.object({
-  endpoint: z.url('endpoint doit être une URL absolue'),
+  endpoint: endpointSchema,
 });

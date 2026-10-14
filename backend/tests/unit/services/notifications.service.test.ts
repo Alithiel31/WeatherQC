@@ -26,7 +26,11 @@ import webpush, { WebPushError } from 'web-push';
 import { config } from '../../../src/config.js';
 import { envoyerNotification } from '../../../src/services/notifications.service.js';
 
-const ABONNEMENT = { endpoint: 'https://push.exemple.com/1', p256dh: 'p256dh', auth: 'auth' };
+const ABONNEMENT = {
+  endpoint: 'https://fcm.googleapis.com/fcm/send/1',
+  p256dh: 'p256dh',
+  auth: 'auth',
+};
 const NOTIFICATION = { titre: 'Orage · Montréal', corps: 'Orage prévu vers 16 h.' };
 
 const VAPID_TEST = {
@@ -102,6 +106,17 @@ describe('notifications.service', () => {
       const resultat = await envoyerNotification(ABONNEMENT, NOTIFICATION);
 
       expect(resultat).toBe('echec');
+    });
+
+    // Défense en profondeur contre un endpoint enregistré avant la liste blanche.
+    it('renvoie "expiree" sans rien envoyer pour un endpoint hors liste blanche', async () => {
+      const resultat = await envoyerNotification(
+        { ...ABONNEMENT, endpoint: 'http://192.168.1.10/push' },
+        NOTIFICATION
+      );
+
+      expect(resultat).toBe('expiree');
+      expect(webpush.sendNotification).not.toHaveBeenCalled();
     });
 
     it('renvoie "echec" pour une erreur qui ne vient pas de web-push', async () => {

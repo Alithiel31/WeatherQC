@@ -3,7 +3,12 @@ import { CITIES } from '../data/cities.js';
 import { config } from '../config.js';
 import { NotFoundError, ServiceIndisponibleError } from '../lib/errors.js';
 import { abonnementSchema, desabonnementSchema } from '../schemas/validation.js';
-import { ajouterAbonnement, supprimerAbonnement } from '../services/abonnements.service.js';
+import {
+  ajouterAbonnement,
+  supprimerAbonnement,
+  abonnementExiste,
+  nombreAbonnements,
+} from '../services/abonnements.service.js';
 
 const MESSAGE_VAPID_ABSENT =
   'Notifications indisponibles — clés VAPID non configurées côté serveur.';
@@ -24,6 +29,12 @@ export default {
     if (!Object.hasOwn(CITIES, ville)) {
       throw new NotFoundError(
         `Ville inconnue. Villes disponibles : ${Object.keys(CITIES).join(', ')}.`
+      );
+    }
+
+    if (nombreAbonnements() >= config.abonnementsMax && !abonnementExiste(subscription.endpoint)) {
+      throw new ServiceIndisponibleError(
+        'Le nombre maximal d’abonnements aux alertes est atteint. Réessayez plus tard.'
       );
     }
 

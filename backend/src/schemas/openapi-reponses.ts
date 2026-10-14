@@ -1,13 +1,14 @@
 import { z } from 'zod';
 
 /**
- * Schémas de *documentation* uniquement — jamais utilisés pour valider une
- * réponse réelle. Contrairement aux schémas de `validation.ts`, qui sont la
- * source de vérité des requêtes entrantes, le backend ne valide pas ses
- * propres sorties : il n'existe donc pas de schéma existant à réutiliser côté
- * réponse. Celui-ci sert seulement à générer `/api/openapi.json` sans dupliquer
- * à la main la forme de chaque route dans une spec figée — et sans prétendre
- * qu'il garantit la conformité de ce que les contrôleurs renvoient réellement.
+ * Schémas des corps de réponse, d'où `/api/openapi.json` est généré.
+ *
+ * Le backend ne valide pas ses propres sorties à l'exécution : ces schémas ne
+ * sont donc pas sur le chemin d'une requête. Leur conformité est vérifiée par
+ * `tests/integration/contrat-reponses.test.ts`, qui rejoue chaque couple
+ * méthode + statut documenté contre l'application réelle et refuse aussi bien
+ * un champ manquant qu'un champ non déclaré ici. Une modification de forme
+ * dans un contrôleur doit donc se refléter ici, sans quoi la CI échoue.
  */
 
 export const villeSchema = z.object({
@@ -136,6 +137,9 @@ export const erreurSchema = z.object({
   status: z.number(),
   error: z.string(),
   details: z.array(z.object({ chemin: z.string(), message: z.string() })).optional(),
+  // Absente en production (`NODE_ENV=production`) : aide au développement
+  // seulement, jamais à exploiter côté client.
+  stack: z.string().optional().describe('Pile d’appel — hors production uniquement'),
 });
 
 export const clePubliqueSchema = z.object({
