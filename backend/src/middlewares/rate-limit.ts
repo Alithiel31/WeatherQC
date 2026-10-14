@@ -30,3 +30,13 @@ export const limiteurGeocode = rateLimit({
   ...communs,
   limit: config.rateLimit.maxGeocode,
 });
+
+/**
+ * Quota des abonnements push : chaque appel accepté écrit une ligne en base et
+ * ajoute un envoi au cycle horaire. Le quota général (100/min) laissait un
+ * script inscrire des dizaines de milliers d'abonnements par jour.
+ */
+export const limiteurAbonnement = rateLimit({
+  ...communs,
+  limit: config.rateLimit.maxAbonnement,
+});

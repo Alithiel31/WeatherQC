@@ -62,6 +62,9 @@ export const environnementSchema = z.object({
   RATE_LIMIT_MAX: entier(100),
   // Le géocodage tape Zippopotam : quota plus serré.
   RATE_LIMIT_GEOCODE_MAX: entier(20),
+  // Chaque abonnement push devient une ligne SQLite et un envoi au cycle
+  // horaire : un navigateur réel s'abonne une fois, rarement plus.
+  RATE_LIMIT_ABONNEMENT_MAX: entier(5),
   CACHE_TTL_PREVISIONS: entier(600_000),
   CACHE_TTL_GEOCODE: entier(2_592_000_000),
   // L'index RainViewer se renouvelle toutes les ~10 min et la carte le
@@ -92,6 +95,11 @@ export const environnementSchema = z.object({
   // répertoire de travail du process (`/app` en conteneur, monté sur un
   // volume nommé — voir docker-compose.yml — pour survivre aux redéploiements).
   DB_PATH: z.string().min(1).optional(),
+  // Plafond global des abonnements : la base vit sur la carte SD du Pi et le
+  // cycle horaire envoie à chacun, l'un après l'autre. Au-delà, les nouveaux
+  // abonnements sont refusés (503) ; un endpoint déjà connu peut toujours
+  // changer de ville.
+  ABONNEMENTS_MAX: entier(5000),
 });
 
 // `.refine()` sur une copie, pas sur `environnementSchema` lui-même : ce
@@ -131,6 +139,7 @@ export function chargerConfig(env: NodeJS.ProcessEnv = process.env) {
       windowMs: valide.RATE_LIMIT_WINDOW_MS,
       max: valide.RATE_LIMIT_MAX,
       maxGeocode: valide.RATE_LIMIT_GEOCODE_MAX,
+      maxAbonnement: valide.RATE_LIMIT_ABONNEMENT_MAX,
     },
     cache: {
       ttlPrevisions: valide.CACHE_TTL_PREVISIONS,
@@ -154,6 +163,7 @@ export function chargerConfig(env: NodeJS.ProcessEnv = process.env) {
           }
         : null,
     dbPath: valide.DB_PATH ?? 'data/abonnements.sqlite',
+    abonnementsMax: valide.ABONNEMENTS_MAX,
   };
 }
 

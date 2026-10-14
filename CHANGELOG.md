@@ -4,6 +4,11 @@
 
 ### Changed
 
+- Test de contrat `backend/tests/integration/contrat-reponses.test.ts` : chaque couple méthode +
+  statut documenté dans `/api/openapi.json` est rejoué contre l'application, et le corps de réponse
+  comparé à son schéma (`openapi-reponses.ts`), champ manquant comme champ non déclaré. Un garde
+  fait échouer la CI si une opération documentée n'a pas de cas. Le champ `stack` des erreurs hors
+  production, renvoyé mais absent de la documentation, y est désormais déclaré
 - Le conteneur frontend écoute sur le port **8080** et non plus 80 (nginx ne tourne plus en
   root). Le label Traefik `loadbalancer.server.port` et le port republié par la CI suivent ;
   toute autre configuration qui visait directement le port 80 du conteneur doit être mise à jour
@@ -12,6 +17,15 @@
   `traefik-net` et republie le port 80 par un fichier de surcharge généré à la volée
 - Refactor CSS du frontend : les styles répétés dans les composants de `frontend/src/lib/` sont
   mutualisés dans `styles/composants.css` et `styles/tokens.css`, sans changement visuel voulu
+
+### Security
+
+- `POST /api/notifications/abonnement` n'accepte plus qu'un `endpoint` HTTPS hébergé par un service
+  push reconnu (FCM, Mozilla, Apple, Windows) : une URL quelconque permettait de faire envoyer par
+  le serveur des requêtes vers son réseau local (SSRF). Un endpoint déjà enregistré hors de cette
+  liste est purgé au premier cycle d'alertes, sans être contacté
+- Abonnements push bornés : quota dédié `RATE_LIMIT_ABONNEMENT_MAX` (5/min/IP par défaut), plafond
+  global `ABONNEMENTS_MAX` (5000, 503 au-delà) et longueur maximale de `endpoint`, `p256dh` et `auth`
 
 ### Added
 
