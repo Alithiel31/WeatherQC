@@ -4,6 +4,10 @@
 
 ### Changed
 
+- Performances mobiles (PageSpeed : CLS 0,6, LCP 3,8 s) : squelette de chargement aux hauteurs du
+  contenu à la place du spinner, photos de villes ramenées à 1000 px (24–67 Ko au lieu de 160–305 Ko),
+  fondu d'apparition de la photo retiré, et Saguenay converti de `.jpg` en `.webp` (plus
+  d'exception d'extension dans `villesPhotos.ts`)
 - Test de contrat `backend/tests/integration/contrat-reponses.test.ts` : chaque couple méthode +
   statut documenté dans `/api/openapi.json` est rejoué contre l'application, et le corps de réponse
   comparé à son schéma (`openapi-reponses.ts`), champ manquant comme champ non déclaré. Un garde

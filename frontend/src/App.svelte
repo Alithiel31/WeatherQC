@@ -280,9 +280,18 @@
   {/if}
 
   {#if chargement}
-    <div class="etat">
-      <span class="spinner" aria-hidden="true"></span>
-      <p>Chargement des prévisions…</p>
+    <!--
+      Squelette aux hauteurs approximatives du contenu qu'il remplace : un
+      simple spinner laissait toute la page (horaire, 7 jours, carte, puis
+      Favoris/Réglages/pied de page) sauter vers le bas à l'arrivée des
+      données — CLS de 0,6 mesuré par PageSpeed (seuil « bon » : 0,1).
+    -->
+    <div class="squelette" role="status" aria-busy="true">
+      <p class="sr-only">Chargement des prévisions…</p>
+      <div class="sq-bloc sq-hero" aria-hidden="true"></div>
+      <div class="sq-bloc sq-horaire" aria-hidden="true"></div>
+      <div class="sq-bloc sq-quotidien" aria-hidden="true"></div>
+      <div class="sq-bloc sq-carte" aria-hidden="true"></div>
     </div>
   {:else if erreur && !donnees}
     <div class="etat erreur" role="alert">
@@ -543,14 +552,22 @@
   .bandeau-erreur .reessayer { padding: 0.35rem 0.9rem; font-size: 0.85rem; }
 
   .etat { text-align: center; padding: 4rem 1rem; }
-  .spinner {
-    display: inline-block; width: 2rem; height: 2rem;
-    border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff;
-    border-radius: 50%; animation: tourner 0.9s linear infinite;
+
+  /* Hauteurs = ordre de grandeur de `ConditionsActuelles`, `Horaire`,
+     `Quotidien` et `CarteNuages` sur mobile ; à réajuster si l'un d'eux change. */
+  .squelette { display: flex; flex-direction: column; gap: 0.9rem; padding-top: 1rem; }
+  .sq-bloc {
+    border-radius: var(--rayon-carte);
+    background: rgba(255, 255, 255, 0.08);
+    animation: pulse 1.4s ease-in-out infinite;
   }
-  @keyframes tourner { to { transform: rotate(360deg); } }
+  .sq-hero { min-height: 22rem; }
+  .sq-horaire { min-height: 9.5rem; }
+  .sq-quotidien { min-height: 24rem; }
+  .sq-carte { min-height: 22rem; }
+  @keyframes pulse { 50% { opacity: 0.5; } }
   @media (prefers-reduced-motion: reduce) {
-    .spinner { animation: none; }
+    .sq-bloc { animation: none; }
     main { transition: none; }
   }
   .reessayer { padding: 0.5rem 1.25rem; }
