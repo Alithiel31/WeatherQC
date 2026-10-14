@@ -17,16 +17,7 @@ export const VILLES_AVEC_PHOTO = new Set([
 ]);
 
 /**
- * `.webp` par défaut ; exception par ville quand le fichier livré était déjà
- * dans un autre format (pas d'outil de conversion disponible au moment de
- * l'intégration) — renommer l'extension mentirait sur le type MIME servi.
- */
-const EXTENSION_PAR_VILLE: Record<string, string> = {
-  saguenay: 'jpg',
-};
-
-/**
- * Chemin attendu : `/villes/<id>-jour.<ext>` ou `/villes/<id>-nuit.<ext>`.
+ * Chemin attendu : `/villes/<id>-jour.webp` ou `/villes/<id>-nuit.webp`.
  *
  * Chemin public (pas un import de module) : un fichier absent répond 404 au
  * lieu de faire échouer le build tant que les photos ne sont pas livrées —
@@ -34,6 +25,5 @@ const EXTENSION_PAR_VILLE: Record<string, string> = {
  */
 export function photoVille(villeId: string | null, nuit: boolean): string | null {
   if (!villeId || !VILLES_AVEC_PHOTO.has(villeId)) return null;
-  const extension = EXTENSION_PAR_VILLE[villeId] ?? 'webp';
-  return `/villes/${villeId}-${nuit ? 'nuit' : 'jour'}.${extension}`;
+  return `/villes/${villeId}-${nuit ? 'nuit' : 'jour'}.webp`;
 }
