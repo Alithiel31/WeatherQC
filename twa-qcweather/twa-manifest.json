@@ -20,7 +20,7 @@
     "path": "./android.keystore",
     "alias": "android"
   },
-  "appVersionName": "3",
+  "appVersionName": "3.2.0",
   "appVersionCode": 3,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
@@ -43,5 +43,5 @@
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "3"
+  "appVersion": "3.2.0"
 }

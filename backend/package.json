@@ -1,6 +1,6 @@
 {
   "name": "meteo-qc-backend",
-  "version": "2.0.0",
+  "version": "3.2.0",
   "description": "API meteo pour le Canada (proxy Open-Meteo avec cache)",
   "type": "module",
   "main": "app.ts",
