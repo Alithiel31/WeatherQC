@@ -57,6 +57,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          # Le label n'existait pas dans le dépôt : `gh issue create --label`
+          # échouait, et l'alerte nocturne n'atteignait personne. Le créer ici
+          # est idempotent (déjà présent : erreur ignorée).
+          gh label create derive-contrat --color D93F0B \
+            --description "Échec des tests de contrat nocturnes (API externe)" 2>/dev/null || true
+
           existante=$(gh issue list --label derive-contrat --state open \
             --json number --jq '.[0].number // empty')
 

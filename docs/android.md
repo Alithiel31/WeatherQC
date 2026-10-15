@@ -10,11 +10,11 @@ L'application est en **test interne** (Internal Testing) sur le Google Play Stor
 
 ## Workflows CI/CD
 
-| Workflow         | Déclencheur                                                                | Rôle                                              |
-| ---------------- | -------------------------------------------------------------------------- | ------------------------------------------------- |
-| `android.yml`    | PR ou push touchant `twa-qcweather/**`                                     | `bundleRelease` **non signé** — filet avant merge |
-| `build-twa.yml`  | Push sur `twa-qcweather/**` **depuis `main`**, ou manuel **depuis `main`** | Build + signature du `.aab`                       |
-| `deploy-twa.yml` | Après `build-twa.yml` réussi, ou manuel depuis `main`                      | Publication sur Play Store (Internal Testing)     |
+| Workflow         | Déclencheur                                                                                                            | Rôle                                              |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `android.yml`    | PR ou push touchant `twa-qcweather/**`                                                                                 | `bundleRelease` **non signé** — filet avant merge |
+| `build-twa.yml`  | Push sur `twa-qcweather/**` **depuis `main`**, ou manuel **depuis `main`** — après une **CI verte** sur le même commit | Build + signature du `.aab`                       |
+| `deploy-twa.yml` | Après `build-twa.yml` réussi, ou manuel depuis `main`                                                                  | Publication sur Play Store (Internal Testing)     |
 
 > Le keystore de production n'est déchiffré que depuis `main` — `build-twa.yml` et
 > `deploy-twa.yml` portent la garde `github.ref == 'refs/heads/main'`, qui couvre aussi le
