@@ -197,7 +197,7 @@ se tient à jour dans la console et non dans ce dépôt.
 
 | Couche        | Technologie                                                                                                                                                      |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Backend       | Express 5 · Node.js 22+ · TypeScript 5.6                                                                                                                         |
+| Backend       | Express 5 · Node.js 26 · TypeScript 6                                                                                                                            |
 | Frontend      | Svelte 5 · TypeScript · Vite 8                                                                                                                                   |
 | PWA           | vite-plugin-pwa · Service Worker (network-first)                                                                                                                 |
 | Carte         | Leaflet · RainViewer                                                                                                                                             |

@@ -4,6 +4,10 @@
 
 ### Changed
 
+- Node.js **26** (LTS depuis le 2026-10-28, suivie jusqu'au 2029-04-30) remplace la 24 dans les
+  images Docker du backend et du frontend, dans tous les workflows CI (`node-version`) et dans
+  `engines.node` du backend (`>=26`). Même règle qu'avant : jamais de version _Current_ sur le Pi,
+  la prochaine montée sera la 28 à son passage LTS
 - `frontend/tests/unit/permissions-policy.test.ts` échoue si le code appelle la géolocalisation, le
   micro ou la caméra alors que `Permissions-Policy` (`nginx.conf`) les interdit : le navigateur les
   refuserait sans invite, et rien ne le montrerait en développement. Commentaire ajouté à côté de
