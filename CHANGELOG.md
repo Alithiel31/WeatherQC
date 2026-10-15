@@ -4,6 +4,10 @@
 
 ### Changed
 
+- Android : `minSdkVersion` passe de 23 à **24** (Android 7.0). Google Play refuse désormais tout
+  bundle de minSdk inférieur à 24 (« Play automatic protection »), ce qui faisait échouer la
+  publication `deploy-twa.yml`. Les appareils sous Android 6.0 ne peuvent plus installer ni mettre à
+  jour l'application ; le site reste accessible depuis leur navigateur
 - Positionnement Québec partout : les descriptions des trois `package.json` disaient encore « pour
   le Canada », alors que l'interface, la recherche (codes postaux G/H/J, villes québécoises) et les
   pages légales ciblent uniquement le Québec
