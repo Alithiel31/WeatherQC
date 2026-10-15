@@ -123,6 +123,16 @@ A Husky hook (`.husky/pre-push`) replays format, lint and `test:run` on the back
 4. Check that the `backend`, `frontend`, `e2e` and `docker` jobs pass — plus `android` if the PR touches `twa-qcweather/**`.
 5. Open the PR against `main`.
 
+## Publishing a release
+
+The repository has a single version number: the one of the latest `## [x.y.z]` section of
+[`CHANGELOG.md`](./CHANGELOG.md). For a release, rename `[Non publié]` to `[x.y.z] - YYYY-MM-DD`,
+then copy `x.y.z` into the three `package.json` files (root, `backend/`, `frontend/`, with
+`npm install --package-lock-only` for the lockfiles), `info.version` in `backend/src/openapi.ts`,
+`versionName` in `twa-qcweather/app/build.gradle` and `appVersionName`/`appVersion` in
+`twa-qcweather/twa-manifest.json`. `backend/tests/unit/versions.test.ts` fails CI if one of them is
+forgotten. The Android `versionCode` is still computed from the commit count.
+
 ## Adding a city
 
 Add an entry to `backend/src/data/cities.ts` (id, name, latitude, longitude, timezone). The list exposed by `GET /api/villes` and the frontend's offline fallback derive from it automatically.

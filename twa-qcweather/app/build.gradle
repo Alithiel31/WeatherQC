@@ -78,7 +78,7 @@ android {
         minSdkVersion 23
         targetSdkVersion 36
         versionCode appVersionCode
-        versionName "3"
+        versionName "3.2.0"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name

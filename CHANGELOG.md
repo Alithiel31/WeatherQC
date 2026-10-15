@@ -4,6 +4,11 @@
 
 ### Changed
 
+- Un seul numéro de version, **3.2.0** (la dernière release du CHANGELOG), dans les trois
+  `package.json`, le document OpenAPI et l'application Android (`versionName`, `twa-manifest.json`),
+  au lieu de 1.0.0, 2.0.0 et « 3 » selon le fichier. Le tag des Releases Android devient
+  `twa-v3.2.0+N` (au lieu de `twa-v3+N`). `backend/tests/unit/versions.test.ts` vérifie la cohérence,
+  et la procédure de release est décrite dans `CONTRIBUTING.md`
 - Les types des réponses de l'API côté frontend (`frontend/src/lib/api-genere.ts`) sont générés
   depuis les schémas du backend (`npm run types:front` dans `backend/`, sans dépendance ajoutée) ;
   `frontend/src/lib/types.ts` n'en est plus qu'une façade aux noms inchangés. Un test backend fait

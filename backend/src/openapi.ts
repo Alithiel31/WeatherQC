@@ -88,7 +88,7 @@ export const openapiDocument = {
   jsonSchemaDialect: 'https://json-schema.org/draft/2020-12/schema',
   info: {
     title: 'Météo Québec — API',
-    version: '1.0.0',
+    version: '3.2.0',
     description:
       'Proxy Open-Meteo / Zippopotam / RainViewer avec cache, disjoncteur et ' +
       "limitation de débit. Le README du dépôt détaille les variables d'environnement " +
