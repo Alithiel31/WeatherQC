@@ -75,10 +75,36 @@ If the Raspberry Pi is lost or replaced but the code and the secrets above are a
 5. `docker compose --env-file frontend/.env up --build -d` (see [README.en.md](../README.en.md#deployment-docker))
 6. Check `/api/sante` and the security headers (the CI's `docker` job runs the exact same
    checks, see `.github/workflows/ci.yml`)
+7. Restore the weather alert subscriptions from the latest backup (next section):
+   `bash scripts/restaurer-abonnements.sh sauvegardes/abonnements-<date>.sqlite`
 
 Without access to the secrets above (VAPID keys, Android keystore), the web service can still
 be recreated but with new keys — **every existing weather alert subscription will become
 invalid**, and the existing Android app will no longer be able to receive a signed update.
+
+### Backing up subscriptions
+
+The only application data that cannot be rebuilt is the SQLite database of weather alert
+subscriptions, in the `backend-data` Docker volume. The cache refills on its own, whereas a lost
+subscription only comes back if its user thinks of subscribing again.
+
+- **Back up**: `bash scripts/sauvegarder-abonnements.sh` on the Pi, from the repository clone.
+  The script takes a consistent snapshot with `VACUUM INTO`, without stopping the backend, and
+  checks its integrity. It writes the snapshot to `sauvegardes/` (git-ignored, mode `600`) and
+  keeps only the 14 most recent. The folder and the number kept can be set as arguments.
+- **Schedule**: once a day is enough, before the Pi's off-site backup runs, which must pick up
+  the `sauvegardes/` folder. Example crontab entry:
+  `15 3 * * * cd <repository path> && bash scripts/sauvegarder-abonnements.sh >> sauvegardes/journal.log 2>&1`.
+- **Restore**: `bash scripts/restaurer-abonnements.sh <file>`. The script asks for confirmation,
+  stops the backend for a few seconds, copies the file into the volume, then restarts the
+  backend. Along the way, `backend-data-init` hands the file back to the `node` user.
+
+A backup is useless without the VAPID keys that created its subscriptions. With new keys, every
+send is rejected and the subscription is purged. Back up `backend/.env` with the same care as
+the database.
+
+These files hold the push endpoints and keys of subscribed browsers, which are personal data:
+treat them like `backend/.env`.
 
 ---
 

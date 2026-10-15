@@ -9,6 +9,9 @@ backend/dist/
 # Base des abonnements aux alertes météo (dev local — en conteneur, sur un volume Docker)
 backend/data/
 
+# Sauvegardes de la base des abonnements (scripts/sauvegarder-abonnements.sh) : données personnelles
+sauvegardes/
+
 # Rapports de couverture et de tests
 coverage/
 rapport-tests.json
