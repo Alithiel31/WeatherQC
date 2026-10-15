@@ -4,6 +4,9 @@
 
 ### Changed
 
+- Positionnement Québec partout : les descriptions des trois `package.json` disaient encore « pour
+  le Canada », alors que l'interface, la recherche (codes postaux G/H/J, villes québécoises) et les
+  pages légales ciblent uniquement le Québec
 - `frontend/tests/unit/permissions-policy.test.ts` échoue si le code appelle la géolocalisation, le
   micro ou la caméra alors que `Permissions-Policy` (`nginx.conf`) les interdit : le navigateur les
   refuserait sans invite, et rien ne le montrerait en développement. Commentaire ajouté à côté de

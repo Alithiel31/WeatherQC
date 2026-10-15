@@ -16,7 +16,7 @@
   interface Props {
     actuel: ConditionsActuelles;
     lieu: string;
-    /** "Canada" ou "‹province›, Canada" — figé au même moment que `lieu`, voir App.svelte. */
+    /** Ligne sous le nom du lieu — « Québec » : le service ne couvre que le Québec (voir App.svelte). */
     sousTitre?: string;
     unite?: Unite;
     /** Absents en dehors d'`App.svelte` (tests, aperçu isolé) : l'étoile ne s'affiche pas. */

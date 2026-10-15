@@ -1,7 +1,7 @@
 {
   "name": "qcweather",
   "version": "3.2.0",
-  "description": "Prévisions météo pour le Canada : API Express/TypeScript, PWA Svelte 5 et application Android TWA.",
+  "description": "Prévisions météo pour le Québec : API Express/TypeScript, PWA Svelte 5 et application Android TWA.",
   "homepage": "https://github.com/Alithiel31/WeatherQC#readme",
   "bugs": {
     "url": "https://github.com/Alithiel31/WeatherQC/issues"
