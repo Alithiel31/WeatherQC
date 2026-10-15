@@ -69,6 +69,9 @@ docker compose --env-file frontend/.env up --build -d
 Nginx sets the security headers on the served document — CSP, `X-Content-Type-Options`,
 `Referrer-Policy`, `Permissions-Policy`, HSTS. `helmet` only covers the JSON responses of
 `/api/`: the HTML that actually runs the JavaScript is served by nginx, not Express.
+`Permissions-Policy` denies geolocation, microphone and camera, which no feature uses: a feature
+that needs one must allow it there (`geolocation=(self)`), and a frontend test flags it if that is
+forgotten.
 
 > **Before editing `frontend/nginx.conf`** — `add_header` does not merge: a `location` block
 > that declares even one loses **all** of those inherited from `server`. Security headers are

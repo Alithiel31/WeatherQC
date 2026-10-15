@@ -4,6 +4,10 @@
 
 ### Changed
 
+- `frontend/tests/unit/permissions-policy.test.ts` échoue si le code appelle la géolocalisation, le
+  micro ou la caméra alors que `Permissions-Policy` (`nginx.conf`) les interdit : le navigateur les
+  refuserait sans invite, et rien ne le montrerait en développement. Commentaire ajouté à côté de
+  l'en-tête et mention dans le README
 - Un seul numéro de version, **3.2.0** (la dernière release du CHANGELOG), dans les trois
   `package.json`, le document OpenAPI et l'application Android (`versionName`, `twa-manifest.json`),
   au lieu de 1.0.0, 2.0.0 et « 3 » selon le fichier. Le tag des Releases Android devient
