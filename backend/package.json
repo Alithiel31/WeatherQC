@@ -9,7 +9,7 @@
     "start": "tsx app.ts",
     "build": "tsc",
     "prod": "node dist/app.js",
-    "lint": "eslint src/ app.ts",
+    "lint": "eslint src/ app.ts scripts/",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "validate": "npm run format && npm run build && npm run lint",
@@ -19,7 +19,8 @@
     "test:coverage": "vitest run --coverage",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
-    "test:contract": "vitest run --config vitest.contract.config.ts"
+    "test:contract": "vitest run --config vitest.contract.config.ts",
+    "types:front": "tsx scripts/generer-types-front.ts"
   },
   "lint-staged": {
     "*.ts": [

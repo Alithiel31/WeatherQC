@@ -1,121 +1,49 @@
-export interface Ville {
-  id: string;
-  nom: string;
-  latitude: number;
-  longitude: number;
-}
-
-/** Entrée du sélecteur — sous-ensemble de ce que renvoie `GET /api/villes`. */
-export interface VilleDisponible {
-  id: string;
-  nom: string;
-}
-
-export interface ConditionsActuelles {
-  temperature: number;
-  ressenti: number;
-  humidite: number;
-  vent: number;
-  code: number;
-  jour: boolean;
-  /**
-   * Champs ajoutés pour le tableau de bord — optionnels, car une réponse mise en
-   * cache par le service worker avant leur introduction (jusqu'à 6 h) ne les a pas,
-   * et `null` quand Open-Meteo n'a pas de valeur.
-   */
-  /** Degrés d'où vient le vent (0 = nord). */
-  directionVent?: number | null;
-  /** km/h. */
-  rafales?: number | null;
-  /** Indice UV de l'heure courante. */
-  uv?: number | null;
-}
-
 /**
- * `null` là où Open-Meteo n'a pas de valeur — typiquement les probabilités de
- * précipitation les plus lointaines, au-delà de la portée du modèle.
+ * Types du frontend.
  *
- * Ces champs étaient déclarés non-nullables alors que le backend les type
- * honnêtement (`backend/src/services/openmeteo.service.ts`, qui fait foi) :
- * TypeScript ne voyait rien et `Math.round(null)` affichait « 0° », une valeur
- * plausible en hiver. Le mensonge coûtait plus cher que la donnée manquante.
+ * Ceux qui décrivent une réponse de l'API ne sont plus écrits à la main : ils
+ * viennent de `api-genere.ts`, produit depuis les schémas du backend (voir
+ * `backend/scripts/generer-types-front.ts`). Un champ renommé ou retiré côté
+ * backend casse donc la compilation ici, au lieu de l'affichage en production.
+ *
+ * Les noms historiques sont conservés pour ne rien changer aux imports. Les
+ * champs ajoutés pour le tableau de bord restent optionnels et nullables, côté
+ * schéma : une réponse mise en cache par le service worker avant leur
+ * introduction (jusqu'à 6 h) ne les a pas, et Open-Meteo n'a pas toujours de
+ * valeur — `Math.round(null)` affichait « 0° », une valeur plausible en hiver.
  */
-export interface PrevisionsHoraires {
-  heure: string;
-  temperature: number | null;
-  code: number | null;
-  /** Probabilité de précipitation, en %. Voir `precipitationMm` pour la quantité. */
-  precipitation: number | null;
-  // Optionnels : voir `ConditionsActuelles` — absents des réponses antérieures au changement.
-  rafales?: number | null;
-  ressenti?: number | null;
-  humidite?: number | null;
-  vent?: number | null;
-  directionVent?: number | null;
-  /** Quantité de précipitation, en mm. */
-  precipitationMm?: number | null;
-  uv?: number | null;
-  /** Neige en cm d'épaisseur — déjà comptée, en équivalent eau, dans `precipitationMm` : ne pas les additionner. */
-  neigeCm?: number | null;
-}
+import type * as Api from './api-genere.ts';
 
-export interface PrevisionsQuotidiennes {
-  date: string;
-  code: number | null;
-  max: number | null;
-  min: number | null;
-  precipitation: number | null;
-  lever: string;
-  coucher: string;
-  uvMax?: number | null;
-  /** Cumul de la journée, en mm. */
-  precipitationMm?: number | null;
-  ventMax?: number | null;
-  rafalesMax?: number | null;
-  /** Cumul de neige de la journée, en cm. */
-  neigeCm?: number | null;
-}
+export type Ville = Api.Ville;
+export type ReponseMeteo = Api.ReponseMeteo;
+export type ConditionsActuelles = ReponseMeteo['actuel'];
+export type PrevisionsHoraires = ReponseMeteo['horaire'][number];
+export type PrevisionsQuotidiennes = ReponseMeteo['quotidien'][number];
 
 /**
  * Alerte météo réelle, déjà rédigée côté backend
  * (`detecterAlertes`/`redigerNotification`) — les mêmes fonctions pures que
  * celles qui décident d'envoyer une notification push. Le frontend n'a donc
- * pas à connaître les seuils ni les types d'alerte pour l'afficher.
+ * pas à connaître les seuils pour l'afficher.
  */
-export interface Alerte {
-  type: string;
-  importante: boolean;
-  titre: string;
-  corps: string;
-}
-
-export interface ReponseMeteo {
-  ville: Ville;
-  misAJour: string;
-  actuel: ConditionsActuelles;
-  horaire: PrevisionsHoraires[];
-  quotidien: PrevisionsQuotidiennes[];
-  alertes: Alerte[];
-  depuisCache: boolean;
-  /**
-   * Vrai quand le backend a servi une entrée périmée parce que l'amont était en
-   * panne. Les prévisions restent utiles, mais elles ne sont plus à jour — et le
-   * dire vaut mieux que d'afficher une heure de mise à jour trompeuse.
-   */
-  obsolete?: boolean;
-}
+export type Alerte = ReponseMeteo['alertes'][number];
 
 /**
  * Lieu géocodé — par code postal (`rta` porte alors le FSA, ex. « H2X ») ou par
  * nom de ville (`rta` vide : Open-Meteo ne renvoie pas de code postal).
  */
-export interface LieuCP {
-  rta: string;
-  nom: string;
-  province: string;
-  latitude: number;
-  longitude: number;
-}
+export type LieuCP = Api.LieuGeocode;
+
+/**
+ * Index RainViewer tel que l'utilise la carte. Les indicateurs de cache du
+ * backend (`depuisCache`, `obsolete`) n'y servent pas : `framesRainViewer()`
+ * ne les relaie pas.
+ */
+export type FramesRainViewer = Omit<Api.FramesRainViewer, 'depuisCache' | 'obsolete'>;
+export type ImageRainViewer = FramesRainViewer['radar'][number];
+
+/** Entrée du sélecteur — sous-ensemble de ce que renvoie `GET /api/villes`. */
+export type VilleDisponible = Pick<Ville, 'id' | 'nom'>;
 
 /**
  * Un favori désigne soit une ville du sélecteur (par son `id`, stable), soit un
@@ -125,14 +53,3 @@ export interface LieuCP {
  * `Favoris.svelte` n'a qu'une seule liste à parcourir dans l'ordre d'ajout.
  */
 export type Favori = { type: 'ville'; id: string; nom: string } | { type: 'cp'; lieu: LieuCP };
-
-export interface ImageRainViewer {
-  path: string;
-  time: number;
-}
-
-export interface FramesRainViewer {
-  hote: string;
-  satellite: ImageRainViewer[];
-  radar: ImageRainViewer[];
-}

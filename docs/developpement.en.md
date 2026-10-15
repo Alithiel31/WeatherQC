@@ -29,9 +29,12 @@ Available routes:
 
 `openapi.json` is generated at startup from the same Zod schemas that actually validate
 requests (`backend/src/schemas/validation.ts`) — not a hand-written spec that drifts from the
-code. Response bodies don't have that guarantee: the backend doesn't validate its own output,
-so `backend/src/schemas/openapi-reponses.ts` describes them separately for documentation
-purposes only. To explore it: paste the URL into [Swagger Editor](https://editor.swagger.io) or
+code. Response bodies are described by `backend/src/schemas/openapi-reponses.ts`: the backend
+doesn't validate its own output at runtime, but `tests/integration/contrat-reponses.test.ts`
+checks that every documented response matches exactly. The same schemas produce the frontend
+types (`frontend/src/lib/api-genere.ts`): after changing a response schema, run
+`npm run types:front` from `backend/` — a test fails CI until the committed file is up to date.
+To explore it: paste the URL into [Swagger Editor](https://editor.swagger.io) or
 import it into Postman/Insomnia — nothing is served as HTML by the backend, to avoid loosening
 the CSP set by nginx.
 

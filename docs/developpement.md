@@ -29,9 +29,13 @@ Routes disponibles :
 
 `openapi.json` est généré au démarrage depuis les mêmes schémas Zod que ceux qui valident
 réellement les requêtes (`backend/src/schemas/validation.ts`) — pas une spec écrite à la main
-qu'on oublierait de mettre à jour. Les corps de réponse, eux, n'ont pas ce filet : le backend ne
-valide pas ses propres sorties, `backend/src/schemas/openapi-reponses.ts` les décrit séparément à
-la seule fin de documenter. Pour l'explorer : coller l'URL dans
+qu'on oublierait de mettre à jour. Les corps de réponse sont décrits par
+`backend/src/schemas/openapi-reponses.ts` : le backend ne valide pas ses propres sorties à
+l'exécution, mais `tests/integration/contrat-reponses.test.ts` vérifie que chaque réponse
+documentée s'y conforme exactement. Ces mêmes schémas produisent les types du frontend
+(`frontend/src/lib/api-genere.ts`) : après avoir modifié un schéma de réponse, lancer
+`npm run types:front` depuis `backend/` — un test fait échouer la CI tant que le fichier
+versionné n'est pas à jour. Pour l'explorer : coller l'URL dans
 [Swagger Editor](https://editor.swagger.io) ou l'importer dans Postman/Insomnia — rien n'est
 servi en HTML par le backend, pour ne pas avoir à assouplir la CSP posée par nginx.
 
