@@ -4,6 +4,11 @@
 
 ### Changed
 
+- CI/CD plus sûre : `build-twa.yml` attend désormais une CI verte sur le même commit avant de signer
+  et publier l'application Android (un commit à la CI rouge pouvait atteindre le Play Store) ;
+  `deploy-web.yml` vérifie après chaque déploiement que `https://qcweather.alithiel31.dev` répond
+  (API et page), pour détecter un tunnel, un Traefik ou un nginx cassé ; `contract.yml` crée le label
+  `derive-contrat` s'il manque — son absence empêchait l'ouverture de l'issue d'alerte
 - Android : `minSdkVersion` passe de 23 à **24** (Android 7.0). Google Play refuse désormais tout
   bundle de minSdk inférieur à 24 (« Play automatic protection »), ce qui faisait échouer la
   publication `deploy-twa.yml`. Les appareils sous Android 6.0 ne peuvent plus installer ni mettre à

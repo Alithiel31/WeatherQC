@@ -112,3 +112,35 @@ jobs:
             --domain="http://caesura.tailb8daf5.ts.net:8090/api" \
             --projectId="db436bc3-c41c-4439-a385-1a547f7c4846" --env=prod -- \
             docker compose --env-file frontend/.env --env-file backend/.env up -d --build --wait --wait-timeout 120
+
+      # `--wait` ne prouve que l'état des conteneurs sur le Pi. Le chemin réel
+      # d'un visiteur passe aussi par le tunnel Cloudflare, Traefik et nginx :
+      # un label Traefik cassé, un réseau `traefik-net` manquant ou un tunnel
+      # tombé laissaient un déploiement « vert » et un site injoignable. On
+      # interroge donc le domaine public, comme le ferait un navigateur.
+      #
+      # Sortie dans un fichier puis `grep` : un `curl | grep -q` échoue en
+      # « curl: (23) » quand grep ferme le tube (cf. le job `docker` de `ci.yml`).
+      - name: Vérifier le domaine public
+        if: steps.portee.outputs.deployer == 'true'
+        env:
+          DOMAINE: qcweather.alithiel31.dev
+        run: |
+          set -euo pipefail
+          reponse=$(mktemp)
+          verifier() {
+            curl -fsS --max-time 10 -o "$reponse" "https://$DOMAINE/api/sante" \
+              && grep -q '"statut":"ok"' "$reponse" \
+              && curl -fsS --max-time 10 -o "$reponse" "https://$DOMAINE/" \
+              && grep -q 'id="app"' "$reponse"
+          }
+          for essai in 1 2 3 4 5 6; do
+            if verifier; then
+              echo "✓ https://$DOMAINE répond : API en bonne santé, page servie."
+              exit 0
+            fi
+            echo "Essai $essai/6 en échec, nouvelle tentative dans 10 s..."
+            sleep 10
+          done
+          echo "::error::https://$DOMAINE ne répond pas correctement après le déploiement (tunnel, Traefik ou nginx)."
+          exit 1

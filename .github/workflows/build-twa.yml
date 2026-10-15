@@ -17,7 +17,50 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Le build signé partait au push, en parallèle de `ci.yml` : un commit dont
+  # la CI échoue — poussé directement sur `main`, ou dont la CI casse sur la
+  # base fusionnée — pouvait quand même atteindre le Play Store. Ce job attend
+  # le verdict de la CI sur le même commit et bloque la suite s'il n'est pas
+  # vert.
+  #
+  # Une attente plutôt qu'un `workflow_run` sur la CI : celui-ci ne sait pas
+  # filtrer par chemin, et chaque merge web déclencherait alors ce workflow —
+  # puis `deploy-twa.yml`, qui chercherait un AAB jamais produit.
+  ci-verte:
+    name: Attendre la CI du commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      actions: read
+    steps:
+      - name: Attendre le verdict de ci.yml
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPOT: ${{ github.repository }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # ~25 min au plus : la CI complète en prend 3 à 4 ; au-delà, elle est
+          # bloquée et rien ne doit être publié sur cette base.
+          for _ in $(seq 1 75); do
+            run=$(gh run list --repo "$DEPOT" --workflow ci.yml --commit "$COMMIT" \
+              --event push --limit 1 --json status,conclusion,url \
+              --jq '.[0] // empty')
+            if [ -n "$run" ] && [ "$(jq -r .status <<<"$run")" = "completed" ]; then
+              conclusion=$(jq -r .conclusion <<<"$run")
+              echo "CI du commit : $conclusion — $(jq -r .url <<<"$run")"
+              [ "$conclusion" = "success" ] && exit 0
+              echo "::error::CI en échec sur ce commit : aucun build signé, rien de publié."
+              exit 1
+            fi
+            sleep 20
+          done
+          echo "::error::Pas de verdict de la CI après 25 minutes."
+          exit 1
+
   build:
+    needs: ci-verte
     runs-on: ubuntu-latest
     # Le script `expect` ci-dessous tournait avec `set timeout -1`. Un libellé de
     # prompt qui change côté Bubblewrap — montée que Dependabot ne voit pas,
