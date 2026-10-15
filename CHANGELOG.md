@@ -4,6 +4,10 @@
 
 ### Changed
 
+- `App.svelte` allégé (611 → 380 lignes) sans changement de comportement : le chargement des
+  prévisions, la recherche de lieu et leurs règles d'annulation passent dans
+  `lib/meteoCourante.svelte.ts` (même patron que `preferences.svelte.ts`, testé à part), et le fond
+  de page et les ciels dans `lib/styles/ciel.css`, que `tests/unit/contraste.test.ts` relit désormais
 - Performances mobiles (PageSpeed : CLS 0,6, LCP 3,8 s) : squelette de chargement aux hauteurs du
   contenu à la place du spinner, photos de villes ramenées à 1000 px (24–67 Ko au lieu de 160–305 Ko),
   fondu d'apparition de la photo retiré, et Saguenay converti de `.jpg` en `.webp` (plus
