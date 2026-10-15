@@ -46,7 +46,8 @@ function superposer(dessus: string, dessous: string, alpha: number): string {
   return `#${[0, 1, 2].map((i) => canal(i).toString(16).padStart(2, '0')).join('')}`;
 }
 
-const app = src('App.svelte');
+// Les ciels et le voile de page vivent dans cette feuille, sortie d'`App.svelte`.
+const app = src('lib/styles/ciel.css');
 
 /**
  * Les deux teintes de chaque ciel, lues dans la feuille de style plutôt que
@@ -61,8 +62,10 @@ function cieux(): Array<{ regle: string; bas: string }> {
 
 /** Alpha du voile noir constant posé sur le ciel dans `main`. */
 function voilePage(): number {
-  const m = app.match(/linear-gradient\(rgba\(0,0,0,([\d.]+)\), rgba\(0,0,0,[\d.]+\)\)/);
-  if (!m) throw new Error('voile de page introuvable dans App.svelte');
+  const m = app.match(
+    /linear-gradient\(\s*rgba\(0,\s*0,\s*0,\s*([\d.]+)\),\s*rgba\(0,\s*0,\s*0,\s*[\d.]+\)\s*\)/
+  );
+  if (!m) throw new Error('voile de page introuvable dans lib/styles/ciel.css');
   return Number(m[1]);
 }
 

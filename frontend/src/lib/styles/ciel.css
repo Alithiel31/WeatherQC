@@ -1,0 +1,168 @@
+/*
+  Fond de page et ciels : la règle de contraste du texte blanc posé sur le ciel.
+
+  Sortis d'`App.svelte` pour l'alléger. Feuille globale, comme `tokens.css` :
+  `main` est unique et `.ciel` ne sert qu'à lui, la portée de Svelte n'apportait
+  rien. `tests/unit/contraste.test.ts` relit ce fichier pour recalculer le
+  contraste de chaque ciel — garder les teintes en littéraux `#rrggbb`.
+*/
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  background: #060e1a;
+}
+
+/*
+  Le voile est une couche de fond constante posée par-dessus le ciel, pas une
+  couleur de chaque dégradé : les ciels ne fournissent plus que leurs deux
+  teintes, et la règle de contraste ne s'écrit qu'ici.
+
+  Sans lui, le blanc pur échouait sur quatre des sept ciels — neige 1.64:1,
+  dégagé 1.93, brouillard 2.06, nuageux 2.66, pour un seuil de 4.5. À 0.45 le
+  pire cas remonte à 5.04:1, toutes les teintes étant conservées.
+*/
+main {
+  position: relative;
+  min-height: 100dvh;
+  color: #fff;
+  padding: max(env(safe-area-inset-top), 1.25rem) 1.25rem calc(env(safe-area-inset-bottom) + 6rem);
+  max-width: 32rem;
+  margin: 0 auto;
+  transition:
+    background-color 0.8s ease,
+    border-radius 0.2s ease,
+    box-shadow 0.2s ease;
+  background-color: #10243b;
+  /* Noir pur en rgba() littéral : `voilePage()` de `tests/unit/contraste.test.ts` le relit. */
+  --voile: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45));
+  background-image:
+    var(--decor, none), var(--voile),
+    linear-gradient(
+      180deg,
+      var(--ciel-haut, #10243b) 0%,
+      var(--ciel-bas, #10243b) var(--ciel-fin, 130%)
+    );
+}
+
+/*
+  Couche atmosphérique décorative : étoiles la nuit par ciel dégagé, halo
+  doux de jour, stries fines de pluie/neige/orage — en remplacement d'une
+  photo de ville par lieu (aucune n'existe pour un lieu quelconque au
+  Canada, cf. le choix de direction artistique). Empilée comme couches
+  *additionnelles* du `background-image` de `main` lui-même plutôt que sur
+  un pseudo-élément séparé : un pseudo `position:absolute` avec un
+  `z-index` négatif ne forme un contexte d'empilement qu'au niveau de
+  l'ancêtre englobant (`main` n'a pas de `z-index` propre), et se
+  retrouvait ainsi peint sous le fond de page tout entier — invisible.
+  Le fond d'un élément, lui, se peint toujours avant son contenu, sans
+  ambiguïté d'empilement. Chaque règle ci-dessous ne déclare que sa couche
+  propre dans `--decor`, que `main` empile au-dessus du voile et du dégradé.
+  Ces règles restent séparées des blocs `--ciel-haut/--ciel-bas` plus bas,
+  que `tests/unit/contraste.test.ts` relit par expression régulière.
+*/
+.ciel.degage:not(.nuit) {
+  --decor: radial-gradient(circle at 88% -6%, rgba(255, 214, 140, 0.4), transparent 55%);
+}
+.ciel.degage.nuit {
+  --decor:
+    radial-gradient(1.8px 1.8px at 18% 10%, #fff 60%, transparent 65%),
+    radial-gradient(1.4px 1.4px at 68% 7%, #fff 60%, transparent 65%),
+    radial-gradient(1.6px 1.6px at 40% 16%, rgba(255, 255, 255, 0.9) 60%, transparent 65%),
+    radial-gradient(1.6px 1.6px at 84% 14%, #fff 60%, transparent 65%),
+    radial-gradient(1.4px 1.4px at 55% 22%, rgba(255, 255, 255, 0.8) 60%, transparent 65%),
+    radial-gradient(1.4px 1.4px at 10% 26%, #fff 60%, transparent 65%),
+    radial-gradient(1.4px 1.4px at 92% 24%, rgba(255, 255, 255, 0.85) 60%, transparent 65%),
+    radial-gradient(1.6px 1.6px at 30% 30%, #fff 60%, transparent 65%),
+    radial-gradient(circle at 78% 2%, rgba(160, 190, 255, 0.2), transparent 45%);
+}
+.ciel.pluie,
+.ciel.orage {
+  --decor: repeating-linear-gradient(112deg, rgba(255, 255, 255, 0.08) 0 2px, transparent 2px 16px);
+}
+.ciel.neige {
+  --decor:
+    radial-gradient(1.6px 1.6px at 15% 8%, rgba(255, 255, 255, 0.85) 65%, transparent 70%),
+    radial-gradient(1.8px 1.8px at 45% 14%, rgba(255, 255, 255, 0.75) 65%, transparent 70%),
+    radial-gradient(1.4px 1.4px at 75% 5%, rgba(255, 255, 255, 0.8) 65%, transparent 70%),
+    radial-gradient(1.6px 1.6px at 90% 18%, rgba(255, 255, 255, 0.7) 65%, transparent 70%),
+    radial-gradient(1.4px 1.4px at 25% 22%, rgba(255, 255, 255, 0.65) 65%, transparent 70%);
+}
+
+/*
+  Base mobile-first inchangée en dessous de 640px : `main` occupe tout
+  l'écran. `min-width` plutôt que `max-width` : on part du mobile et on
+  ajoute, on ne part pas du desktop pour retirer.
+
+  Au-delà, la colonne de 32rem flottait au milieu d'un fond uni de la même
+  teinte que le body — aucune démarcation, juste un grand vide de part et
+  d'autre. Elle s'élargit donc et se détache visuellement du fond avec une
+  ombre et un liseré, plutôt que de s'étirer en pleine largeur.
+*/
+@media (min-width: 640px) {
+  body {
+    background: #050b16;
+  }
+
+  main {
+    min-height: auto;
+    max-width: 40rem;
+    margin: 2.5rem auto;
+    padding: 2rem 2rem calc(env(safe-area-inset-bottom) + 6rem);
+    border-radius: 1.5rem;
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
+}
+
+.ciel.degage {
+  --ciel-haut: #1f6fc4;
+  --ciel-bas: #7fc2ee;
+}
+.ciel.degage.nuit {
+  --ciel-haut: #081226;
+  --ciel-bas: #1d3a61;
+}
+.ciel.nuageux {
+  --ciel-haut: #4a5d72;
+  --ciel-bas: #8da1b4;
+}
+.ciel.nuageux.nuit {
+  --ciel-haut: #1a2531;
+  --ciel-bas: #3c4d5f;
+}
+.ciel.pluie,
+.ciel.pluie.nuit {
+  --ciel-haut: #2e3d4e;
+  --ciel-bas: #5d7186;
+}
+.ciel.neige {
+  --ciel-haut: #5b7493;
+  --ciel-bas: #b9cce0;
+  --ciel-fin: 140%;
+}
+.ciel.neige.nuit {
+  --ciel-haut: #232f42;
+  --ciel-bas: #5b7493;
+  --ciel-fin: 140%;
+}
+.ciel.orage,
+.ciel.orage.nuit {
+  --ciel-haut: #141c29;
+  --ciel-bas: #3d4d63;
+}
+.ciel.brouillard,
+.ciel.brouillard.nuit {
+  --ciel-haut: #6c7b89;
+  --ciel-bas: #aab6c1;
+  --ciel-fin: 140%;
+}

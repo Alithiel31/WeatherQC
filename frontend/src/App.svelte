@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import './lib/styles/tokens.css';
+  import './lib/styles/ciel.css';
   import './lib/styles/verre.css';
   import './lib/styles/composants.css';
   import Horaire from './lib/Horaire.svelte';
@@ -14,47 +15,30 @@
   import Favoris from './lib/Favoris.svelte';
   import BottomNav from './lib/BottomNav.svelte';
   import { familleMeteo, heureMinute, libelleUniteTemp } from './lib/meteo.ts';
-  import {
-    previsionsVille,
-    previsionsCoordonnees,
-    geocoder,
-    geocoderVille,
-    villesDisponibles,
-    VILLES_REPLI,
-    ErreurApi,
-  } from './lib/api.ts';
   import { creerPreferences } from './lib/preferences.svelte.ts';
-  import type { ReponseMeteo, VilleDisponible, Favori } from './lib/types.ts';
+  import { creerMeteoCourante } from './lib/meteoCourante.svelte.ts';
+  import type { Favori } from './lib/types.ts';
 
   const prefs = creerPreferences();
+  // Prévisions, recherche de lieu et leurs règles d'annulation : voir
+  // `lib/meteoCourante.svelte.ts`. Ce composant ne garde que la mise en page
+  // et la navigation.
+  const meteo = creerMeteoCourante(prefs);
 
-  // `VILLES_REPLI` le temps que `/api/villes` réponde — et indéfiniment si le
-  // backend est injoignable : le sélecteur doit exister au premier rendu.
-  let villes     = $state<VilleDisponible[]>(VILLES_REPLI);
-  let donnees    = $state<ReponseMeteo | null>(null);
-  let chargement = $state(true);
-  let erreur     = $state<string | null>(null);
-  let erreurCP   = $state<string | null>(null);
-  let rechercheCP = $state(false);
   let horsLigne  = $state(!navigator.onLine);
 
-  let famille   = $derived(donnees ? familleMeteo(donnees.actuel.code) : 'nuageux');
-  let nuit      = $derived(donnees ? !donnees.actuel.jour : false);
+  let famille   = $derived(meteo.donnees ? familleMeteo(meteo.donnees.actuel.code) : 'nuageux');
+  let nuit      = $derived(meteo.donnees ? !meteo.donnees.actuel.jour : false);
   let classeCiel = $derived(`ciel ${famille}${nuit ? ' nuit' : ''}`);
-  // Figé au moment où les données arrivent, et non dérivé des préférences :
-  // celles-ci changent dès le clic, alors que `donnees` peut rester sur la ville
-  // précédente si le chargement échoue. Dérivé, le libellé annonçait alors une
-  // ville dont on affichait les prévisions d'une autre.
-  let nomLieu   = $state('');
 
   // Pas d'abonnement par code postal (décision produit) : le nom n'est dérivé
   // que pour une ville du sélecteur, jamais pour `prefs.lieuCP`.
-  let nomVilleActive = $derived(villes.find((v) => v.id === prefs.selection)?.nom ?? '');
+  let nomVilleActive = $derived(meteo.villes.find((v) => v.id === prefs.selection)?.nom ?? '');
 
   // Le lieu actuellement sélectionné, sous la forme que persiste `prefs.favoris`
   // — `null` si rien n'est encore résolu (ville du repli pas encore confirmée,
-  // par exemple). Dérivé des préférences (pas figé comme `nomLieu`) : l'étoile
-  // doit refléter la sélection en cours, y compris pendant un chargement.
+  // par exemple). Dérivé des préférences (pas figé comme `meteo.nomLieu`) :
+  // l'étoile doit refléter la sélection en cours, y compris pendant un chargement.
   let favoriCibleActuel = $derived<Favori | null>(
     prefs.selection === 'cp' && prefs.lieuCP
       ? { type: 'cp', lieu: prefs.lieuCP }
@@ -70,15 +54,7 @@
 
   /** Bascule vers un favori choisi dans l'écran Favoris, puis revient à l'accueil. */
   function choisirFavori(favori: Favori): void {
-    if (favori.type === 'ville') {
-      choisirVille(favori.id);
-    } else {
-      // Déjà géocodé (c'est un favori) : inutile de regéocoder le RTA. `rta`
-      // sert de saisie de repli — le code postal complet d'origine n'est pas
-      // conservé dans le favori, seul le lieu géocodé l'est.
-      prefs.retenirLieu(favori.lieu, favori.lieu.rta);
-      charger();
-    }
+    meteo.choisirFavori(favori);
     allerA('accueil');
   }
 
@@ -104,110 +80,18 @@
       ?.scrollIntoView({ behavior: reduireMouvement ? 'auto' : 'smooth', block: 'start' });
   }
 
-  let chargementEnCours: AbortController | null = null;
-  let rechercheEnCours: AbortController | null = null;
-
-  async function charger(): Promise<void> {
-    // Deux clics rapides lançaient deux requêtes concurrentes : si la première
-    // répondait en dernier, l'écran affichait une ville et le bouton actif en
-    // désignait une autre. La requête devenue inutile est annulée pour de bon.
-    chargementEnCours?.abort();
-    const controleur = new AbortController();
-    chargementEnCours = controleur;
-
-    // Cible et libellé capturés avec la requête : ils ne bougeront plus, même si
-    // l'utilisateur reclique pendant qu'elle est en vol.
-    const lieu = prefs.selection === 'cp' && prefs.lieuCP ? prefs.lieuCP : null;
-    // `rta` est vide pour un lieu trouvé par nom de ville — rien à mettre entre
-    // parenthèses dans ce cas, le nom seul suffit.
-    const etiquette = lieu
-      ? lieu.rta
-        ? `${lieu.nom} (${lieu.rta})`
-        : lieu.nom
-      : (villes.find((v) => v.id === prefs.selection)?.nom ?? '');
-
-    chargement = true;
-    erreur = null;
-    try {
-      donnees = lieu
-        ? await previsionsCoordonnees(lieu, controleur.signal)
-        : await previsionsVille(prefs.selection, controleur.signal);
-      nomLieu = etiquette;
-    } catch (e) {
-      // Remplacée par une requête plus récente : ni erreur, ni fin de chargement
-      // — celle qui l'a supplantée s'en charge.
-      if (controleur.signal.aborted) return;
-
-      // Le backend sait pourquoi il a échoué (ville inconnue, amont injoignable,
-      // quota dépassé) ; le message générique ne sert que pour une panne réseau.
-      erreur =
-        e instanceof ErreurApi
-          ? e.message
-          : 'Les prévisions ne sont pas disponibles pour le moment. Vérifiez la connexion, puis réessayez.';
-    } finally {
-      // Une requête supplantée ne rend pas la main : celle qui l'a remplacée est
-      // encore en vol, le spinner doit rester.
-      if (chargementEnCours === controleur) chargement = false;
-    }
-  }
-
-  function choisirVille(id: string): void {
-    if (id === prefs.selection) return;
-    // L'erreur de code postal précédente n'a plus de rapport avec ce qui est
-    // affiché : la laisser à l'écran à côté d'une ville chargée est trompeur.
-    erreurCP = null;
-    prefs.choisirVille(id);
-    charger();
-  }
-
-  // Un code postal canadien commence toujours par lettre-chiffre-lettre (ex.
-  // H2X, K1A 0B1) — tout le reste part vers la recherche par nom de ville.
-  const FORME_CODE_POSTAL = /^[A-Za-z]\d[A-Za-z]/;
-
-  async function rechercherCP(saisie: string): Promise<void> {
-    // Même raisonnement que `charger()` : sans annulation, deux soumissions
-    // rapides laissaient la dernière réponse gagner, et `retenirLieu` persistait
-    // la saisie de la fermeture périmée — `codePostal` et `lieuCP` pouvaient
-    // alors décrire deux codes différents.
-    rechercheEnCours?.abort();
-    const controleur = new AbortController();
-    rechercheEnCours = controleur;
-
-    erreurCP = null;
-    rechercheCP = true;
-    try {
-      const lieu = FORME_CODE_POSTAL.test(saisie)
-        ? await geocoder(saisie, controleur.signal)
-        : await geocoderVille(saisie, controleur.signal);
-      prefs.retenirLieu(lieu, saisie);
-      charger();
-    } catch (e) {
-      if (controleur.signal.aborted) return;
-      erreurCP =
-        e instanceof ErreurApi ? e.message : 'Recherche impossible. Vérifiez la connexion.';
-    } finally {
-      if (rechercheEnCours === controleur) rechercheCP = false;
-    }
-  }
-
   onMount(() => {
-    charger();
-    // Échec silencieux : `VILLES_REPLI` couvre déjà le sélecteur.
-    villesDisponibles()
-      .then((liste) => {
-        if (liste.length) villes = liste;
-      })
-      .catch(() => {});
+    meteo.charger();
+    meteo.chargerVilles();
 
-    const enLigne      = () => { horsLigne = false; charger(); };
+    const enLigne      = () => { horsLigne = false; meteo.charger(); };
     const horsConnexion = () => { horsLigne = true; };
     window.addEventListener('online', enLigne);
     window.addEventListener('offline', horsConnexion);
     return () => {
       window.removeEventListener('online', enLigne);
       window.removeEventListener('offline', horsConnexion);
-      chargementEnCours?.abort();
-      rechercheEnCours?.abort();
+      meteo.annuler();
     };
   });
 </script>
@@ -225,17 +109,17 @@
     </div>
     <div class="recherche-groupe">
       <SelecteurVille
-        {villes}
+        villes={meteo.villes}
         lieuCP={prefs.lieuCP}
         selection={prefs.selection}
-        onchoisir={choisirVille}
+        onchoisir={meteo.choisirVille}
       />
 
       <RechercheCodePostal
         bind:valeur={prefs.codePostal}
-        erreur={erreurCP}
-        enCours={rechercheCP}
-        onrechercher={rechercherCP}
+        erreur={meteo.erreurCP}
+        enCours={meteo.rechercheCP}
+        onrechercher={meteo.rechercherCP}
       />
     </div>
   </header>
@@ -248,14 +132,14 @@
     d'où sa place ici, hors des branches conditionnelles.
   -->
   <p class="sr-only" aria-live="polite">
-    {#if !chargement && donnees}
-      Prévisions pour {nomLieu}, mises à jour à {heureMinute(donnees.misAJour)}
+    {#if !meteo.chargement && meteo.donnees}
+      Prévisions pour {meteo.nomLieu}, mises à jour à {heureMinute(meteo.donnees.misAJour)}
     {/if}
   </p>
 
   {#if horsLigne}
     <p class="bandeau-hors-ligne">Hors ligne — dernières prévisions enregistrées</p>
-  {:else if donnees?.obsolete}
+  {:else if meteo.donnees?.obsolete}
     <!--
       Le backend a servi une entrée périmée : l'amont est en panne, mais des
       prévisions un peu datées valent mieux qu'un écran vide. Le dire évite que
@@ -272,14 +156,14 @@
     données parfaitement lisibles, toujours présentes en mémoire — l'inverse de
     ce que promet une application hors ligne d'abord.
   -->
-  {#if erreur && donnees && !chargement}
+  {#if meteo.erreur && meteo.donnees && !meteo.chargement}
     <div class="bandeau-erreur" role="alert">
-      <p>{erreur}</p>
-      <button class="reessayer btn-pilule pressable" onclick={charger}>Réessayer</button>
+      <p>{meteo.erreur}</p>
+      <button class="reessayer btn-pilule pressable" onclick={meteo.charger}>Réessayer</button>
     </div>
   {/if}
 
-  {#if chargement}
+  {#if meteo.chargement}
     <!--
       Squelette aux hauteurs approximatives du contenu qu'il remplace : un
       simple spinner laissait toute la page (horaire, 7 jours, carte, puis
@@ -293,15 +177,15 @@
       <div class="sq-bloc sq-quotidien" aria-hidden="true"></div>
       <div class="sq-bloc sq-carte" aria-hidden="true"></div>
     </div>
-  {:else if erreur && !donnees}
+  {:else if meteo.erreur && !meteo.donnees}
     <div class="etat erreur" role="alert">
-      <p>{erreur}</p>
-      <button class="reessayer btn-pilule pressable" onclick={charger}>Réessayer</button>
+      <p>{meteo.erreur}</p>
+      <button class="reessayer btn-pilule pressable" onclick={meteo.charger}>Réessayer</button>
     </div>
-  {:else if donnees}
+  {:else if meteo.donnees}
     <ConditionsActuelles
-      actuel={donnees.actuel}
-      lieu={nomLieu}
+      actuel={meteo.donnees.actuel}
+      lieu={meteo.nomLieu}
       sousTitre="Québec"
       unite={prefs.unite}
       estFavori={estFavoriActuel}
@@ -309,19 +193,19 @@
       villeId={prefs.selection !== 'cp' ? prefs.selection : null}
     />
 
-    <BandeauAlerte alertes={donnees.alertes} onvoirplus={() => allerA('reglages')} />
+    <BandeauAlerte alertes={meteo.donnees.alertes} onvoirplus={() => allerA('reglages')} />
 
-    <Horaire heures={donnees.horaire} unite={prefs.unite} />
+    <Horaire heures={meteo.donnees.horaire} unite={prefs.unite} />
 
-    <Quotidien jours={donnees.quotidien} unite={prefs.unite} />
+    <Quotidien jours={meteo.donnees.quotidien} unite={prefs.unite} />
 
     {#if !horsLigne}
       <div id="section-carte">
         <CarteNuages
-          latitude={donnees.ville.latitude}
-          longitude={donnees.ville.longitude}
-          nom={donnees.ville.nom}
-          heures={donnees.horaire}
+          latitude={meteo.donnees.ville.latitude}
+          longitude={meteo.donnees.ville.longitude}
+          nom={meteo.donnees.ville.nom}
+          heures={meteo.donnees.horaire}
         />
       </div>
     {/if}
@@ -375,9 +259,9 @@
     par-dessus l'application.
   -->
   <footer>
-    {#if donnees}
+    {#if meteo.donnees}
       <p>
-        Mis à jour à {heureMinute(donnees.misAJour)} · Données
+        Mis à jour à {heureMinute(meteo.donnees.misAJour)} · Données
         <a href="https://open-meteo.com" target="_blank" rel="noreferrer">Open-Meteo</a>
       </p>
     {/if}
@@ -397,121 +281,6 @@
 </main>
 
 <style>
-  :global(*) { box-sizing: border-box; }
-  :global(body) {
-    margin: 0;
-    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-    background: #060e1a;
-  }
-
-  /*
-    Le voile est une couche de fond constante posée par-dessus le ciel, pas une
-    couleur de chaque dégradé : les ciels ne fournissent plus que leurs deux
-    teintes, et la règle de contraste ne s'écrit qu'ici.
-
-    Sans lui, le blanc pur échouait sur quatre des sept ciels — neige 1.64:1,
-    dégagé 1.93, brouillard 2.06, nuageux 2.66, pour un seuil de 4.5. À 0.45 le
-    pire cas remonte à 5.04:1, toutes les teintes étant conservées.
-  */
-  main {
-    position: relative;
-    min-height: 100dvh;
-    color: #fff;
-    padding: max(env(safe-area-inset-top), 1.25rem) 1.25rem
-      calc(env(safe-area-inset-bottom) + 6rem);
-    max-width: 32rem;
-    margin: 0 auto;
-    transition:
-      background-color 0.8s ease,
-      border-radius 0.2s ease,
-      box-shadow 0.2s ease;
-    background-color: #10243b;
-    /* Littéral sans espaces : `voilePage()` de `tests/unit/contraste.test.ts` le relit. */
-    --voile: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45));
-    background-image:
-      var(--decor, none),
-      var(--voile),
-      linear-gradient(180deg, var(--ciel-haut, #10243b) 0%, var(--ciel-bas, #10243b) var(--ciel-fin, 130%));
-  }
-
-  /*
-    Couche atmosphérique décorative : étoiles la nuit par ciel dégagé, halo
-    doux de jour, stries fines de pluie/neige/orage — en remplacement d'une
-    photo de ville par lieu (aucune n'existe pour un lieu quelconque au
-    Canada, cf. le choix de direction artistique). Empilée comme couches
-    *additionnelles* du `background-image` de `main` lui-même plutôt que sur
-    un pseudo-élément séparé : un pseudo `position:absolute` avec un
-    `z-index` négatif ne forme un contexte d'empilement qu'au niveau de
-    l'ancêtre englobant (`main` n'a pas de `z-index` propre), et se
-    retrouvait ainsi peint sous le fond de page tout entier — invisible.
-    Le fond d'un élément, lui, se peint toujours avant son contenu, sans
-    ambiguïté d'empilement. Chaque règle ci-dessous ne déclare que sa couche
-    propre dans `--decor`, que `main` empile au-dessus du voile et du dégradé.
-    Ces règles restent séparées des blocs `--ciel-haut/--ciel-bas` plus bas,
-    que `tests/unit/contraste.test.ts` relit par expression régulière.
-  */
-  .ciel.degage:not(.nuit) {
-    --decor:
-      radial-gradient(circle at 88% -6%, rgba(255, 214, 140, 0.4), transparent 55%);
-  }
-  .ciel.degage.nuit {
-    --decor:
-      radial-gradient(1.8px 1.8px at 18% 10%, #fff 60%, transparent 65%),
-      radial-gradient(1.4px 1.4px at 68% 7%, #fff 60%, transparent 65%),
-      radial-gradient(1.6px 1.6px at 40% 16%, rgba(255,255,255,0.9) 60%, transparent 65%),
-      radial-gradient(1.6px 1.6px at 84% 14%, #fff 60%, transparent 65%),
-      radial-gradient(1.4px 1.4px at 55% 22%, rgba(255,255,255,0.8) 60%, transparent 65%),
-      radial-gradient(1.4px 1.4px at 10% 26%, #fff 60%, transparent 65%),
-      radial-gradient(1.4px 1.4px at 92% 24%, rgba(255,255,255,0.85) 60%, transparent 65%),
-      radial-gradient(1.6px 1.6px at 30% 30%, #fff 60%, transparent 65%),
-      radial-gradient(circle at 78% 2%, rgba(160, 190, 255, 0.2), transparent 45%);
-  }
-  .ciel.pluie, .ciel.orage {
-    --decor:
-      repeating-linear-gradient(112deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 16px);
-  }
-  .ciel.neige {
-    --decor:
-      radial-gradient(1.6px 1.6px at 15% 8%, rgba(255,255,255,0.85) 65%, transparent 70%),
-      radial-gradient(1.8px 1.8px at 45% 14%, rgba(255,255,255,0.75) 65%, transparent 70%),
-      radial-gradient(1.4px 1.4px at 75% 5%, rgba(255,255,255,0.8) 65%, transparent 70%),
-      radial-gradient(1.6px 1.6px at 90% 18%, rgba(255,255,255,0.7) 65%, transparent 70%),
-      radial-gradient(1.4px 1.4px at 25% 22%, rgba(255,255,255,0.65) 65%, transparent 70%);
-  }
-
-  /*
-    Base mobile-first inchangée en dessous de 640px : `main` occupe tout
-    l'écran. `min-width` plutôt que `max-width` : on part du mobile et on
-    ajoute, on ne part pas du desktop pour retirer.
-
-    Au-delà, la colonne de 32rem flottait au milieu d'un fond uni de la même
-    teinte que le body — aucune démarcation, juste un grand vide de part et
-    d'autre. Elle s'élargit donc et se détache visuellement du fond avec une
-    ombre et un liseré, plutôt que de s'étirer en pleine largeur.
-  */
-  @media (min-width: 640px) {
-    :global(body) { background: #050b16; }
-
-    main {
-      min-height: auto;
-      max-width: 40rem;
-      margin: 2.5rem auto;
-      padding: 2rem 2rem calc(env(safe-area-inset-bottom) + 6rem);
-      border-radius: 1.5rem;
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
-    }
-  }
-
-  .ciel.degage       { --ciel-haut: #1f6fc4; --ciel-bas: #7fc2ee; }
-  .ciel.degage.nuit  { --ciel-haut: #081226; --ciel-bas: #1d3a61; }
-  .ciel.nuageux      { --ciel-haut: #4a5d72; --ciel-bas: #8da1b4; }
-  .ciel.nuageux.nuit { --ciel-haut: #1a2531; --ciel-bas: #3c4d5f; }
-  .ciel.pluie, .ciel.pluie.nuit { --ciel-haut: #2e3d4e; --ciel-bas: #5d7186; }
-  .ciel.neige        { --ciel-haut: #5b7493; --ciel-bas: #b9cce0; --ciel-fin: 140%; }
-  .ciel.neige.nuit   { --ciel-haut: #232f42; --ciel-bas: #5b7493; --ciel-fin: 140%; }
-  .ciel.orage, .ciel.orage.nuit { --ciel-haut: #141c29; --ciel-bas: #3d4d63; }
-  .ciel.brouillard, .ciel.brouillard.nuit { --ciel-haut: #6c7b89; --ciel-bas: #aab6c1; --ciel-fin: 140%; }
-
   header { display: flex; flex-direction: column; gap: 0.75rem; }
   /*
     Les textes secondaires posés à nu sur le ciel n'ont plus d'`opacity` : sous
