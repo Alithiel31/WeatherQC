@@ -56,6 +56,11 @@
 
 ### Added
 
+- `scripts/sauvegarder-abonnements.sh` et `scripts/restaurer-abonnements.sh` : sauvegarde à chaud
+  de la base SQLite des abonnements (`VACUUM INTO`, intégrité vérifiée, rotation sur 14 copies,
+  dossier `sauvegardes/` ignoré par git) et restauration en quelques secondes de coupure. La
+  procédure, la planification et le lien avec les clés VAPID sont décrits dans
+  `docs/guide-de-reprise.md` (section 4)
 - Page `404.html` bilingue servie par nginx (`error_page 404`) pour les fichiers statiques manquants
   (`/assets/*`, `/icons/*`…). Les routes inconnues retombent toujours sur la coquille SPA, et les
   réponses d'erreur de l'API ne sont pas interceptées
