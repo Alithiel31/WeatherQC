@@ -4,6 +4,11 @@
 
 ### Changed
 
+- Les types des réponses de l'API côté frontend (`frontend/src/lib/api-genere.ts`) sont générés
+  depuis les schémas du backend (`npm run types:front` dans `backend/`, sans dépendance ajoutée) ;
+  `frontend/src/lib/types.ts` n'en est plus qu'une façade aux noms inchangés. Un test backend fait
+  échouer la CI si le fichier versionné est périmé : un champ renommé côté backend casse désormais
+  la compilation du frontend au lieu de son affichage
 - `App.svelte` allégé (611 → 380 lignes) sans changement de comportement : le chargement des
   prévisions, la recherche de lieu et leurs règles d'annulation passent dans
   `lib/meteoCourante.svelte.ts` (même patron que `preferences.svelte.ts`, testé à part), et le fond
