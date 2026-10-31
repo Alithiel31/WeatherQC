@@ -4,6 +4,10 @@
 
 ### Changed
 
+- Node.js **26** (LTS depuis le 2026-10-28, suivie jusqu'au 2029-04-30) remplace la 24 dans les
+  images Docker du backend et du frontend, dans tous les workflows CI (`node-version`) et dans
+  `engines.node` du backend (`>=26`). Même règle qu'avant : jamais de version _Current_ sur le Pi,
+  la prochaine montée sera la 28 à son passage LTS
 - CI/CD plus sûre : `build-twa.yml` attend désormais une CI verte sur le même commit avant de signer
   et publier l'application Android (un commit à la CI rouge pouvait atteindre le Play Store) ;
   `deploy-web.yml` vérifie après chaque déploiement que `https://qcweather.alithiel31.dev` répond

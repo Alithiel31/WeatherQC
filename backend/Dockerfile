@@ -1,11 +1,12 @@
-# Node 24 et non 26 : au 2026-08, la 26 est encore une version *Current* — elle
-# ne passe LTS que le 2026-10-28. La 24 est LTS depuis le 2025-10-28 et suivie
-# jusqu'au 2028-04-30, soit deux ans de plus que la 22 qu'elle remplace, sans
-# jamais faire tourner du Current sur le Raspberry Pi. Dependabot proposera la
-# 26 parce que c'est le tag le plus récent ; ce n'est pas le même critère.
+# Node 26 : LTS depuis le 2026-10-28 et suivie jusqu'au 2029-04-30, un an de
+# plus que la 24 qu'elle remplace. Règle inchangée : on ne monte de version
+# majeure qu'une fois celle-ci passée LTS, jamais du Current sur le Raspberry Pi.
+# Dependabot proposera la 27, puis la 28, parce que ce sont les tags les plus
+# récents ; ce n'est pas le même critère — la prochaine montée sera la 28, à son
+# passage LTS (octobre 2028).
 
 # ── deps : dépendances complètes (dev + prod) ─────────────────────────────
-FROM node:24-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -22,7 +23,7 @@ COPY . .
 RUN npx tsc
 
 # ── production : image minimale, cible de docker-compose ──────────────────
-FROM node:24-alpine AS production
+FROM node:26-alpine AS production
 # Applique les derniers correctifs de sécurité Alpine : l'image de base peut ne
 # pas avoir été republiée depuis la sortie d'un correctif upstream,
 # indépendamment de l'âge du tag. Couvre notamment libssl3/libcrypto3

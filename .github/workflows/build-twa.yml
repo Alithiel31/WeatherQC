@@ -93,7 +93,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version: 26
 
       # Version épinglée : cette étape s'exécute dans le job qui déchiffre le
       # keystore et porte les mots de passe en environnement. Les actions tierces
