@@ -76,11 +76,37 @@ disponibles :
 5. `docker compose --env-file frontend/.env up --build -d` (voir [README.md](../README.md#déploiement-docker))
 6. Vérifier `/api/sante` et les en-têtes de sécurité (le job `docker` de la CI reproduit
    exactement ces vérifications, voir `.github/workflows/ci.yml`)
+7. Restaurer les abonnements aux alertes depuis la dernière sauvegarde (section suivante) :
+   `bash scripts/restaurer-abonnements.sh sauvegardes/abonnements-<date>.sqlite`
 
 Sans accès aux secrets ci-dessus (clés VAPID, keystore Android), le service web peut être
 recréé mais avec de nouvelles clés — **tous les abonnements aux alertes météo existants
 deviendront invalides** et l'app Android existante ne pourra plus recevoir de mise à jour
 signée.
+
+### Sauvegarde des abonnements
+
+La seule donnée de l'application qui ne se reconstruit pas est la base SQLite des abonnements
+aux alertes météo, dans le volume Docker `backend-data`. Le cache se reremplit seul, alors qu'un
+abonnement perdu ne revient que si son utilisateur pense à se réabonner.
+
+- **Sauvegarder** : `bash scripts/sauvegarder-abonnements.sh` sur le Pi, depuis la copie du
+  dépôt. Le script prend un instantané cohérent avec `VACUUM INTO`, sans arrêter le backend, et
+  vérifie son intégrité. Il l'écrit dans `sauvegardes/` (ignoré par git, mode `600`) et ne garde
+  que les 14 plus récentes. Le dossier et le nombre à garder sont réglables en arguments.
+- **Planifier** : une exécution quotidienne suffit, avant le passage de la sauvegarde hors site
+  du Pi, qui doit reprendre le dossier `sauvegardes/`. Exemple de crontab :
+  `15 3 * * * cd <chemin du dépôt> && bash scripts/sauvegarder-abonnements.sh >> sauvegardes/journal.log 2>&1`.
+- **Restaurer** : `bash scripts/restaurer-abonnements.sh <fichier>`. Le script demande une
+  confirmation, arrête le backend quelques secondes, copie le fichier dans le volume, puis
+  redémarre le backend. `backend-data-init` rend au passage le fichier à l'utilisateur `node`.
+
+Une sauvegarde ne sert à rien sans les clés VAPID qui ont créé ses abonnements. Avec de
+nouvelles clés, chaque envoi est refusé et l'abonnement est purgé. Il faut donc sauvegarder
+`backend/.env` avec la même attention que la base.
+
+Ces fichiers contiennent les endpoints et les clés push des navigateurs abonnés, qui sont des
+données personnelles : il faut les traiter comme `backend/.env`.
 
 ---
 

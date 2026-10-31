@@ -8,6 +8,18 @@
   images Docker du backend et du frontend, dans tous les workflows CI (`node-version`) et dans
   `engines.node` du backend (`>=26`). Même règle qu'avant : jamais de version _Current_ sur le Pi,
   la prochaine montée sera la 28 à son passage LTS
+- CI/CD plus sûre : `build-twa.yml` attend désormais une CI verte sur le même commit avant de signer
+  et publier l'application Android (un commit à la CI rouge pouvait atteindre le Play Store) ;
+  `deploy-web.yml` vérifie après chaque déploiement que `https://qcweather.alithiel31.dev` répond
+  (API et page), pour détecter un tunnel, un Traefik ou un nginx cassé ; `contract.yml` crée le label
+  `derive-contrat` s'il manque — son absence empêchait l'ouverture de l'issue d'alerte
+- Android : `minSdkVersion` passe de 23 à **24** (Android 7.0). Google Play refuse désormais tout
+  bundle de minSdk inférieur à 24 (« Play automatic protection »), ce qui faisait échouer la
+  publication `deploy-twa.yml`. Les appareils sous Android 6.0 ne peuvent plus installer ni mettre à
+  jour l'application ; le site reste accessible depuis leur navigateur
+- Positionnement Québec partout : les descriptions des trois `package.json` disaient encore « pour
+  le Canada », alors que l'interface, la recherche (codes postaux G/H/J, villes québécoises) et les
+  pages légales ciblent uniquement le Québec
 - `frontend/tests/unit/permissions-policy.test.ts` échoue si le code appelle la géolocalisation, le
   micro ou la caméra alors que `Permissions-Policy` (`nginx.conf`) les interdit : le navigateur les
   refuserait sans invite, et rien ne le montrerait en développement. Commentaire ajouté à côté de
@@ -60,6 +72,11 @@
 
 ### Added
 
+- `scripts/sauvegarder-abonnements.sh` et `scripts/restaurer-abonnements.sh` : sauvegarde à chaud
+  de la base SQLite des abonnements (`VACUUM INTO`, intégrité vérifiée, rotation sur 14 copies,
+  dossier `sauvegardes/` ignoré par git) et restauration en quelques secondes de coupure. La
+  procédure, la planification et le lien avec les clés VAPID sont décrits dans
+  `docs/guide-de-reprise.md` (section 4)
 - Page `404.html` bilingue servie par nginx (`error_page 404`) pour les fichiers statiques manquants
   (`/assets/*`, `/icons/*`…). Les routes inconnues retombent toujours sur la coquille SPA, et les
   réponses d'erreur de l'API ne sont pas interceptées
