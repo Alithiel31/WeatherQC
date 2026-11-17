@@ -21,8 +21,11 @@ export class NotFoundError extends HttpClientError {
 }
 
 export class BadGatewayError extends HttpClientError {
-  constructor(message: string) {
+  constructor(message: string, options?: ErrorOptions) {
     super(message, 502);
+    // `cause` n'est renseignée que pour une panne réseau : une réponse au schéma
+    // invalide n'en a pas, ce qui permet de distinguer les deux.
+    if (options?.cause !== undefined) this.cause = options.cause;
   }
 }
 
