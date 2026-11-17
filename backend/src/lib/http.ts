@@ -89,5 +89,5 @@ export async function fetchAvecTimeout(
   }
 
   const detail = derniereErreur instanceof Error ? derniereErreur.message : String(derniereErreur);
-  throw new BadGatewayError(`${service} injoignable : ${detail}`);
+  throw new BadGatewayError(`${service} injoignable : ${detail}`, { cause: derniereErreur });
 }

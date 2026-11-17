@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { fetchFrames } from '../../src/services/rainviewer.service.js';
+import { appelAmont } from './amont.js';
 
 // ⚠️ Ces tests interrogent réellement RainViewer — voir `openmeteo.contract.test.ts`.
 describe('Contrat RainViewer (réseau réel)', () => {
-  it('retourne un index d’images exploitable', async () => {
-    const frames = await fetchFrames();
+  it('retourne un index d’images exploitable', async (ctx) => {
+    const frames = await appelAmont(ctx, () => fetchFrames());
 
     expect(frames.hote).toMatch(/^https:\/\//);
 
@@ -23,10 +24,10 @@ describe('Contrat RainViewer (réseau réel)', () => {
     }
   });
 
-  it('rend les images du radar dans l’ordre chronologique', async () => {
+  it('rend les images du radar dans l’ordre chronologique', async (ctx) => {
     // L'animation les rejoue dans l'ordre du tableau : un index désordonné
     // ferait défiler le temps à l'envers sans rien casser d'autre.
-    const { radar } = await fetchFrames();
+    const { radar } = await appelAmont(ctx, () => fetchFrames());
 
     const instants = radar.map((i) => i.time);
     expect(instants).toEqual([...instants].sort((a, b) => a - b));

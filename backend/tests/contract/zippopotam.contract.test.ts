@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { geocodeRTA } from '../../src/services/geocode.service.js';
+import { appelAmont } from './amont.js';
 import { NotFoundError } from '../../src/lib/errors.js';
 
 // ⚠️ Ces tests interrogent réellement Zippopotam — voir `openmeteo.contract.test.ts`.
 describe('Contrat Zippopotam (réseau réel)', () => {
-  it('géocode la RTA H2X quelque part au Québec', async () => {
-    const lieu = await geocodeRTA('H2X');
+  it('géocode la RTA H2X quelque part au Québec', async (ctx) => {
+    const lieu = await appelAmont(ctx, () => geocodeRTA('H2X'));
 
     expect(lieu.rta).toBe('H2X');
     expect(typeof lieu.nom).toBe('string');
@@ -18,7 +19,7 @@ describe('Contrat Zippopotam (réseau réel)', () => {
     expect(lieu.longitude).toBeLessThan(-72);
   });
 
-  it('lève NotFoundError sur une RTA inexistante', async () => {
-    await expect(geocodeRTA('Z9Z')).rejects.toThrow(NotFoundError);
+  it('lève NotFoundError sur une RTA inexistante', async (ctx) => {
+    await expect(appelAmont(ctx, () => geocodeRTA('Z9Z'))).rejects.toThrow(NotFoundError);
   });
 });

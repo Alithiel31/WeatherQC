@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { geocodeNomVille } from '../../src/services/geocode.service.js';
+import { appelAmont } from './amont.js';
 import { NotFoundError } from '../../src/lib/errors.js';
 
 // ⚠️ Ces tests interrogent réellement l'API de géocodage Open-Meteo — ils sont
@@ -7,8 +8,8 @@ import { NotFoundError } from '../../src/lib/errors.js';
 // (workflow nocturne `contract.yml`). Leur rôle : détecter une dérive du
 // contrat que les fixtures ne verraient pas.
 describe('Contrat Open-Meteo Geocoding (réseau réel)', () => {
-  it('géocode Montréal au Québec', async () => {
-    const lieu = await geocodeNomVille('Montreal');
+  it('géocode Montréal au Québec', async (ctx) => {
+    const lieu = await appelAmont(ctx, () => geocodeNomVille('Montreal'));
 
     expect(lieu.rta).toBe('');
     expect(typeof lieu.nom).toBe('string');
@@ -20,7 +21,9 @@ describe('Contrat Open-Meteo Geocoding (réseau réel)', () => {
     expect(lieu.longitude).toBeLessThan(-72);
   });
 
-  it('lève NotFoundError pour une ville qui n’existe pas', async () => {
-    await expect(geocodeNomVille('Villequinexistepasqcweather')).rejects.toThrow(NotFoundError);
+  it('lève NotFoundError pour une ville qui n’existe pas', async (ctx) => {
+    await expect(
+      appelAmont(ctx, () => geocodeNomVille('Villequinexistepasqcweather'))
+    ).rejects.toThrow(NotFoundError);
   });
 });
